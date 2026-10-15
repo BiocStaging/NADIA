@@ -137,37 +137,22 @@ reference.
 
 ## Installation
 
-NADIA requires R 4.6 or later. While the package is under development and not yet
-available on Bioconductor, it can be installed from its GitHub repository:
-
-```r
-# install.packages("remotes")
-remotes::install_github("sciordia/NADIA", build_vignettes = TRUE)
-library(NADIA)
-```
-
-The mandatory dependencies declared in the `Imports:` field of `DESCRIPTION` are
-installed automatically. The dependencies declared in `Suggests:` are only needed
-for particular optional functions or methods. `mice`, for instance, is required
-when that imputation method is selected, `pROC` computes the AUC and pAUC
-benchmarking metrics, and `Mfuzz` is used by the Pattern Profiler.
-
-When an optional dependency is missing, NADIA names the required package and
-explains how to install it. All the package dependencies can be checked or
-installed through the helper functions included in the repository:
-
-```r
-source("install_dependencies.R")         # from a clone of the repository
-install_nadia_deps(dry_run = TRUE)       # only report what is missing
-install_nadia_deps(optional = FALSE)     # only the essentials
-```
-
-Once NADIA is available on Bioconductor, the recommended installation will be:
+NADIA requires R 4.6 or later. Install it from Bioconductor with:
 
 ```r
 if (!requireNamespace("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
 BiocManager::install("NADIA")
+```
+
+This installs the packages in the `Imports:` field of `DESCRIPTION`. Those in
+`Suggests:` are needed only by particular methods or functions: `mice` when that
+imputation method is selected, for instance, or `Mfuzz` for the Pattern
+Profiler. When one is missing, NADIA names it and explains how to install it.
+To install them all at once:
+
+```r
+BiocManager::install("NADIA", dependencies = TRUE)
 ```
 
 ### A note on Highcharts licensing
