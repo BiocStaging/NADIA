@@ -397,9 +397,7 @@ pca_highchart <- function(scores_df,
     palette <- stats::setNames(pal, lvls)
   } else if (is.character(palette) && length(palette) == 1 && grepl("::", palette)) {
     # paletteer palette (format "ggsci::category10_d3")
-    if (!requireNamespace("paletteer", quietly = TRUE)) {
-      stop("To use paletteer, install it with: install.packages('paletteer')")
-    }
+    .check_suggests("paletteer", sprintf("The palette '%s'", palette))
     pal <- tryCatch({
       raw_pal <- as.character(paletteer::paletteer_d(palette))
       # Normalize the colours (drop the alpha channel if present)

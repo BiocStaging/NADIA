@@ -53,18 +53,14 @@ configure_cluster_palette <- function(n_clusters, palette = NULL) {
 
   } else if (grepl("^ggsci::", palette)) {
     # ggsci palettes via paletteer
-    if (requireNamespace("paletteer", quietly = TRUE)) {
-      pal_name <- sub("^ggsci::", "", palette)
-      colors <- tryCatch({
-        as.character(paletteer::paletteer_d(paste0("ggsci::", pal_name), n_clusters))
-      }, error = function(e) {
-        warning("ggsci palette not found, using the default one")
-        default_colors[seq_len(n_clusters)]
-      })
-    } else {
-      warning("Package 'paletteer' not available, using the default palette")
-      colors <- default_colors[seq_len(n_clusters)]
-    }
+    .check_suggests("paletteer", sprintf("The palette '%s'", palette))
+    pal_name <- sub("^ggsci::", "", palette)
+    colors <- tryCatch({
+      as.character(paletteer::paletteer_d(paste0("ggsci::", pal_name), n_clusters))
+    }, error = function(e) {
+      warning("ggsci palette not found, using the default one")
+      default_colors[seq_len(n_clusters)]
+    })
 
   } else if (grepl("^brewer:", palette)) {
     # RColorBrewer palettes

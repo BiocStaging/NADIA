@@ -55,9 +55,7 @@ volcano_highchart_list <- function(
   
   # --- Colour handling ---
   if (!is.null(palette)) {
-    if (!requireNamespace("paletteer", quietly = TRUE)) {
-      stop("The 'paletteer' package is required to use palettes. Install it with install.packages('paletteer')")
-    }
+    .check_suggests("paletteer", sprintf("The palette '%s'", palette))
     pal_colors <- as.character(paletteer::paletteer_d(palette, n = 3))
     colors <- list(
       up   = pal_colors[1],

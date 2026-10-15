@@ -19,6 +19,9 @@ Changes made in response to the Bioconductor review.
   and tables, and with them the Highcharts licence, are an explicit choice.
   The functions that need them say so when they are missing, and
   `benchmarking_proteomics()` skips its interactive volcano plots.
+* `paletteer` moves to `Suggests`: it is needed only for palettes given as
+  `"package::palette"`, and its absence is now always an error that says what
+  to install, where two functions used to fall back silently to the default.
 * `proteomics_heatmap()` no longer changes ComplexHeatmap's `message` option
   for the rest of the session.
 

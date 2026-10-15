@@ -124,9 +124,7 @@ get_heatmap_palette <- function(palette = NULL,
 
   # paletteer palette
   if (is.character(palette) && length(palette) == 1 && grepl("::", palette)) {
-    if (!requireNamespace("paletteer", quietly = TRUE)) {
-      stop("To use paletteer, install it with: install.packages('paletteer')")
-    }
+    .check_suggests("paletteer", sprintf("The palette '%s'", palette))
 
     # Try it as a discrete palette first
     colors <- tryCatch({
@@ -213,9 +211,7 @@ get_annotation_palette <- function(levels, palette = NULL) {
 
   # paletteer palette
   if (is.character(palette) && length(palette) == 1 && grepl("::", palette)) {
-    if (!requireNamespace("paletteer", quietly = TRUE)) {
-      stop("To use paletteer, install it with: install.packages('paletteer')")
-    }
+    .check_suggests("paletteer", sprintf("The palette '%s'", palette))
     colors <- tryCatch({
       raw_pal <- as.character(paletteer::paletteer_d(palette))
       vapply(raw_pal, .normalize_hex, character(1), USE.NAMES = FALSE)
@@ -1122,18 +1118,18 @@ proteomics_heatmap <- function(data,
         # paletteer or RColorBrewer palette
         if (grepl("::", palette_adjp)) {
           # Paletteer
-          if (requireNamespace("paletteer", quietly = TRUE)) {
-            raw_pal <- tryCatch({
-              as.character(paletteer::paletteer_c(palette_adjp, n = 3))
-            }, error = function(e) {
-              tryCatch({
-                as.character(paletteer::paletteer_d(palette_adjp, n = 3))
-              }, error = function(e2) NULL)
-            })
-            if (!is.null(raw_pal) && length(raw_pal) >= 3) {
-              adjp_colors <- vapply(raw_pal[seq_len(3)], .normalize_hex,
-                                    character(1), USE.NAMES = FALSE)
-            }
+          .check_suggests("paletteer",
+                          sprintf("The palette '%s'", palette_adjp))
+          raw_pal <- tryCatch({
+            as.character(paletteer::paletteer_c(palette_adjp, n = 3))
+          }, error = function(e) {
+            tryCatch({
+              as.character(paletteer::paletteer_d(palette_adjp, n = 3))
+            }, error = function(e2) NULL)
+          })
+          if (!is.null(raw_pal) && length(raw_pal) >= 3) {
+            adjp_colors <- vapply(raw_pal[seq_len(3)], .normalize_hex,
+                                  character(1), USE.NAMES = FALSE)
           }
         } else if (startsWith(palette_adjp, "brewer:")) {
           # RColorBrewer

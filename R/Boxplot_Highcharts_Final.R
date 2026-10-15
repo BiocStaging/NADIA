@@ -152,9 +152,7 @@ boxplot_highchart_list <- function(
   if (is.null(palette)) {
     pal <- default_palette
   } else if (is.character(palette) && length(palette) == 1 && grepl("::", palette)) {
-    if (!requireNamespace("paletteer", quietly = TRUE)) {
-      stop("To use paletteer, install it with: install.packages('paletteer')")
-    }
+    .check_suggests("paletteer", sprintf("The palette '%s'", palette))
     pal <- as.character(paletteer::paletteer_d(palette))
   } else if (is.character(palette) && length(palette) == 1 && startsWith(palette, "brewer:")) {
     nm <- sub("^brewer:", "", palette)

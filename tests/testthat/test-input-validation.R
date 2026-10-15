@@ -207,3 +207,12 @@ test_that("a missing suggested package is named, with how to install it", {
                  fixed = TRUE)
     expect_true(.check_suggests("stats", "f()"))
 })
+
+test_that("the cluster palette honours a paletteer palette", {
+    skip_if_not_installed("paletteer")
+    skip_if_not_installed("ggsci")
+    expect_identical(configure_cluster_palette(3, "ggsci::default_jco"),
+                     stats::setNames(
+                         as.character(paletteer::paletteer_d("ggsci::default_jco", 3)),
+                         as.character(1:3)))
+})

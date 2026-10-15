@@ -1703,7 +1703,9 @@ volcano_highchart_list(
 
 When a named palette is preferred, `paletteer` themes use the
 `"package::palette"` format and `RColorBrewer` themes use
-`"brewer:PaletteName"`. The accepted formats vary slightly between plotting
+`"brewer:PaletteName"`. `paletteer` is a suggested package: it is needed only
+for the `"package::palette"` format, together with the package that provides
+the palette (`ggsci` in the example below). The accepted formats vary slightly between plotting
 functions, as summarised below.
 
 ::: {.palette-reference-table}
