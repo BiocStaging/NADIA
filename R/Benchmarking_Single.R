@@ -565,17 +565,14 @@
   )
 }
 
-#' Compute AUC using pROC (optional)
+#' Compute AUC using pROC
 #'
 #' @param classified_df Classified data frame for one comparison
 #' @param p_col P-value column name
-#' @return AUC value or NA if pROC not available
+#' @return AUC value, or NA if the comparison lacks both classes or has
+#'   fewer than three proteins
 #' @keywords internal
 .compute_auc <- function(classified_df, p_col) {
-  if (!requireNamespace("pROC", quietly = TRUE)) {
-    return(NA_real_)
-  }
-
   truth <- classified_df$truth
   predictor <- suppressWarnings(as.numeric(classified_df[[p_col]]))
 
@@ -603,11 +600,10 @@
 #' @param classified_df Classified data frame for one comparison
 #' @param p_col P-value column name
 #' @param max_fpr Maximum false positive rate threshold (default: 0.1)
-#' @return Corrected partial AUC value or NA if pROC not available
+#' @return Corrected partial AUC value, or NA if the comparison lacks both
+#'   classes or has fewer than three proteins
 #' @keywords internal
 .compute_pauc <- function(classified_df, p_col, max_fpr = 0.1) {
-  if (!requireNamespace("pROC", quietly = TRUE)) return(NA_real_)
-
   truth <- classified_df$truth
   predictor <- suppressWarnings(as.numeric(classified_df[[p_col]]))
 
@@ -1340,10 +1336,8 @@ benchmark_confusion_overall_gg <- function(
 #' ev <- data.frame(Comparison = rep(c("B-A", "D-A"), each = 2),
 #'                  Species = c("ECOLI", "YEAST"),
 #'                  expected_logFC = c(1, -0.58, 2, -3.3))
-#' if (requireNamespace("pROC", quietly = TRUE)) {
-#'   metrics <- compute_benchmark_metrics(de, ev)
-#'   benchmark_auc_bars_gg(metrics)
-#' }
+#' metrics <- compute_benchmark_metrics(de, ev)
+#' benchmark_auc_bars_gg(metrics)
 #' @export
 benchmark_auc_bars_gg <- function(
     metrics_table,
@@ -1358,7 +1352,7 @@ benchmark_auc_bars_gg <- function(
   plot_data <- plot_data[!is.na(plot_data$AUC), , drop = FALSE]
 
   if (nrow(plot_data) == 0) {
-    warning("No AUC values available (requires pROC)")
+    warning("No AUC values available")
     return(NULL)
   }
 
@@ -1614,7 +1608,6 @@ benchmark_signif_bars_gg <- function(
 #' ROC Curves by Comparison (ggplot2)
 #'
 #' Generates ROC curves for each comparison using pROC::ggroc().
-#' Requires the pROC package.
 #'
 #' @param classified_df Classified data frame (output of .classify_all_comparisons)
 #' @param p_col P-value column name used as predictor score
@@ -1623,7 +1616,7 @@ benchmark_signif_bars_gg <- function(
 #' @param zoom If TRUE, zoom into the low-FPR region (x = 0 to 0.1)
 #' @param palette RColorBrewer palette name (default: "Set1")
 #'
-#' @return ggplot2 object or NULL if pROC is not available
+#' @return ggplot2 object
 #'
 #' @examples
 #' data(nadia_dia)
@@ -1634,10 +1627,8 @@ benchmark_signif_bars_gg <- function(
 #' ev <- data.frame(Comparison = rep(c("B-A", "D-A"), each = 2),
 #'                  Species = c("ECOLI", "YEAST"),
 #'                  expected_logFC = c(1, -0.58, 2, -3.3))
-#' if (requireNamespace("pROC", quietly = TRUE)) {
-#'   bench <- benchmarking_proteomics(de, ev, verbose = FALSE)
-#'   benchmark_roc_gg(bench$classified_df, comparisons = "B-A")
-#' }
+#' bench <- benchmarking_proteomics(de, ev, verbose = FALSE)
+#' benchmark_roc_gg(bench$classified_df, comparisons = "B-A")
 #' @export
 benchmark_roc_gg <- function(
     classified_df,
@@ -1647,12 +1638,6 @@ benchmark_roc_gg <- function(
     zoom = FALSE,
     palette = "Set1"
 ) {
-  if (!requireNamespace("pROC", quietly = TRUE)) {
-    warning("Package 'pROC' is not installed. ROC curves cannot be generated.\n",
-            "Install it with: install.packages('pROC')")
-    return(NULL)
-  }
-
   # Compute score: -log10(p-value) -- higher = more significant
   p_col <- .detect_p_col(classified_df, p_col)
   classified_df$score <- -log10(pmax(as.numeric(classified_df[[p_col]]), 1e-300))
@@ -1749,13 +1734,9 @@ benchmark_roc_gg <- function(
     )
 
   # Apply palette
-  if (requireNamespace("RColorBrewer", quietly = TRUE)) {
-    n_colors <- min(length(roc_list), RColorBrewer::brewer.pal.info[palette, "maxcolors"])
-    pal_colors <- RColorBrewer::brewer.pal(max(n_colors, 3), palette)
-    gg <- gg + ggplot2::scale_color_manual(values = pal_colors, labels = labels)
-  } else {
-    gg <- gg + ggplot2::scale_color_discrete(labels = labels)
-  }
+  n_colors <- min(length(roc_list), RColorBrewer::brewer.pal.info[palette, "maxcolors"])
+  pal_colors <- RColorBrewer::brewer.pal(max(n_colors, 3), palette)
+  gg <- gg + ggplot2::scale_color_manual(values = pal_colors, labels = labels)
 
   # Zoom or full view
   if (zoom) {
@@ -2445,11 +2426,6 @@ benchmarking_proteomics <- function(
   metrics_table <- compute_benchmark_metrics(de_res, ev, alpha, lfc_thr, p_col,
                                              comparisons = comps, assay = assay)
 
-  if (!requireNamespace("pROC", quietly = TRUE) && verbose) {
-    message("  [NOTE] Package 'pROC' is not installed. AUC = NA.")
-    message("  Install it with: install.packages('pROC')")
-  }
-
   if (verbose) {
     for (i in seq_len(nrow(metrics_table))) {
       message(sprintf("  %s: Sens=%.3f Spec=%.3f Prec=%.3f F1=%.3f AUC=%s",
@@ -2467,10 +2443,6 @@ benchmarking_proteomics <- function(
   if (verbose) message("\n--- OpDEA metrics (pAUC, nMCC, G-mean) ---")
   opdea_metrics <- compute_opdea_metrics(de_res, ev, alpha, lfc_thr, p_col,
                                          comparisons = comps, assay = assay)
-
-  if (!requireNamespace("pROC", quietly = TRUE) && verbose) {
-    message("  [NOTE] Package 'pROC' is not installed. pAUC = NA.")
-  }
 
   if (verbose) {
     for (i in seq_len(nrow(opdea_metrics))) {

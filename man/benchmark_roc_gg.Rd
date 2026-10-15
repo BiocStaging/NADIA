@@ -27,11 +27,10 @@ benchmark_roc_gg(
 \item{palette}{RColorBrewer palette name (default: "Set1")}
 }
 \value{
-ggplot2 object or NULL if pROC is not available
+ggplot2 object
 }
 \description{
 Generates ROC curves for each comparison using pROC::ggroc().
-Requires the pROC package.
 }
 \examples{
 data(nadia_dia)
@@ -42,8 +41,6 @@ de$Species <- sp$PG.OrganismId[match(de$Protein.IDs, sp$PG.ProteinGroups)]
 ev <- data.frame(Comparison = rep(c("B-A", "D-A"), each = 2),
                  Species = c("ECOLI", "YEAST"),
                  expected_logFC = c(1, -0.58, 2, -3.3))
-if (requireNamespace("pROC", quietly = TRUE)) {
-  bench <- benchmarking_proteomics(de, ev, verbose = FALSE)
-  benchmark_roc_gg(bench$classified_df, comparisons = "B-A")
-}
+bench <- benchmarking_proteomics(de, ev, verbose = FALSE)
+benchmark_roc_gg(bench$classified_df, comparisons = "B-A")
 }

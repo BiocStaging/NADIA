@@ -25,7 +25,8 @@ truth, and a p-value column}
 \item{palette}{RColorBrewer palette name (default: "Set2")}
 }
 \value{
-ggplot2 object or NULL if pROC not available
+ggplot2 object, or NULL (with a warning) if the comparison has no
+data from which to draw a ROC curve
 }
 \description{
 Generates ROC (or ROC zoom) plot where each curve represents
@@ -46,7 +47,5 @@ classified_all <- do.call(rbind, lapply(c("cycloess", "quantile"), function(nm) 
   cl$Assay <- nm
   cl
 }))
-if (requireNamespace("pROC", quietly = TRUE)) {
-  bm_plot_roc(classified_all, comparison = "B-A")
-}
+bm_plot_roc(classified_all, comparison = "B-A")
 }

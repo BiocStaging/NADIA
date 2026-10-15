@@ -142,10 +142,6 @@
     condition_column = "Condition",
     label_column = "Column"
 ) {
-  if (!requireNamespace("SummarizedExperiment", quietly = TRUE)) {
-    stop("Package 'SummarizedExperiment' is required")
-  }
-
   # Validate required columns
   if (!protein_column %in% names(data)) {
     stop("Column '", protein_column, "' not found in data")
@@ -322,10 +318,6 @@
   # limma::normalizeQuantiles handles NA consistently (it interpolates the
   # per-column quantiles onto a common grid), unlike
   # preprocessCore::normalize.quantiles, which propagates NaN with DIA data.
-  if (!requireNamespace("limma", quietly = TRUE)) {
-    stop("Package 'limma' is required for the quantile method. ",
-         "Install it with BiocManager::install('limma')")
-  }
   res <- limma::normalizeQuantiles(x_log2)
   dimnames(res) <- dimnames(x_log2)
   res
@@ -507,12 +499,6 @@ normalize_proteomics <- function(
   # Match cycloess sub-parameters
   cyclic_loess_method <- match.arg(cyclic_loess_method)
 
-  # Validate required packages
-  if (!requireNamespace("SummarizedExperiment", quietly = TRUE)) {
-    stop("Package 'SummarizedExperiment' is required. ",
-         "Install it with BiocManager::install('SummarizedExperiment')")
-  }
-
   # =========================================================================
   # 1. ZERO TO NA CONVERSION
   # =========================================================================
@@ -619,9 +605,6 @@ normalize_proteomics <- function(
       "Rlr"             = .norm_rlr(x_input),
       "MAD"             = .norm_mad(x_input),
       "cycloess"        = {
-                            if (!requireNamespace("limma", quietly = TRUE))
-                              stop("Package 'limma' is required for the cycloess method. ",
-                                   "Install it with BiocManager::install('limma')")
                             limma::normalizeCyclicLoess(
                               x_input,
                               method     = cyclic_loess_method,

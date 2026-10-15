@@ -146,10 +146,6 @@ get_heatmap_palette <- function(palette = NULL,
 
   # RColorBrewer palette
   if (is.character(palette) && length(palette) == 1 && startsWith(palette, "brewer:")) {
-    if (!requireNamespace("RColorBrewer", quietly = TRUE)) {
-      stop("To use RColorBrewer, install it with: install.packages('RColorBrewer')")
-    }
-
     nm <- sub("^brewer:", "", palette)
     colors <- tryCatch({
       maxc <- RColorBrewer::brewer.pal.info[nm, "maxcolors"]
@@ -170,8 +166,7 @@ get_heatmap_palette <- function(palette = NULL,
 
   # Bare palette name (try RColorBrewer)
   if (is.character(palette) && length(palette) == 1) {
-    if (requireNamespace("RColorBrewer", quietly = TRUE) &&
-        palette %in% rownames(RColorBrewer::brewer.pal.info)) {
+    if (palette %in% rownames(RColorBrewer::brewer.pal.info)) {
       maxc <- RColorBrewer::brewer.pal.info[palette, "maxcolors"]
       colors <- RColorBrewer::brewer.pal(min(n, maxc), palette)
       if (reverse) colors <- rev(colors)
@@ -226,9 +221,6 @@ get_annotation_palette <- function(levels, palette = NULL) {
 
   # RColorBrewer palette
   if (is.character(palette) && length(palette) == 1 && startsWith(palette, "brewer:")) {
-    if (!requireNamespace("RColorBrewer", quietly = TRUE)) {
-      stop("To use RColorBrewer, install it with: install.packages('RColorBrewer')")
-    }
     nm <- sub("^brewer:", "", palette)
     colors <- tryCatch({
       maxc <- RColorBrewer::brewer.pal.info[nm, "maxcolors"]
@@ -1133,14 +1125,12 @@ proteomics_heatmap <- function(data,
           }
         } else if (startsWith(palette_adjp, "brewer:")) {
           # RColorBrewer
-          if (requireNamespace("RColorBrewer", quietly = TRUE)) {
-            nm <- sub("^brewer:", "", palette_adjp)
-            raw_pal <- tryCatch({
-              RColorBrewer::brewer.pal(3, nm)
-            }, error = function(e) NULL)
-            if (!is.null(raw_pal)) {
-              adjp_colors <- raw_pal
-            }
+          nm <- sub("^brewer:", "", palette_adjp)
+          raw_pal <- tryCatch({
+            RColorBrewer::brewer.pal(3, nm)
+          }, error = function(e) NULL)
+          if (!is.null(raw_pal)) {
+            adjp_colors <- raw_pal
           }
         }
       }

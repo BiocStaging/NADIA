@@ -199,7 +199,6 @@ test_that("MAR methods impute near the protein's own level, MNAR far below", {
     # against the global median would call every MAR method "too low".
     data(nadia_dia, package = "NADIA")
     skip_if_not_installed("impute")
-    skip_if_not_installed("rrcovNA")
 
     se     <- normalize_proteomics(nadia_dia, verbose = FALSE)$se
     x      <- SummarizedExperiment::assay(se, "cycloess")

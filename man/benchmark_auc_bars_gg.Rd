@@ -33,8 +33,6 @@ de$Species <- sp$PG.OrganismId[match(de$Protein.IDs, sp$PG.ProteinGroups)]
 ev <- data.frame(Comparison = rep(c("B-A", "D-A"), each = 2),
                  Species = c("ECOLI", "YEAST"),
                  expected_logFC = c(1, -0.58, 2, -3.3))
-if (requireNamespace("pROC", quietly = TRUE)) {
-  metrics <- compute_benchmark_metrics(de, ev)
-  benchmark_auc_bars_gg(metrics)
-}
+metrics <- compute_benchmark_metrics(de, ev)
+benchmark_auc_bars_gg(metrics)
 }

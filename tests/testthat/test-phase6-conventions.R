@@ -138,3 +138,23 @@ test_that("nm_compute_metrics() draws its random columns from the caller's RNG",
     expect_equal(a, b)                       # same seed, same answer
     expect_false(isTRUE(all.equal(a, d)))    # no seed of its own overrides it
 })
+
+test_that("no package in Imports is checked with requireNamespace()", {
+    files <- .nadia_r_files()
+    skip_if(length(files) == 0, "sources not available (installed package)")
+
+    # A package in Imports is installed with NADIA, so the check can never
+    # fail and its fallback can never run (Bioconductor review, #186).
+    desc <- read.dcf(file.path(dirname(dirname(files[1])), "DESCRIPTION"),
+                     fields = "Imports")[1, ]
+    imports <- trimws(sub("[(].*", "", strsplit(desc, ",")[[1]]))
+    imports <- imports[nzchar(imports)]
+    pattern <- sprintf('requireNamespace[(]["\'](%s)["\']',
+                       paste(imports, collapse = "|"))
+    offenders <- unlist(lapply(files, function(f) {
+        lines <- readLines(f, warn = FALSE)
+        hits <- grep(pattern, lines)
+        if (length(hits)) paste0(basename(f), ":", hits)
+    }))
+    expect_equal(as.character(offenders), character(0))
+})

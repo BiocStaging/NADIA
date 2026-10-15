@@ -555,9 +555,6 @@ nm_run_normalizations <- function(se,
                                   include_baseline = TRUE,
                                   verbose          = TRUE) {
 
-  if (!requireNamespace("SummarizedExperiment", quietly = TRUE))
-    stop("Package 'SummarizedExperiment' is required.")
-
   # Validate baseline assay exists
   all_assays <- SummarizedExperiment::assayNames(se)
   if (!assay_name %in% all_assays)
@@ -676,12 +673,6 @@ import_norm_matrices <- function(tsv_dir,
                                  method_names  = NULL,
                                  condition_col = "Condition",
                                  sample_col    = "Column") {
-  # --- Required packages ---
-  if (!requireNamespace("SummarizedExperiment", quietly = TRUE))
-    stop("Package 'SummarizedExperiment' is required.")
-  if (!requireNamespace("S4Vectors", quietly = TRUE))
-    stop("Package 'S4Vectors' is required.")
-
   # --- Find TSV files ---
   files <- list.files(tsv_dir, pattern = pattern, full.names = TRUE)
   if (length(files) == 0)
@@ -763,18 +754,12 @@ import_norm_matrices <- function(tsv_dir,
 
 # Helper: PRONE-style qualitative color palette (RColorBrewer, reversed)
 .nm_prone_colors <- function(n) {
-  if (requireNamespace("RColorBrewer", quietly = TRUE)) {
-    pal_info   <- RColorBrewer::brewer.pal.info
-    qual_pals  <- pal_info[pal_info$category == "qual", ]
-    col_vector <- rev(unlist(mapply(RColorBrewer::brewer.pal,
-                                    qual_pals$maxcolors,
-                                    rownames(qual_pals))))
-    rep_len(col_vector, n)
-  } else {
-    # fallback: evenly spaced hues
-    grDevices::hcl(seq(15, 375, length.out = n + 1)[seq_len(n)],
-                   l = 65, c = 100)
-  }
+  pal_info   <- RColorBrewer::brewer.pal.info
+  qual_pals  <- pal_info[pal_info$category == "qual", ]
+  col_vector <- rev(unlist(mapply(RColorBrewer::brewer.pal,
+                                  qual_pals$maxcolors,
+                                  rownames(qual_pals))))
+  rep_len(col_vector, n)
 }
 
 # Helper: resolve assay_names (NULL -> all)

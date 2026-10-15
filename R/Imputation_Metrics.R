@@ -183,17 +183,12 @@
 #' @return Character vector of hex colors
 #' @keywords internal
 .im_prone_colors <- function(n) {
-  if (requireNamespace("RColorBrewer", quietly = TRUE)) {
-    pal_info   <- RColorBrewer::brewer.pal.info
-    qual_pals  <- pal_info[pal_info$category == "qual", ]
-    col_vector <- rev(unlist(mapply(RColorBrewer::brewer.pal,
-                                    qual_pals$maxcolors,
-                                    rownames(qual_pals))))
-    rep_len(col_vector, n)
-  } else {
-    grDevices::hcl(seq(15, 375, length.out = n + 1)[seq_len(n)],
-                   l = 65, c = 100)
-  }
+  pal_info   <- RColorBrewer::brewer.pal.info
+  qual_pals  <- pal_info[pal_info$category == "qual", ]
+  col_vector <- rev(unlist(mapply(RColorBrewer::brewer.pal,
+                                  qual_pals$maxcolors,
+                                  rownames(qual_pals))))
+  rep_len(col_vector, n)
 }
 
 # =============================================================================
@@ -458,12 +453,6 @@ import_imp_matrices <- function(tsv_dir,
                                 method_names  = NULL,
                                 condition_col = "Condition",
                                 sample_col    = "Column") {
-  # --- Required packages ---
-  if (!requireNamespace("SummarizedExperiment", quietly = TRUE))
-    stop("Package 'SummarizedExperiment' is required.")
-  if (!requireNamespace("S4Vectors", quietly = TRUE))
-    stop("Package 'S4Vectors' is required.")
-
   # --- Find TSV files ---
   files <- list.files(tsv_dir, pattern = pattern, full.names = TRUE)
   if (length(files) == 0)

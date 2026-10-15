@@ -2,7 +2,7 @@
 % Please edit documentation in R/Benchmarking_Single.R
 \name{.compute_auc}
 \alias{.compute_auc}
-\title{Compute AUC using pROC (optional)}
+\title{Compute AUC using pROC}
 \usage{
 .compute_auc(classified_df, p_col)
 }
@@ -12,9 +12,10 @@
 \item{p_col}{P-value column name}
 }
 \value{
-AUC value or NA if pROC not available
+AUC value, or NA if the comparison lacks both classes or has
+fewer than three proteins
 }
 \description{
-Compute AUC using pROC (optional)
+Compute AUC using pROC
 }
 \keyword{internal}

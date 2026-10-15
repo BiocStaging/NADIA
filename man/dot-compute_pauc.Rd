@@ -14,7 +14,8 @@
 \item{max_fpr}{Maximum false positive rate threshold (default: 0.1)}
 }
 \value{
-Corrected partial AUC value or NA if pROC not available
+Corrected partial AUC value, or NA if the comparison lacks both
+classes or has fewer than three proteins
 }
 \description{
 Uses pROC::roc() with partial.auc and partial.auc.correct = TRUE

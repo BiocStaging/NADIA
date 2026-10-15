@@ -315,10 +315,6 @@
 #' Impseq: Sequential imputation (rrcovNA)
 #' @keywords internal
 .imp_Impseq <- function(x, args = list()) {
-  if (!requireNamespace("rrcovNA", quietly = TRUE)) {
-    stop("imp_method='Impseq' requires the 'rrcovNA' package.\n",
-         "  install.packages('rrcovNA')")
-  }
   res <- rrcovNA::impSeq(x)
   as.matrix(res)
 }
@@ -327,10 +323,6 @@
 #' @param args list with optional `alpha` (default 0.9)
 #' @keywords internal
 .imp_Impseqrob <- function(x, args = list()) {
-  if (!requireNamespace("rrcovNA", quietly = TRUE)) {
-    stop("imp_method='Impseqrob' requires the 'rrcovNA' package.\n",
-         "  install.packages('rrcovNA')")
-  }
   alpha <- args$alpha %||% 0.9
   res <- rrcovNA::impSeqRob(x, alpha = alpha, verbose = FALSE)
   if (is.list(res) && !is.null(res$x)) res$x else as.matrix(res)

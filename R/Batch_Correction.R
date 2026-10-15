@@ -461,9 +461,6 @@ pvca_plot <- function(pvca_res,
                       title               = NULL,
                       base_size           = 15) {
 
-  if (!requireNamespace("ggplot2", quietly = TRUE))
-    stop("Package 'ggplot2' is required for pvca_plot().")
-
   # --- Categorize if needed ---
   if (!"category" %in% colnames(pvca_res)) {
     if (is.null(technical_factors) && is.null(biological_factors))
@@ -1291,9 +1288,6 @@ pca_covariates_plot <- function(
     point_size       = 3,
     verbose          = TRUE
 ) {
-
-  if (!requireNamespace("ggplot2", quietly = TRUE))
-    stop("Package 'ggplot2' is required for pca_covariates_plot().")
 
   # --- Resolve assay name ---
   all_assays <- SummarizedExperiment::assayNames(se)

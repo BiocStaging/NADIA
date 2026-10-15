@@ -1348,9 +1348,6 @@ results_list_widget <- function(
 #' @return A JS object to be used as filterMethod in colDef.
 #' @noRd
 .pl_agg_filter_method <- function(col_ids) {
-  if (!requireNamespace("jsonlite", quietly = TRUE)) {
-    stop("'jsonlite' is required for the aggregated filters.")
-  }
   cols_json <- jsonlite::toJSON(col_ids)
   JS(sprintf("function(rows, columnId, filterValue) {
     var cols = %s;
@@ -2121,10 +2118,6 @@ protein_list_widget <- function(
   palette    <- .pl_condition_palette(conditions)
 
   # --- JSON structures for the client side ---
-  if (!requireNamespace("jsonlite", quietly = TRUE)) {
-    stop("The 'jsonlite' package is required by protein_list_widget().")
-  }
-
   cond_struct <- setNames(
     lapply(conditions, function(cc) sample_map$column[sample_map$condition == cc]),
     conditions
@@ -2574,10 +2567,6 @@ quant_list_widget <- function(
   conditions <- unique(sample_map$condition)
   palette    <- .pl_condition_palette(conditions)
 
-  if (!requireNamespace("jsonlite", quietly = TRUE)) {
-    stop("The 'jsonlite' package is required by quant_list_widget().")
-  }
-
   cond_struct <- setNames(
     lapply(conditions, function(cc) sample_map$column[sample_map$condition == cc]),
     conditions
@@ -2995,9 +2984,6 @@ summary_list_widget <- function(
   cols   <- .sl_build_columns(df, palette)
   rstyle <- .sl_build_row_style()
 
-  if (!requireNamespace("jsonlite", quietly = TRUE)) {
-    stop("The 'jsonlite' package is required by summary_list_widget().")
-  }
   palette_json      <- jsonlite::toJSON(as.list(palette), auto_unbox = TRUE)
   tint_palette_json <- jsonlite::toJSON(as.list(tint_palette), auto_unbox = TRUE)
   conditions_json   <- jsonlite::toJSON(as.list(conditions), auto_unbox = FALSE)

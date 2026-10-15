@@ -201,7 +201,6 @@ test_that("the widgets ship their JavaScript, with no CDN reference", {
 
 
 test_that("benchmarking scores the pipeline against the spike-in truth", {
-    skip_if_not_installed("pROC")
     data(nadia_dia, package = "NADIA")
 
     de <- process_proteomics(nadia_dia, verbose = FALSE)$DEPs_results

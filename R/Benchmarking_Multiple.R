@@ -849,9 +849,6 @@ bm_compute_extended_ranking <- function(opdea_combined,
 #' bm_plot_extended_ranking_bars(ext)
 #' @export
 bm_plot_extended_ranking_bars <- function(extended_ranking, title = NULL) {
-  if (!requireNamespace("ggplot2", quietly = TRUE))
-    stop("Package 'ggplot2' is required.")
-
   rank_df   <- extended_ranking$mean_ranking
   n_methods <- extended_ranking$n_methods
 
@@ -907,9 +904,6 @@ bm_plot_extended_ranking_bars <- function(extended_ranking, title = NULL) {
 #' bm_plot_extended_ranking_heatmap(ext)
 #' @export
 bm_plot_extended_ranking_heatmap <- function(extended_ranking, title = NULL) {
-  if (!requireNamespace("ggplot2", quietly = TRUE))
-    stop("Package 'ggplot2' is required.")
-
   rank_df <- extended_ranking$mean_ranking
   metrics <- extended_ranking$metrics_used
   n_methods <- extended_ranking$n_methods
@@ -989,11 +983,6 @@ bm_plot_extended_ranking_heatmap <- function(extended_ranking, title = NULL) {
 bm_plot_ranking_heatmap <- function(ranking_result,
                                     type  = "mean",
                                     title = NULL) {
-  if (!requireNamespace("ggplot2", quietly = TRUE))
-    stop("Package 'ggplot2' is required.")
-  if (!requireNamespace("tidyr", quietly = TRUE))
-    stop("Package 'tidyr' is required.")
-
   rank_df <- if (type == "median") {
     ranking_result$median_ranking
   } else {
@@ -1075,9 +1064,6 @@ bm_plot_ranking_heatmap <- function(ranking_result,
 bm_plot_ranking_bars <- function(ranking_result,
                                  type  = "mean",
                                  title = NULL) {
-  if (!requireNamespace("ggplot2", quietly = TRUE))
-    stop("Package 'ggplot2' is required.")
-
   rank_df <- if (type == "median") {
     ranking_result$median_ranking
   } else {
@@ -1144,13 +1130,6 @@ bm_plot_ranking_bars <- function(ranking_result,
 bm_plot_metrics_heatmap <- function(ranking_result,
                                     type  = "mean",
                                     title = NULL) {
-  if (!requireNamespace("ggplot2", quietly = TRUE))
-    stop("Package 'ggplot2' is required.")
-  if (!requireNamespace("tidyr", quietly = TRUE))
-    stop("Package 'tidyr' is required.")
-  if (!requireNamespace("dplyr", quietly = TRUE))
-    stop("Package 'dplyr' is required.")
-
   agg_df <- if (type == "median") {
     ranking_result$median_aggregated
   } else {
@@ -1243,13 +1222,6 @@ bm_plot_metrics_heatmap <- function(ranking_result,
 bm_plot_metrics_comparison <- function(opdea_combined,
                                        metrics = .BM_METRICS,
                                        title   = NULL) {
-  if (!requireNamespace("ggplot2", quietly = TRUE))
-    stop("Package 'ggplot2' is required.")
-  if (!requireNamespace("tidyr", quietly = TRUE))
-    stop("Package 'tidyr' is required.")
-  if (!requireNamespace("dplyr", quietly = TRUE))
-    stop("Package 'dplyr' is required.")
-
   avail <- intersect(metrics, colnames(opdea_combined))
   if (length(avail) == 0) stop("No valid metrics found in opdea_combined.")
 
@@ -1361,11 +1333,6 @@ bm_plot_metrics_comparison <- function(opdea_combined,
 bm_plot_ranking_heatmap_by_comp <- function(ranking_by_comp,
                                             comparison,
                                             title = NULL) {
-  if (!requireNamespace("ggplot2", quietly = TRUE))
-    stop("Package 'ggplot2' is required.")
-  if (!requireNamespace("tidyr", quietly = TRUE))
-    stop("Package 'tidyr' is required.")
-
   if (!comparison %in% names(ranking_by_comp$by_comparison))
     stop("Comparison '", comparison, "' not found. Available: ",
          paste(names(ranking_by_comp$by_comparison), collapse = ", "))
@@ -1437,9 +1404,6 @@ bm_plot_ranking_heatmap_by_comp <- function(ranking_by_comp,
 bm_plot_ranking_bars_by_comp <- function(ranking_by_comp,
                                          comparison,
                                          title = NULL) {
-  if (!requireNamespace("ggplot2", quietly = TRUE))
-    stop("Package 'ggplot2' is required.")
-
   if (!comparison %in% names(ranking_by_comp$by_comparison))
     stop("Comparison '", comparison, "' not found. Available: ",
          paste(names(ranking_by_comp$by_comparison), collapse = ", "))
@@ -1504,11 +1468,6 @@ bm_plot_ranking_bars_by_comp <- function(ranking_by_comp,
 bm_plot_confusion_stacked <- function(confusion_combined,
                                       comparison = NULL,
                                       title      = NULL) {
-  if (!requireNamespace("ggplot2", quietly = TRUE))
-    stop("Package 'ggplot2' is required.")
-  if (!requireNamespace("tidyr", quietly = TRUE))
-    stop("Package 'tidyr' is required.")
-
   .bm_validate_confusion(confusion_combined)
 
   # Filter to single comparison if requested
@@ -1607,7 +1566,8 @@ bm_plot_confusion_stacked <- function(confusion_combined,
 #' @param zoom Logical. If TRUE, zoom to FPR 0-10% and show pAUC in legend
 #' @param palette RColorBrewer palette name (default: "Set2")
 #'
-#' @return ggplot2 object or NULL if pROC not available
+#' @return ggplot2 object, or NULL (with a warning) if the comparison has no
+#'   data from which to draw a ROC curve
 #'
 #' @examples
 #' data(nadia_dia)
@@ -1624,21 +1584,13 @@ bm_plot_confusion_stacked <- function(confusion_combined,
 #'   cl$Assay <- nm
 #'   cl
 #' }))
-#' if (requireNamespace("pROC", quietly = TRUE)) {
-#'   bm_plot_roc(classified_all, comparison = "B-A")
-#' }
+#' bm_plot_roc(classified_all, comparison = "B-A")
 #' @export
 bm_plot_roc <- function(classified_combined,
                         comparison,
                         p_col   = "adj.P.Val",
                         zoom    = FALSE,
                         palette = "Set2") {
-
-  if (!requireNamespace("pROC", quietly = TRUE)) {
-    warning("Package 'pROC' not installed. Cannot generate ROC curves.\n",
-            "Install with: install.packages('pROC')")
-    return(NULL)
-  }
 
   # Filter to the requested comparison
   df <- classified_combined[classified_combined$Comparison == comparison, , drop = FALSE]
@@ -1739,8 +1691,7 @@ bm_plot_roc <- function(classified_combined,
 
   # Apply palette -- use hcl.colors to support any number of methods
   n_methods <- length(roc_list)
-  pal_colors <- if (requireNamespace("RColorBrewer", quietly = TRUE) &&
-                    n_methods <= RColorBrewer::brewer.pal.info[palette, "maxcolors"]) {
+  pal_colors <- if (n_methods <= RColorBrewer::brewer.pal.info[palette, "maxcolors"]) {
     RColorBrewer::brewer.pal(max(n_methods, 3), palette)[seq_len(n_methods)]
   } else {
     grDevices::hcl.colors(n_methods, palette = "Dynamic")

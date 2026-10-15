@@ -81,10 +81,6 @@
 .perform_limma <- function(data, condition_vector, comparisons, covariate = NULL,
                            block = NULL,
                            eBayes_trend = TRUE, eBayes_robust = TRUE) {
-  if (!requireNamespace("limma", quietly = TRUE)) {
-    stop("The 'limma' package is required")
-  }
-
   condition <- factor(condition_vector)
 
   # Create design matrix
@@ -512,12 +508,6 @@ de_analysis_proteomics <- function(
   default_eb <- de_method != "limpa"
   if (is.null(eBayes_trend))  eBayes_trend  <- default_eb
   if (is.null(eBayes_robust)) eBayes_robust <- default_eb
-
-  # Validate required packages
-  if (!requireNamespace("limma", quietly = TRUE)) {
-    stop("The 'limma' package is required. ",
-         "Install it with BiocManager::install('limma')")
-  }
 
   # Determine assay name
   if (is.null(assay_name)) {

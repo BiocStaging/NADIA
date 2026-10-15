@@ -65,20 +65,15 @@ configure_cluster_palette <- function(n_clusters, palette = NULL) {
   } else if (grepl("^brewer:", palette)) {
     # RColorBrewer palettes
     pal_name <- sub("^brewer:", "", palette)
-    if (requireNamespace("RColorBrewer", quietly = TRUE)) {
-      max_colors <- RColorBrewer::brewer.pal.info[pal_name, "maxcolors"]
-      if (is.na(max_colors)) {
-        warning("brewer palette not found, using the default one")
-        colors <- default_colors[seq_len(n_clusters)]
-      } else {
-        colors <- RColorBrewer::brewer.pal(min(n_clusters, max_colors), pal_name)
-        if (n_clusters > max_colors) {
-          colors <- colorRampPalette(colors)(n_clusters)
-        }
-      }
-    } else {
-      warning("Package 'RColorBrewer' not available, using the default palette")
+    max_colors <- RColorBrewer::brewer.pal.info[pal_name, "maxcolors"]
+    if (is.na(max_colors)) {
+      warning("brewer palette not found, using the default one")
       colors <- default_colors[seq_len(n_clusters)]
+    } else {
+      colors <- RColorBrewer::brewer.pal(min(n_clusters, max_colors), pal_name)
+      if (n_clusters > max_colors) {
+        colors <- colorRampPalette(colors)(n_clusters)
+      }
     }
 
   } else {
