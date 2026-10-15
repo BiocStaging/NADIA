@@ -4,6 +4,9 @@
 ^\.Rproj\.user$
 ^.*\.Rproj$
 ^\.Rhistory$
+# Default graphics device left in the working directory by a plot drawn outside
+# knitr. git ignores it; without this rule R CMD build packs it.
+^Rplots\.pdf$
 ^CLAUDE\.md$
 ^CODE_REVIEW_.*\.md$
 ^SUBMISSION\.md$
