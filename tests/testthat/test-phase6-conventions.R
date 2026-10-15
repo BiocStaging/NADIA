@@ -39,9 +39,11 @@ test_that("cat() survives only inside the print.* show methods", {
             e <- which(lines == "}" & seq_along(lines) > s)[1]
             if (!is.na(e)) in_print[s:e] <- TRUE
         }
-        # `.concat(` in the embedded JavaScript is not a cat() call.
+        # `.concat(` in the embedded JavaScript is not a cat() call, and nor
+        # is a comment or roxygen line that mentions one.
         hits <- grep("(^|[^a-zA-Z._])cat\\(", lines)
         hits <- hits[!in_print[hits]]
+        hits <- hits[!grepl("^\\s*#", lines[hits])]
         hits <- hits[!grepl("concat\\(", lines[hits])]
         if (length(hits))
             offenders[[basename(f)]] <- paste0(basename(f), ":", hits)
