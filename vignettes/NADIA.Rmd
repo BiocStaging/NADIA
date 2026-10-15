@@ -788,9 +788,13 @@ how each one relates to it.
   similar profiles, interactive Highcharts figures, interactive `reactable`
   tables that link the differential results with identification,
   quantification and sample data, with filters and Excel export, all of which
-  can be saved as standalone HTML files, and a single `.nadia` file that
-  stores the whole analysis (`vignette("visualization")`,
-  `vignette("results-and-export")`).
+  can be saved as standalone HTML files (`vignette("visualization")`).
+- **A complete, restorable record of the analysis.** `write_nadia()` stores the
+  imported data, every result, the parameters of the run and the provenance of
+  the input files in a single `.nadia` file, and `read_nadia()` restores an
+  exact copy of the project, identical to the original object. The file is a
+  DuckDB database, so it can also be opened by any DuckDB client outside R
+  (`vignette("results-and-export")`).
 
 NADIA works with protein-level quantities: it does not model peptides or
 precursors, as `MSstats`, `msqrob2` and `limpa` can. Except with `limpa`, its
