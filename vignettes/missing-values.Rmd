@@ -156,6 +156,10 @@ if (!requireNamespace("BiocManager", quietly = TRUE))
 BiocManager::install("NADIA")
 ```
 
+This vignette also uses `limpa`, which is optional;
+`BiocManager::install("NADIA", dependencies = TRUE)` installs it together
+with NADIA.
+
 ```{r library, message = FALSE}
 library(NADIA)
 data(nadia_dia)

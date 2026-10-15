@@ -217,6 +217,10 @@ if (!requireNamespace("BiocManager", quietly = TRUE))
 BiocManager::install("NADIA")
 ```
 
+This vignette also uses `highcharter`, which is optional;
+`BiocManager::install("NADIA", dependencies = TRUE)` installs it together
+with NADIA.
+
 ```{r library, message = FALSE}
 library(NADIA)
 data(nadia_dia)

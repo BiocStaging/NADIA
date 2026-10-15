@@ -328,17 +328,15 @@ compare what each visualisation adds to the interpretation.
 
 ## Installation
 
-NADIA can be installed with `BiocManager`. The heatmap and Pattern Profiler
-packages are optional dependencies and are installed separately when those
-visualisations are required.
-
-```{r installation, eval=FALSE}
+```{r install, eval = FALSE}
 if (!requireNamespace("BiocManager", quietly = TRUE))
-  install.packages("BiocManager")
-
-BiocManager::install(c("NADIA", "ComplexHeatmap", "Mfuzz", "Biobase"))
-install.packages(c("tidyHeatmap", "circlize", "e1071"))
+    install.packages("BiocManager")
+BiocManager::install("NADIA")
 ```
+
+This vignette also uses `ComplexHeatmap`, `tidyHeatmap`, `highcharter`, `Mfuzz` and `ggsci`, which are optional;
+`BiocManager::install("NADIA", dependencies = TRUE)` installs them together
+with NADIA.
 
 ## Processing the example dataset
 

@@ -203,13 +203,15 @@ the internal ranks described here; see `vignette("benchmarking")`.
 
 # Installation and packages
 
-While NADIA is under development, it can be installed from GitHub:
-
 ```{r install, eval = FALSE}
-if (!requireNamespace("remotes", quietly = TRUE))
-    install.packages("remotes")
-remotes::install_github("sciordia/NADIA", build_vignettes = TRUE)
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+BiocManager::install("NADIA")
 ```
+
+This vignette also uses `impute`, `imputeLCMD` and `vegan`, which are optional;
+`BiocManager::install("NADIA", dependencies = TRUE)` installs them together
+with NADIA.
 
 Only NADIA and `SummarizedExperiment` need to be attached for the code in this
 vignette. Method-specific packages are called internally when required.

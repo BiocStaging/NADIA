@@ -193,13 +193,17 @@ if (!requireNamespace("BiocManager", quietly = TRUE))
 BiocManager::install("NADIA")
 ```
 
+This vignette also uses `BERT` and `lme4`, which are optional;
+`BiocManager::install("NADIA", dependencies = TRUE)` installs them together
+with NADIA.
+
 ```{r library, message = FALSE}
 library(NADIA)
 data(nadia_dia)
 ```
 
-Batch correction needs `BERT` and the variance decomposition needs `lme4`; both
-are optional dependencies:
+Batch correction needs `BERT` and the variance decomposition needs `lme4`. The
+sections that use them run only when they are installed:
 
 ```{r deps}
 have_bert <- requireNamespace("BERT", quietly = TRUE)

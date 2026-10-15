@@ -225,6 +225,10 @@ if (!requireNamespace("BiocManager", quietly = TRUE))
 BiocManager::install("NADIA")
 ```
 
+This vignette also uses `ComplexHeatmap` and `tidyHeatmap`, which are optional;
+`BiocManager::install("NADIA", dependencies = TRUE)` installs them together
+with NADIA.
+
 After installation, the package is loaded into the R session:
 
 ```{r library, message = FALSE}

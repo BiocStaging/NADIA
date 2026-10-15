@@ -207,17 +207,15 @@ use.
 
 # Setup and example data
 
-Pattern Profiler is included in NADIA, while `Mfuzz` and its clustering
-dependencies are optional. The following commands install the required packages
-if they are not already available.
-
-```{r installation, eval=FALSE}
+```{r install, eval = FALSE}
 if (!requireNamespace("BiocManager", quietly = TRUE))
-  install.packages("BiocManager")
-
-BiocManager::install(c("NADIA", "Mfuzz", "Biobase"))
-install.packages("e1071")
+    install.packages("BiocManager")
+BiocManager::install("NADIA")
 ```
+
+This vignette also uses `Mfuzz`, `arrow` and `duckdb`, which are optional;
+`BiocManager::install("NADIA", dependencies = TRUE)` installs them together
+with NADIA.
 
 We use `nadia_dia`, the example DIA proteomics dataset distributed with NADIA.
 The data are first processed to obtain both the intensity assays and the

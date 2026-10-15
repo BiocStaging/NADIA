@@ -281,12 +281,15 @@ different export formats.
 Install NADIA through Bioconductor if it is not already available, and then load
 the package and example data.
 
-```{r installation, eval = FALSE}
-if (!requireNamespace("BiocManager", quietly = TRUE)) {
-  install.packages("BiocManager")
-}
+```{r install, eval = FALSE}
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
 BiocManager::install("NADIA")
 ```
+
+This vignette also uses `reactable`, `crosstalk`, `Mfuzz`, `arrow` and `duckdb`, which are optional;
+`BiocManager::install("NADIA", dependencies = TRUE)` installs them together
+with NADIA.
 
 ```{r load-package}
 library(NADIA)
