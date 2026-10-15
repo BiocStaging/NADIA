@@ -1835,12 +1835,6 @@ benchmarking_multiple <- function(opdea_combined            = NULL,
                                   plot_height    = 8,
                                   plot_dpi       = 150) {
 
-  # --- Required packages ---
-  for (pkg in c("ggplot2", "dplyr", "tidyr")) {
-    if (!requireNamespace(pkg, quietly = TRUE))
-      stop("Package '", pkg, "' is required for benchmarking_multiple().")
-  }
-
   # ==========================================================================
   # STEP 1: Input resolution
   # ==========================================================================

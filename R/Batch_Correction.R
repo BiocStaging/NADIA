@@ -602,12 +602,6 @@ pvca_analysis <- function(se,
                           plot_height         = 6,
                           plot_dpi            = 150) {
 
-  # --- Required packages ---
-  for (pkg in c("ggplot2", "SummarizedExperiment")) {
-    if (!requireNamespace(pkg, quietly = TRUE))
-      stop("Package '", pkg, "' is required for pvca_analysis().")
-  }
-
   factors <- c(technical_factors, biological_factors)
   if (length(factors) == 0)
     stop("At least one factor must be specified via technical_factors ",

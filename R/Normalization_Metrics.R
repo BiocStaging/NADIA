@@ -2193,12 +2193,6 @@ normalization_metrics <- function(se,
   pca_scales <- match.arg(pca_scales)
   mds_scales <- match.arg(mds_scales)
 
-  # --- Required packages check ---
-  for (pkg in c("ggplot2", "dplyr", "tidyr", "SummarizedExperiment", "S4Vectors")) {
-    if (!requireNamespace(pkg, quietly = TRUE))
-      stop("Package '", pkg, "' is required for normalization_metrics().")
-  }
-
   # --- Auto-normalization (if methods requested) ---
   if (!is.null(methods)) {
     if (verbose) message("Auto-normalizing from assay '", base_assay, "' ...")

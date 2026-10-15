@@ -157,4 +157,25 @@ test_that("no package in Imports is checked with requireNamespace()", {
         if (length(hits)) paste0(basename(f), ":", hits)
     }))
     expect_equal(as.character(offenders), character(0))
+
+    # The literal check above misses a loop such as
+    # `for (pkg in c("ggplot2", ...)) requireNamespace(pkg)`, so a package name
+    # held in a variable is only allowed inside the helpers that check Suggests.
+    allowed <- c(".check_suggests", ".db_require", ".mfuzz_deps_attach")
+    offenders <- unlist(lapply(files, function(f) {
+        exprs <- parse(f, keep.source = TRUE)
+        unlist(lapply(seq_along(exprs), function(k) {
+            e <- exprs[[k]]
+            is_fun <- is.call(e) && is.name(e[[1]]) &&
+                as.character(e[[1]]) %in% c("<-", "=") &&
+                is.call(e[[3]]) && identical(e[[3]][[1]], as.name("function"))
+            if (!is_fun || as.character(e[[2]]) %in% allowed) return(NULL)
+            src <- as.character(attr(exprs, "srcref")[[k]])
+            src <- src[!grepl("^\\s*#", src)]
+            hits <- grep("requireNamespace[(][^\"']|vapply[(][^)]*requireNamespace",
+                         src)
+            if (length(hits)) paste0(basename(f), ": ", as.character(e[[2]]))
+        }))
+    }))
+    expect_equal(as.character(offenders), character(0))
 })

@@ -1284,12 +1284,6 @@ imputation_metrics <- function(se,
                                plot_width    = 12,
                                plot_height   = 8,
                                plot_dpi      = 150) {
-  # --- Required packages check ---
-  for (pkg in c("ggplot2", "dplyr", "tidyr", "SummarizedExperiment", "S4Vectors")) {
-    if (!requireNamespace(pkg, quietly = TRUE))
-      stop("Package '", pkg, "' is required for imputation_metrics().")
-  }
-
   # --- Compute metrics ---
   if (verbose) message("=== COMPUTING IMPUTATION METRICS ===")
   metrics_df <- im_compute_metrics(
