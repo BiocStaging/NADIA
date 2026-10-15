@@ -23,136 +23,6 @@ knitr::opts_chunk$set(collapse = TRUE, comment = "#>", crop = NULL,
                       dev = "svg", fig.ext = "svg")
 ```
 
-<style>
-.bert-warning {
-  width: calc(100% - 4.5em);
-  box-sizing: border-box;
-  margin: 1.15em 0 1.5em;
-  padding: 0.9em 1.1em;
-  border: 1px solid #e4c78e;
-  border-left: 5px solid #c98718;
-  border-radius: 5px;
-  background: #fffaf0;
-  box-shadow: 0 1px 2px rgba(112, 78, 20, 0.08);
-}
-.bert-warning p {
-  margin: 0;
-  padding: 0 !important;
-  text-align: justify;
-}
-.bert-warning strong:first-child {
-  color: #7a5310;
-}
-.batch-argument-table {
-  width: calc(100% + 3em);
-  margin: 1em 0 1.35em -1.5em;
-}
-.batch-argument-table table {
-  width: 100% !important;
-  table-layout: fixed;
-}
-.batch-argument-table col:first-child {
-  width: 29% !important;
-}
-.batch-argument-table col:nth-child(2) {
-  width: 71% !important;
-}
-.batch-argument-table th:first-child,
-.batch-argument-table td:first-child {
-  width: 29%;
-  padding-right: 1.25em !important;
-}
-.batch-argument-table th:nth-child(2),
-.batch-argument-table td:nth-child(2) {
-  width: 71%;
-  padding-left: 1.25em !important;
-}
-.batch-argument-table th,
-.batch-argument-table td {
-  vertical-align: top;
-}
-.lightbox-figure {
-  width: calc(100% - 1em);
-  margin: 1.25em 0 1.5em;
-  text-align: center;
-}
-.lightbox-figure img {
-  width: 100%;
-  height: auto;
-  cursor: zoom-in;
-}
-.lightbox-figure.pca-covariates-figure {
-  width: 110%;
-  margin-left: -5%;
-}
-.lightbox-figure.tmt-benchmark-table {
-  width: 110%;
-  margin-left: -5%;
-}
-.tmt-pca-figure {
-  width: 110%;
-  margin-left: -5%;
-}
-.tmt-pca-figure img {
-  width: 100%;
-  height: auto;
-}
-@media (max-width: 767px) {
-  .lightbox-figure.pca-covariates-figure,
-  .lightbox-figure.tmt-benchmark-table,
-  .tmt-pca-figure {
-    width: 100%;
-    margin-left: 0;
-  }
-}
-#diagram-lightbox {
-  display: none;
-  position: fixed;
-  z-index: 9999;
-  inset: 0;
-  align-items: center;
-  justify-content: center;
-  padding: 2vh 2vw;
-  background: rgba(10, 18, 25, 0.9);
-}
-#diagram-lightbox.is-open {
-  display: flex;
-}
-#diagram-lightbox p {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0;
-}
-#diagram-lightbox img {
-  max-width: 96vw;
-  max-height: 94vh;
-  padding: 0.4em;
-  background: #ffffff;
-  box-shadow: 0 6px 30px rgba(0, 0, 0, 0.35);
-  cursor: default;
-  /* The enlarged image is a clone: it must not inherit the
-     positioning the in-flow figure uses to widen itself. */
-  position: static !important;
-  left: auto !important;
-  transform: none !important;
-}
-#diagram-lightbox button {
-  position: absolute;
-  top: 12px;
-  right: 18px;
-  border: 0;
-  background: transparent;
-  color: #ffffff;
-  font-size: 36px;
-  line-height: 1;
-  cursor: pointer;
-}
-body.diagram-lightbox-open {
-  overflow: hidden;
-}
-</style>
-
 # Introduction
 
 Samples prepared on different days, labelled in different batches or acquired in
@@ -401,56 +271,13 @@ subsequent limma model. Finally, `bio_replicate_column = "Subject"` uses
 from the same subject rather than treating all samples as independent.
 
 The diagram below places the three arguments in the complete workflow and shows
-typical variables that can be supplied to each one. Click the figure to enlarge
-it.
+typical variables that can be supplied to each one.
 
 ::: {.batch-arguments-figure .lightbox-figure}
 ```{r batch-arguments-diagram, echo = FALSE, out.width = "100%", fig.cap = "The three arguments act at different stages: batch_column modifies the quantitative matrix, whereas covariate_column and bio_replicate_column act during differential abundance analysis.", fig.alt = "Workflow diagram comparing batch_column, covariate_column and bio_replicate_column. Batch_column removes a technical effect from the normalised matrix before imputation. Covariate_column adds nuisance variables to the limma model without changing the matrix. Bio_replicate_column models correlation between paired, repeated or technical replicate samples."}
 knitr::include_graphics("figures/Batch_Correction_Arguments.svg")
 ```
 :::
-
-<div id="diagram-lightbox" role="dialog" aria-modal="true" aria-label="Enlarged diagram">
-<button type="button" aria-label="Close enlarged diagram">&times;</button>
-<img alt="Enlarged diagram" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" />
-</div>
-
-<script>
-(function () {
-  function initialiseDiagramLightbox() {
-    var figures = document.querySelectorAll('.lightbox-figure img');
-    var lightbox = document.getElementById('diagram-lightbox');
-    if (!figures.length || !lightbox) return;
-    var enlarged = lightbox.querySelector('img');
-    var closeButton = lightbox.querySelector('button');
-    function closeLightbox() {
-      lightbox.classList.remove('is-open');
-      document.body.classList.remove('diagram-lightbox-open');
-    }
-    figures.forEach(function (figure) {
-      figure.addEventListener('click', function () {
-        enlarged.src = figure.src;
-        enlarged.alt = figure.alt || 'Enlarged diagram';
-        lightbox.classList.add('is-open');
-        document.body.classList.add('diagram-lightbox-open');
-        closeButton.focus();
-      });
-    });
-    closeButton.addEventListener('click', closeLightbox);
-    lightbox.addEventListener('click', function (event) {
-      if (event.target === lightbox) closeLightbox();
-    });
-    document.addEventListener('keydown', function (event) {
-      if (event.key === 'Escape') closeLightbox();
-    });
-  }
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initialiseDiagramLightbox);
-  } else {
-    initialiseDiagramLightbox();
-  }
-})();
-</script>
 
 ```{r correct, eval = run_bc, message = FALSE, warning = FALSE, results = "hide"}
 res_bc <- process_proteomics(
@@ -501,7 +328,7 @@ protected covariate.
 The appropriate choice depends on both the biological question and the design.
 The following guide summarises when a protected covariate should be supplied,
 when `NULL` may be reasonable, and when the design should be reconsidered rather
-than forcing an unprotected correction. Click the figure to enlarge it.
+than forcing an unprotected correction.
 
 ::: {.batch-covariates-figure .lightbox-figure}
 ```{r batch-covariates-decision, echo = FALSE, out.width = "100%", fig.cap = "Choosing batch_covariates. A known biological variable should normally be protected when batch and biology can be estimated separately. NULL is not a remedy for confounding or insufficient replication.", fig.alt = "Decision guide for batch_covariates. Use a protected covariate for a known biological variable when the design is estimable. Reassess the design rather than falling back to NULL when batch and biology are confounded or replication is insufficient. NULL may be appropriate when no biological variable needs protection or when all batch-associated variation is deliberately removed."}
@@ -693,7 +520,7 @@ eliminate, the need to check design balance and verify the results.
 PVCA summarises the contributions numerically, whereas PCA shows how the samples
 are arranged. `pca_covariates_plot()` displays the same projection coloured by
 each selected covariate, making it easier to identify factors associated with
-sample separation. Click the figure to enlarge it:
+sample separation:
 
 ```{r pca-cov, eval = run_bc, message = FALSE, fig.show = "hide"}
 pca_grid <- pca_covariates_plot(
@@ -765,7 +592,7 @@ the second. The separate labelling reactions and acquisitions create a plausible
 source of technical variation.
 
 The diagram below combines the biological spike-in composition with the channel
-allocation across the two TMTpro mixes. Click the figure to enlarge it.
+allocation across the two TMTpro mixes.
 
 ::: {.tmt-design-figure .lightbox-figure}
 ```{r tmt-design-diagram, echo = FALSE, out.width = "100%", fig.cap = "Three-proteome TMT design. Conditions A, B and D retain an 80% human background while the proportions of *E. coli* and yeast vary. Replicates 1–4 of each condition are assigned to mix 1 and replicates 5–8 to mix 2.", fig.alt = "Experimental design of the TMT spike-in study. Condition A contains 80 percent human, 5 percent E. coli and 15 percent yeast; condition B contains 80, 10 and 10 percent; condition D contains 80 percent human, 20 percent E. coli and no yeast. Mix 1 contains replicates 1 to 4 of A, B and D plus internal standards 1 and 2. Mix 2 contains replicates 5 to 8 plus internal standards 3 and 4."}
@@ -1058,7 +885,7 @@ proteins recovered with the expected direction of change, whereas false
 positives (FP) are human proteins called differential despite the constant human
 background. The Matthews correlation coefficient (MCC) summarises the complete
 confusion matrix in a single score, with values closer to 1 indicating better
-overall classification. Click the table to enlarge it.
+overall classification.
 
 ::: {.tmt-benchmark-table .lightbox-figure}
 ```{r tmt-threshold-table, echo = FALSE, out.width = "100%", fig.cap = "Benchmarking of the D-A comparison across log2 fold-change thresholds. Sensitivity, specificity and MCC are coloured on a common scale from 0 (red) to 1 (green); the 0.3 threshold is highlighted because it provides the best overall balance in this experiment.", fig.alt = "Table comparing true positives, false positives, sensitivity, specificity and Matthews correlation coefficient for uncorrected, corrected and condition-protected analyses at log2 fold-change thresholds of zero, 0.2, 0.3, 0.5 and 1. True positives are expected E. coli and yeast changes and false positives are unchanged human proteins called differential. Sensitivity, specificity and MCC cells are coloured from red at zero to green at one. The cells for threshold 0.3 are bold and outlined."}

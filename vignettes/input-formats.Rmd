@@ -17,219 +17,6 @@ vignette: >
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>", crop = NULL)
 ```
 
-<style type="text/css">
-#fig\:input-format-overview + img,
-img[src$="Input_Formats_Workflow.svg"] {
-  width: 100% !important;
-  max-width: none !important;
-}
-@media screen and (min-width: 992px) {
-  #fig\:input-format-overview + img,
-  img[src$="Input_Formats_Workflow.svg"] {
-    width: 116% !important;
-    margin-left: -12%;
-  }
-}
-#fig\:input-format-overview + img.input-format-clickable,
-img[src$="Input_Formats_Workflow.svg"].input-format-clickable {
-  cursor: zoom-in;
-}
-.figure-zoom-hint {
-  margin: -0.15em 0 1.2em;
-  text-align: center;
-  color: #5f6f7e;
-  font-size: 0.9em;
-  font-style: italic;
-}
-#input-format-lightbox {
-  display: none;
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  padding: 24px;
-  align-items: center;
-  justify-content: center;
-  background: rgba(15, 25, 35, 0.88);
-  cursor: zoom-out;
-}
-#input-format-lightbox.is-open {
-  display: flex;
-}
-#input-format-lightbox img {
-  width: auto !important;
-  height: auto !important;
-  max-width: 96vw !important;
-  max-height: 92vh !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  background: white;
-  box-shadow: 0 6px 30px rgba(0, 0, 0, 0.35);
-  cursor: default;
-  /* The enlarged image is a clone: it must not inherit the
-     positioning the in-flow figure uses to widen itself. */
-  position: static !important;
-  left: auto !important;
-  transform: none !important;
-}
-#input-format-lightbox button {
-  position: absolute;
-  top: 12px;
-  right: 18px;
-  border: 0;
-  background: transparent;
-  color: white;
-  font-size: 36px;
-  line-height: 1;
-  cursor: pointer;
-}
-body.input-format-lightbox-open {
-  overflow: hidden;
-}
-#fig\:spectronaut-input-structure + img,
-img[src$="Spectronaut_Input_Structure.svg"],
-#fig\:diann-input-structure + img,
-img[src$="DIANN_Input_Structure.svg"],
-#fig\:tmt-input-structure + img,
-img[src$="TMT_Input_Structure.svg"],
-#fig\:lfq-input-structure + img,
-img[src$="LFQ_Input_Structure.svg"] {
-  width: 100% !important;
-  max-width: none !important;
-}
-@media screen and (min-width: 992px) {
-  #fig\:spectronaut-input-structure + img,
-  img[src$="Spectronaut_Input_Structure.svg"],
-  #fig\:diann-input-structure + img,
-  img[src$="DIANN_Input_Structure.svg"],
-  #fig\:tmt-input-structure + img,
-  img[src$="TMT_Input_Structure.svg"],
-  #fig\:lfq-input-structure + img,
-  img[src$="LFQ_Input_Structure.svg"] {
-    width: 110% !important;
-    margin-left: -5%;
-  }
-}
-img.preprocessor-structure-clickable {
-  cursor: zoom-in;
-}
-#preprocessor-structure-lightbox {
-  display: none;
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  padding: 24px;
-  align-items: center;
-  justify-content: center;
-  background: rgba(15, 25, 35, 0.88);
-  cursor: zoom-out;
-}
-#preprocessor-structure-lightbox.is-open {
-  display: flex;
-}
-#preprocessor-structure-lightbox img {
-  width: auto !important;
-  height: auto !important;
-  max-width: 96vw !important;
-  max-height: 92vh !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  background: white;
-  box-shadow: 0 6px 30px rgba(0, 0, 0, 0.35);
-  cursor: default;
-  /* The enlarged image is a clone: it must not inherit the
-     positioning the in-flow figure uses to widen itself. */
-  position: static !important;
-  left: auto !important;
-  transform: none !important;
-}
-#preprocessor-structure-lightbox button {
-  position: absolute;
-  top: 12px;
-  right: 18px;
-  border: 0;
-  background: transparent;
-  color: white;
-  font-size: 36px;
-  line-height: 1;
-  cursor: pointer;
-}
-body.preprocessor-structure-lightbox-open {
-  overflow: hidden;
-}
-.spectronaut-schema-note {
-  margin: 1.15em 0 1.5em;
-  width: calc(100% - 1.5em);
-  box-sizing: border-box;
-  padding: 1em 1.15em 0.9em;
-  border: 1px solid #a9c3d6;
-  border-left: 5px solid #3577a8;
-  border-radius: 5px;
-  background: #f4f8fb;
-  box-shadow: 0 1px 2px rgba(27, 62, 88, 0.08);
-}
-.spectronaut-schema-note-title {
-  margin-bottom: 0.55em;
-  color: #1d5278;
-  font-size: 1.08em;
-  font-weight: 700;
-}
-.spectronaut-schema-note p {
-  margin: 0 0 0.75em;
-  padding-left: 0 !important;
-  padding-right: 0 !important;
-  text-align: left;
-}
-.spectronaut-schema-command {
-  margin: 0.75em 0;
-  padding: 0.65em 0.8em;
-  overflow-x: auto;
-  border: 1px solid #d0dee8;
-  border-radius: 4px;
-  background: #ffffff;
-  white-space: nowrap;
-}
-.spectronaut-schema-note p:last-child {
-  margin-bottom: 0;
-}
-.default-call {
-  margin: 1em 0 1.25em;
-  border: 1px solid #c8d3dc;
-  border-radius: 5px;
-  background: #f7f9fb;
-}
-.default-call summary {
-  padding: 0.75em 1em;
-  color: #1d3557;
-  font-weight: 600;
-  cursor: pointer;
-}
-.default-call[open] summary {
-  border-bottom: 1px solid #c8d3dc;
-}
-.default-call pre {
-  margin: 1em;
-}
-.input-format-summary table {
-  width: 100%;
-  table-layout: fixed;
-}
-.input-format-summary col:nth-child(1) { width: 20% !important; }
-.input-format-summary col:nth-child(2) { width: 18% !important; }
-.input-format-summary col:nth-child(3) { width: 62% !important; }
-.input-format-summary th,
-.input-format-summary td {
-  vertical-align: top !important;
-}
-@media screen and (max-width: 767px) {
-  .input-format-summary {
-    overflow-x: auto;
-  }
-  .input-format-summary table {
-    min-width: 760px;
-  }
-}
-</style>
-
 # Introduction
 
 NADIA accepts four input formats through `preprocess_spectronaut()`,
@@ -266,155 +53,11 @@ report into three coordinated tables:
   the protein annotations and quantitative evidence required by the downstream
   workflow.
 
+::: {.lightbox-figure}
 ```{r input-format-overview, echo = FALSE, fig.align = "center", out.width = "100%", fig.cap = "Four report formats converge on the common `proteomics_data` structure used by the NADIA workflow.", fig.alt = "Workflow diagram showing Spectronaut, DIA-NN, TMT and LFQ reports entering their corresponding preprocessing functions. Spectronaut obtains the design from R.Condition and R.Replicate in the report. DIA-NN, TMT and LFQ obtain it from Abundance column suffixes or an annotation file supplied through annot_path. All four produce a proteomics_data object containing metadata, protein_id and protein_quant, which is passed to process_proteomics."}
 knitr::include_graphics("figures/Input_Formats_Workflow.svg")
 ```
-
-<div class="figure-zoom-hint">Click the figure to enlarge it; press Esc or click outside the image to close it.</div>
-
-<script>
-(function () {
-  var anchor = document.getElementById("fig:input-format-overview");
-  var source = anchor ? anchor.nextElementSibling : null;
-  // BiocStyle numbers figures and leaves that anchor before the image;
-  // pkgdown emits no such anchor, so fall back to the file itself.
-  if (!source || source.tagName !== "IMG") {
-    source = document.querySelector('img[src$="Input_Formats_Workflow.svg"]');
-  }
-  if (!source) return;
-
-  source.classList.add("input-format-clickable");
-  source.setAttribute("tabindex", "0");
-  source.setAttribute("title", "Click to enlarge the input-format workflow");
-
-  var lightbox = document.createElement("div");
-  lightbox.id = "input-format-lightbox";
-  lightbox.setAttribute("role", "dialog");
-  lightbox.setAttribute("aria-modal", "true");
-  lightbox.setAttribute("aria-label", "Enlarged NADIA input-format workflow");
-  lightbox.setAttribute("aria-hidden", "true");
-
-  var enlarged = source.cloneNode(true);
-  enlarged.classList.remove("input-format-clickable");
-  enlarged.removeAttribute("tabindex");
-  enlarged.removeAttribute("title");
-  enlarged.removeAttribute("width");
-
-  var closeButton = document.createElement("button");
-  closeButton.type = "button";
-  closeButton.setAttribute("aria-label", "Close enlarged figure");
-  closeButton.textContent = "\u00d7";
-
-  lightbox.appendChild(enlarged);
-  lightbox.appendChild(closeButton);
-  document.body.appendChild(lightbox);
-
-  function openLightbox() {
-    lightbox.classList.add("is-open");
-    lightbox.setAttribute("aria-hidden", "false");
-    document.body.classList.add("input-format-lightbox-open");
-    closeButton.focus();
-  }
-  function closeLightbox() {
-    lightbox.classList.remove("is-open");
-    lightbox.setAttribute("aria-hidden", "true");
-    document.body.classList.remove("input-format-lightbox-open");
-    source.focus();
-  }
-
-  source.addEventListener("click", openLightbox);
-  source.addEventListener("keydown", function (event) {
-    if (event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      openLightbox();
-    }
-  });
-  enlarged.addEventListener("click", function (event) {
-    event.stopPropagation();
-  });
-  closeButton.addEventListener("click", closeLightbox);
-  lightbox.addEventListener("click", closeLightbox);
-  document.addEventListener("keydown", function (event) {
-    if (event.key === "Escape" && lightbox.classList.contains("is-open")) {
-      closeLightbox();
-    }
-  });
-}());
-</script>
-
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-  // BiocStyle numbers figures and leaves an anchor before each image; pkgdown
-  // emits no such anchor, so each entry also carries the file to fall back on.
-  var figures = [
-    ["fig:spectronaut-input-structure", "Spectronaut_Input_Structure.svg"],
-    ["fig:diann-input-structure",       "DIANN_Input_Structure.svg"],
-    ["fig:tmt-input-structure",         "TMT_Input_Structure.svg"],
-    ["fig:lfq-input-structure",         "LFQ_Input_Structure.svg"]
-  ];
-  var sources = figures.map(function (entry) {
-    var anchor = document.getElementById(entry[0]);
-    var image = anchor ? anchor.nextElementSibling : null;
-    if (image && image.tagName === "IMG") return image;
-    return document.querySelector('img[src$="' + entry[1] + '"]');
-  }).filter(Boolean);
-  if (!sources.length) return;
-
-  var lightbox = document.createElement("div");
-  lightbox.id = "preprocessor-structure-lightbox";
-  lightbox.setAttribute("role", "dialog");
-  lightbox.setAttribute("aria-modal", "true");
-  lightbox.setAttribute("aria-label", "Enlarged input-file structure diagram");
-  lightbox.setAttribute("aria-hidden", "true");
-
-  var enlarged = document.createElement("img");
-  var closeButton = document.createElement("button");
-  closeButton.type = "button";
-  closeButton.setAttribute("aria-label", "Close enlarged figure");
-  closeButton.textContent = "\u00d7";
-  lightbox.appendChild(enlarged);
-  lightbox.appendChild(closeButton);
-  document.body.appendChild(lightbox);
-
-  var activeSource = null;
-  function openLightbox(source) {
-    activeSource = source;
-    enlarged.src = source.src;
-    enlarged.alt = source.alt;
-    lightbox.classList.add("is-open");
-    lightbox.setAttribute("aria-hidden", "false");
-    document.body.classList.add("preprocessor-structure-lightbox-open");
-    closeButton.focus();
-  }
-  function closeLightbox() {
-    lightbox.classList.remove("is-open");
-    lightbox.setAttribute("aria-hidden", "true");
-    document.body.classList.remove("preprocessor-structure-lightbox-open");
-    if (activeSource) activeSource.focus();
-  }
-
-  sources.forEach(function (source) {
-    source.classList.add("preprocessor-structure-clickable");
-    source.setAttribute("tabindex", "0");
-    source.setAttribute("title", "Click to enlarge this input-file structure");
-    source.addEventListener("click", function () { openLightbox(source); });
-    source.addEventListener("keydown", function (event) {
-      if (event.key === "Enter" || event.key === " ") {
-        event.preventDefault();
-        openLightbox(source);
-      }
-    });
-  });
-  enlarged.addEventListener("click", function (event) { event.stopPropagation(); });
-  closeButton.addEventListener("click", closeLightbox);
-  lightbox.addEventListener("click", closeLightbox);
-  document.addEventListener("keydown", function (event) {
-    if (event.key === "Escape" && lightbox.classList.contains("is-open")) {
-      closeLightbox();
-    }
-  });
-});
-</script>
+:::
 
 In the Spectronaut example used below, `metadata` contains 12 samples, whereas
 `protein_id` and `protein_quant` each contain 2,000 protein groups.
@@ -462,11 +105,11 @@ design does not need to be supplied separately. `preprocess_spectronaut()`
 extracts it directly from the `R.Condition` and `R.Replicate` columns in the
 report.
 
+::: {.lightbox-figure}
 ```{r spectronaut-input-structure, echo = FALSE, fig.align = "center", out.width = "100%", fig.cap = "Structure of the long-format Spectronaut report accepted by `preprocess_spectronaut()`.", fig.alt = "Diagram of a long-format Spectronaut report. Each row contains one LC-MS run and one protein group. R.FileName, R.Condition and R.Replicate identify the sample and experimental design; PG.ProteinGroups identifies the protein; PG.Quantity contains its abundance; and further columns contain run-level annotations."}
 knitr::include_graphics("figures/Spectronaut_Input_Structure.svg")
 ```
-
-<div class="figure-zoom-hint">Click the figure to enlarge it; press Esc or click outside the image to close it.</div>
+:::
 
 The arguments accepted by `preprocess_spectronaut()` are summarised below. The
 input report and the order of the conditions are required; the remaining
@@ -541,11 +184,11 @@ one row per protein group and one intensity column per run. This differs from
 the long Spectronaut report and resembles the wide Proteome Discoverer exports
 described below, which is why it requires a dedicated importer.
 
+::: {.lightbox-figure}
 ```{r diann-input-structure, echo = FALSE, fig.align = "center", out.width = "100%", fig.cap = "Structure of the wide DIA-NN protein-group matrix accepted by `preprocess_diann()`.", fig.alt = "Diagram of a wide DIA-NN protein-group matrix. Each row represents one protein group. Protein annotations occupy the first columns, followed by one Abundance column for each run. The experimental design is obtained from Condition_Replicate suffixes or from annot_path."}
 knitr::include_graphics("figures/DIANN_Input_Structure.svg")
 ```
-
-<div class="figure-zoom-hint">Click the figure to enlarge it; press Esc or click outside the image to close it.</div>
+:::
 
 The arguments accepted by `preprocess_diann()` are shown below. The report and
 the condition order are required. `annot_path` is optional and is used when the
@@ -674,11 +317,11 @@ experimental design must be declared either through column names that follow
 the `Abundance: <Condition>_<Replicate>` convention or through an annotation
 file supplied with `annot_path`.
 
+::: {.lightbox-figure}
 ```{r tmt-input-structure, echo = FALSE, fig.align = "center", out.width = "100%", fig.cap = "Structure of the wide Proteome Discoverer TMT report accepted by `preprocess_tmt()`.", fig.alt = "Diagram of a wide TMT report from Proteome Discoverer. Each row represents one protein group. Global protein and identification annotations occupy the first columns, followed by one Abundance column for each TMT channel. The design is obtained from Condition_Replicate suffixes or from annot_path."}
 knitr::include_graphics("figures/TMT_Input_Structure.svg")
 ```
-
-<div class="figure-zoom-hint">Click the figure to enlarge it; press Esc or click outside the image to close it.</div>
+:::
 
 The arguments accepted by `preprocess_tmt()` are listed below. The report and
 the conditions to retain are required. `annot_path` provides an alternative
@@ -795,11 +438,11 @@ the experimental design can be obtained from column names that follow the
 `Abundance: <Condition>_<Replicate>` convention or supplied separately through
 `annot_path`.
 
+::: {.lightbox-figure}
 ```{r lfq-input-structure, echo = FALSE, fig.align = "center", out.width = "100%", fig.cap = "Structure of the wide Proteome Discoverer LFQ report accepted by `preprocess_lfq()`.", fig.alt = "Diagram of a wide label-free report from Proteome Discoverer. Each row represents one protein group. Protein annotations are followed by repeated families of Score Mascot, PSM count, peptide count and Abundance columns for every sample. NADIA matches these families by sample name."}
 knitr::include_graphics("figures/LFQ_Input_Structure.svg")
 ```
-
-<div class="figure-zoom-hint">Click the figure to enlarge it; press Esc or click outside the image to close it.</div>
+:::
 
 Unlike DIA-NN and TMT, but like Spectronaut, this report contains
 **per-sample identification metrics**. For every sample, Proteome Discoverer

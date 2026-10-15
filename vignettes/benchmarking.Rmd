@@ -17,181 +17,6 @@ vignette: >
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>", crop = NULL)
 ```
 
-<style type="text/css">
-.species-preview,
-.function-parameters,
-.code-details {
-  margin: 1em 0 1.4em;
-  border: 1px solid #c8d3dc;
-  border-radius: 5px;
-  background: #f7f9fb;
-}
-.species-preview summary,
-.function-parameters summary,
-.code-details summary {
-  padding: 0.75em 1em;
-  color: #1d3557;
-  font-weight: 600;
-  cursor: pointer;
-}
-.species-preview[open] summary,
-.function-parameters[open] summary,
-.code-details[open] summary {
-  border-bottom: 1px solid #c8d3dc;
-}
-.species-preview pre,
-.species-preview table,
-.function-parameters pre,
-.function-parameters table,
-.code-details pre,
-.code-details table {
-  margin: 1em;
-}
-.function-parameters .parameter-content {
-  padding: 0.2em 1em 0.7em;
-}
-.function-parameters .parameter-content ul {
-  margin-bottom: 0.7em;
-}
-.benchmark-warning {
-  width: calc(100% - 4.5em);
-  box-sizing: border-box;
-  margin: 1.15em 0 1.5em;
-  padding: 0.9em 1.1em;
-  border: 1px solid #e4c78e;
-  border-left: 5px solid #c98718;
-  border-radius: 5px;
-  background: #fffaf0;
-  box-shadow: 0 1px 2px rgba(112, 78, 20, 0.08);
-}
-.benchmark-warning p {
-  margin: 0;
-  padding: 0 !important;
-  text-align: justify;
-}
-.benchmark-warning strong:first-child {
-  color: #7a5310;
-}
-
-/* Give the experimental-design figure the same responsive scale as NADIA.Rmd. */
-@media screen and (min-width: 992px) {
-  #fig\:benchmark-three-proteome-design + img,
-  img[src$="Three_Proteome_Experimental_Design.svg"],
-  #fig\:benchmarking-outputs + img,
-  img[src$="Benchmarking_Proteomics_Outputs.svg"] {
-    width: 112% !important;
-    max-width: none !important;
-    margin-left: -6%;
-  }
-}
-@media screen and (min-width: 1400px) {
-  #fig\:benchmark-three-proteome-design + img,
-  img[src$="Three_Proteome_Experimental_Design.svg"],
-  #fig\:benchmarking-outputs + img,
-  img[src$="Benchmarking_Proteomics_Outputs.svg"] {
-    width: 124% !important;
-    margin-left: -12%;
-  }
-}
-@media screen and (min-width: 768px) {
-  .signif-direction-plot img,
-  .confusion-plot-110 img,
-  .metrics-heatmap-110 img,
-  .roc-plot-110 img,
-  .volcano-plot-110 img,
-  .multiple-confusion-plot-110 img,
-  .multiple-ranking-plot-110 img {
-    width: 110% !important;
-    height: auto !important;
-    max-width: none !important;
-    margin-left: -5%;
-  }
-}
-.confusion-plot-110 {
-  margin: 1.8em 0;
-}
-.metrics-heatmap-110 {
-  margin-top: 1.8em;
-  margin-bottom: 1.8em;
-}
-.roc-plot-110 {
-  margin: 1.8em 0;
-}
-.volcano-plot-110 {
-  margin: 1.8em 0;
-}
-.multiple-confusion-plot-110 img,
-.multiple-ranking-plot-110 img {
-  display: block;
-  margin-top: 1.8em !important;
-  margin-bottom: 1.8em !important;
-}
-#fig\:benchmark-three-proteome-design + img.benchmark-three-proteome-clickable,
-img[src$="Three_Proteome_Experimental_Design.svg"].benchmark-three-proteome-clickable,
-#fig\:benchmarking-outputs + img.benchmarking-outputs-clickable,
-img[src$="Benchmarking_Proteomics_Outputs.svg"].benchmarking-outputs-clickable,
-#fig\:bench-volcano-svg + img.benchmark-volcano-clickable,
-img[src$="benchmark-volcano-b-a-im.svg"].benchmark-volcano-clickable {
-  cursor: zoom-in;
-}
-.figure-zoom-hint {
-  margin: -0.15em 0 1.2em;
-  text-align: center;
-  color: #5f6f7e;
-  font-size: 0.9em;
-  font-style: italic;
-}
-#benchmark-three-proteome-lightbox,
-#benchmarking-outputs-lightbox,
-#benchmark-volcano-lightbox {
-  display: none;
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  padding: 24px;
-  align-items: center;
-  justify-content: center;
-  background: rgba(15, 25, 35, 0.88);
-  cursor: zoom-out;
-}
-#benchmark-three-proteome-lightbox.is-open,
-#benchmarking-outputs-lightbox.is-open,
-#benchmark-volcano-lightbox.is-open {
-  display: flex;
-}
-#benchmark-three-proteome-lightbox img,
-#benchmarking-outputs-lightbox img,
-#benchmark-volcano-lightbox img {
-  width: auto !important;
-  height: auto !important;
-  max-width: 96vw !important;
-  max-height: 92vh !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  background: white;
-  box-shadow: 0 6px 30px rgba(0, 0, 0, 0.35);
-  cursor: default;
-  /* The enlarged image is a clone: it must not inherit the
-     positioning the in-flow figure uses to widen itself. */
-  position: static !important;
-  left: auto !important;
-  transform: none !important;
-}
-#benchmark-three-proteome-lightbox button,
-#benchmarking-outputs-lightbox button,
-#benchmark-volcano-lightbox button {
-  position: absolute;
-  top: 12px;
-  right: 18px;
-  border: 0;
-  background: transparent;
-  color: white;
-  font-size: 36px;
-  line-height: 1;
-  cursor: pointer;
-}
-</style>
-
 # Introduction
 
 In most proteomics experiments, the proteins that truly change between
@@ -241,79 +66,11 @@ therefore termed **pseudo-biological replicates**: they are not independent
 biological specimens, but they capture more experimental variation than repeated
 injections of the same prepared sample.
 
+::: {.lightbox-figure}
 ```{r benchmark-three-proteome-design, echo = FALSE, fig.align = "center", out.width = "100%", fig.cap = "Complete three-proteome spike-in design underlying the benchmark dataset. HeLa remains constant at 80%, while E. coli increases and yeast decreases across conditions. The dataset distributed with NADIA retains conditions A, B, and D and 2,000 protein groups.", fig.alt = "Three-proteome spike-in experimental design with conditions A to D and four replicates per condition. HeLa proteins remain at 80 percent, Escherichia coli proteins increase from 5 to 20 percent, and yeast proteins decrease from 15 percent to zero. NADIA retains conditions A, B, and D for the example benchmark."}
 knitr::include_graphics("figures/Three_Proteome_Experimental_Design.svg")
 ```
-
-<div class="figure-zoom-hint">Click the figure to enlarge it; press Esc or click outside the image to close it.</div>
-
-<script>
-(function () {
-  var anchor = document.getElementById("fig:benchmark-three-proteome-design");
-  var source = anchor ? anchor.nextElementSibling : null;
-  // BiocStyle numbers figures and leaves that anchor before the image;
-  // pkgdown emits no such anchor, so fall back to the file itself.
-  if (!source || source.tagName !== "IMG") {
-    source = document.querySelector('img[src$="Three_Proteome_Experimental_Design.svg"]');
-  }
-  if (!source) return;
-
-  source.classList.add("benchmark-three-proteome-clickable");
-  source.setAttribute("tabindex", "0");
-  source.setAttribute("title", "Click to enlarge the experimental design");
-
-  var lightbox = document.createElement("div");
-  lightbox.id = "benchmark-three-proteome-lightbox";
-  lightbox.setAttribute("role", "dialog");
-  lightbox.setAttribute("aria-modal", "true");
-  lightbox.setAttribute("aria-label", "Enlarged three-proteome experimental design");
-  lightbox.setAttribute("aria-hidden", "true");
-
-  var enlarged = source.cloneNode(true);
-  enlarged.classList.remove("benchmark-three-proteome-clickable");
-  enlarged.removeAttribute("tabindex");
-  enlarged.removeAttribute("title");
-  enlarged.removeAttribute("width");
-
-  var closeButton = document.createElement("button");
-  closeButton.type = "button";
-  closeButton.setAttribute("aria-label", "Close enlarged figure");
-  closeButton.textContent = "\u00d7";
-
-  lightbox.appendChild(enlarged);
-  lightbox.appendChild(closeButton);
-  document.body.appendChild(lightbox);
-
-  function openLightbox() {
-    lightbox.classList.add("is-open");
-    lightbox.setAttribute("aria-hidden", "false");
-    closeButton.focus();
-  }
-  function closeLightbox() {
-    lightbox.classList.remove("is-open");
-    lightbox.setAttribute("aria-hidden", "true");
-    source.focus();
-  }
-
-  source.addEventListener("click", openLightbox);
-  source.addEventListener("keydown", function (event) {
-    if (event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      openLightbox();
-    }
-  });
-  enlarged.addEventListener("click", function (event) {
-    event.stopPropagation();
-  });
-  closeButton.addEventListener("click", closeLightbox);
-  lightbox.addEventListener("click", closeLightbox);
-  document.addEventListener("keydown", function (event) {
-    if (event.key === "Escape" && lightbox.classList.contains("is-open")) {
-      closeLightbox();
-    }
-  });
-}());
-</script>
+:::
 
 The reduced dataset distributed with NADIA retains conditions A, B, and D: 12
 samples and 2,000 protein groups. These groups were selected at random with a
@@ -466,79 +223,11 @@ summarised below.
 The diagram groups the outputs by the question they answer. The following
 sections inspect these results individually.
 
+::: {.lightbox-figure}
 ```{r benchmarking-outputs, echo = FALSE, fig.align = "center", out.width = "100%", fig.cap = "Inputs, classification steps, and output families produced by benchmarking_proteomics().", fig.alt = "Workflow diagram showing differential-expression results, expected changes, species annotation, and analysis settings entering benchmarking_proteomics. The function returns TP, FP, TN and FN counts; sensitivity, specificity, precision, F1 and MCC; ROC, AUC and partial AUC; fold-change recovery statistics; classified proteins; and diagnostic plots."}
 knitr::include_graphics("figures/Benchmarking_Proteomics_Outputs.svg")
 ```
-
-<div class="figure-zoom-hint">Click the figure to enlarge it; press Esc or click outside the image to close it.</div>
-
-<script>
-(function () {
-  var anchor = document.getElementById("fig:benchmarking-outputs");
-  var source = anchor ? anchor.nextElementSibling : null;
-  // BiocStyle numbers figures and leaves that anchor before the image;
-  // pkgdown emits no such anchor, so fall back to the file itself.
-  if (!source || source.tagName !== "IMG") {
-    source = document.querySelector('img[src$="Benchmarking_Proteomics_Outputs.svg"]');
-  }
-  if (!source) return;
-
-  source.classList.add("benchmarking-outputs-clickable");
-  source.setAttribute("tabindex", "0");
-  source.setAttribute("title", "Click to enlarge the benchmarking outputs");
-
-  var lightbox = document.createElement("div");
-  lightbox.id = "benchmarking-outputs-lightbox";
-  lightbox.setAttribute("role", "dialog");
-  lightbox.setAttribute("aria-modal", "true");
-  lightbox.setAttribute("aria-label", "Enlarged benchmarking outputs diagram");
-  lightbox.setAttribute("aria-hidden", "true");
-
-  var enlarged = source.cloneNode(true);
-  enlarged.classList.remove("benchmarking-outputs-clickable");
-  enlarged.removeAttribute("tabindex");
-  enlarged.removeAttribute("title");
-  enlarged.removeAttribute("width");
-
-  var closeButton = document.createElement("button");
-  closeButton.type = "button";
-  closeButton.setAttribute("aria-label", "Close enlarged figure");
-  closeButton.textContent = "\u00d7";
-
-  lightbox.appendChild(enlarged);
-  lightbox.appendChild(closeButton);
-  document.body.appendChild(lightbox);
-
-  function openLightbox() {
-    lightbox.classList.add("is-open");
-    lightbox.setAttribute("aria-hidden", "false");
-    closeButton.focus();
-  }
-  function closeLightbox() {
-    lightbox.classList.remove("is-open");
-    lightbox.setAttribute("aria-hidden", "true");
-    source.focus();
-  }
-
-  source.addEventListener("click", openLightbox);
-  source.addEventListener("keydown", function (event) {
-    if (event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      openLightbox();
-    }
-  });
-  enlarged.addEventListener("click", function (event) {
-    event.stopPropagation();
-  });
-  closeButton.addEventListener("click", closeLightbox);
-  lightbox.addEventListener("click", closeLightbox);
-  document.addEventListener("keydown", function (event) {
-    if (event.key === "Escape" && lightbox.classList.contains("is-open")) {
-      closeLightbox();
-    }
-  });
-}());
-</script>
+:::
 
 In this example, `res$DEPs_results` is the differential-expression table,
 `expected` is the truth table defined above, and `species_df` supplies the
@@ -1099,81 +788,13 @@ The exported SVG version is shown below.
 
 <div class="volcano-plot-110">
 
+::: {.lightbox-figure}
 ```{r bench-volcano-svg, echo = FALSE, out.width = "110%", fig.alt = "Benchmark volcano plot for B-A, with proteins coloured by species and expected fold changes marked", fig.cap = "Benchmark volcano plot for the B-A comparison."}
 knitr::include_graphics("figures/benchmark-volcano-b-a-im.svg")
 ```
+:::
 
 </div>
-
-<div class="figure-zoom-hint">Click the figure to enlarge it; press Esc or click outside the image to close it.</div>
-
-<script>
-(function () {
-  var anchor = document.getElementById("fig:bench-volcano-svg");
-  var source = anchor ? anchor.nextElementSibling : null;
-  // BiocStyle numbers figures and leaves that anchor before the image;
-  // pkgdown emits no such anchor, so fall back to the file itself.
-  if (!source || source.tagName !== "IMG") {
-    source = document.querySelector('img[src$="benchmark-volcano-b-a-im.svg"]');
-  }
-  if (!source) return;
-
-  source.classList.add("benchmark-volcano-clickable");
-  source.setAttribute("tabindex", "0");
-  source.setAttribute("title", "Click to enlarge the benchmark volcano plot");
-
-  var lightbox = document.createElement("div");
-  lightbox.id = "benchmark-volcano-lightbox";
-  lightbox.setAttribute("role", "dialog");
-  lightbox.setAttribute("aria-modal", "true");
-  lightbox.setAttribute("aria-label", "Enlarged benchmark volcano plot for B-A");
-  lightbox.setAttribute("aria-hidden", "true");
-
-  var enlarged = source.cloneNode(true);
-  enlarged.classList.remove("benchmark-volcano-clickable");
-  enlarged.removeAttribute("tabindex");
-  enlarged.removeAttribute("title");
-  enlarged.removeAttribute("width");
-
-  var closeButton = document.createElement("button");
-  closeButton.type = "button";
-  closeButton.setAttribute("aria-label", "Close enlarged figure");
-  closeButton.textContent = "\u00d7";
-
-  lightbox.appendChild(enlarged);
-  lightbox.appendChild(closeButton);
-  document.body.appendChild(lightbox);
-
-  function openLightbox() {
-    lightbox.classList.add("is-open");
-    lightbox.setAttribute("aria-hidden", "false");
-    closeButton.focus();
-  }
-  function closeLightbox() {
-    lightbox.classList.remove("is-open");
-    lightbox.setAttribute("aria-hidden", "true");
-    source.focus();
-  }
-
-  source.addEventListener("click", openLightbox);
-  source.addEventListener("keydown", function (event) {
-    if (event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      openLightbox();
-    }
-  });
-  enlarged.addEventListener("click", function (event) {
-    event.stopPropagation();
-  });
-  closeButton.addEventListener("click", closeLightbox);
-  lightbox.addEventListener("click", closeLightbox);
-  document.addEventListener("keydown", function (event) {
-    if (event.key === "Escape" && lightbox.classList.contains("is-open")) {
-      closeLightbox();
-    }
-  });
-}());
-</script>
 
 Colouring proteins by species turns the volcano plot into a diagnostic view of
 the spike-in experiment. Human background proteins are shown in grey and

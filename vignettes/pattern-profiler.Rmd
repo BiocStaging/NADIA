@@ -30,161 +30,6 @@ have_pattern_profiler <- all(vapply(
 ))
 ```
 
-```{css, echo=FALSE}
-.function-parameters {
-  margin: 1.4em 0 1.8em;
-  border: 1px solid #c8d4df;
-  border-radius: 5px;
-  background: #f8fafc;
-}
-
-.function-parameters summary {
-  padding: 0.8em 1em;
-  cursor: pointer;
-  font-weight: 600;
-  color: #234f73;
-}
-
-.function-parameters .parameter-content {
-  padding: 0 1.2em 0.8em;
-}
-
-.function-parameters dt {
-  margin-top: 0.7em;
-}
-
-.function-parameters dd {
-  margin-left: 1.4em;
-}
-
-.code-details {
-  margin: 1em 0 1.4em;
-  border: 1px solid #c8d3dc;
-  border-radius: 5px;
-  background: #f7f9fb;
-}
-
-.code-details summary {
-  padding: 0.75em 1em;
-  color: #1d3557;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.code-details[open] summary {
-  border-bottom: 1px solid #c8d3dc;
-}
-
-.code-details pre,
-.code-details table {
-  margin: 1em;
-}
-
-.pattern-note {
-  margin: 1.4em 0;
-  padding: 0.95em 1.15em;
-  border-left: 5px solid #e6a700;
-  background: #fff8e5;
-}
-
-.figure-space {
-  margin-top: 1.8em;
-  margin-bottom: 1.8em;
-}
-
-.horizontal-scroll > table:has(> caption) {
-  margin-left: 65px !important;
-  margin-right: 0 !important;
-}
-
-.cluster-summary-table .horizontal-scroll > table {
-  margin-left: 0 !important;
-  margin-right: 0 !important;
-}
-
-.profile-lightbox-target,
-.centroid-lightbox-target {
-  margin-top: 1.8em;
-}
-
-.profile-lightbox-target img.profile-lightbox-clickable,
-.centroid-lightbox-target img.centroid-lightbox-clickable {
-  cursor: zoom-in;
-}
-
-@media screen and (min-width: 768px) {
-  .profile-lightbox-target img,
-  .centroid-lightbox-target img {
-    display: block;
-    width: 110% !important;
-    height: auto !important;
-    max-width: none !important;
-    margin-left: -5%;
-  }
-}
-
-.figure-zoom-hint {
-  margin: -0.15em 0 1.2em;
-  text-align: center;
-  color: #5f6f7e;
-  font-size: 0.9em;
-  font-style: italic;
-}
-
-#profile-lightbox,
-#centroid-lightbox {
-  display: none;
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  padding: 24px;
-  align-items: center;
-  justify-content: center;
-  background: rgba(15, 25, 35, 0.88);
-  cursor: zoom-out;
-}
-
-#profile-lightbox.is-open,
-#centroid-lightbox.is-open {
-  display: flex;
-}
-
-#profile-lightbox img,
-#centroid-lightbox img {
-  width: auto !important;
-  height: auto !important;
-  max-width: 96vw !important;
-  max-height: 92vh !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  background: white;
-  box-shadow: 0 6px 30px rgba(0, 0, 0, 0.35);
-  cursor: default;
-  /* The enlarged image is a clone: it must not inherit the
-     positioning the in-flow figure uses to widen itself. */
-  position: static !important;
-  left: auto !important;
-  transform: none !important;
-}
-
-#profile-lightbox button,
-#centroid-lightbox button {
-  position: absolute;
-  top: 12px;
-  right: 18px;
-  border: 0;
-  background: transparent;
-  color: white;
-  font-size: 36px;
-  line-height: 1;
-  cursor: pointer;
-}
-
-body.pattern-lightbox-open {
-  overflow: hidden;
-}
-```
-
 # Introduction
 
 Differential-expression analysis identifies proteins that change between pairs
@@ -685,7 +530,7 @@ The first cluster is shown below. Its interactive Highcharts object was exported
 as SVG so that the figure remains compact and can be enlarged without losing
 quality.
 
-<div class="profile-lightbox-target">
+<div class="profile-lightbox-target lightbox-figure">
 
 ```{r cluster-profile-svg, echo=FALSE, out.width='100%', fig.alt='Standardised expression profiles for the 378 proteins assigned to Pattern Profiler cluster 1 with membership of at least 0.70.'}
 knitr::include_graphics(
@@ -694,8 +539,6 @@ knitr::include_graphics(
 ```
 
 </div>
-
-<div class="figure-zoom-hint">Click the figure to enlarge it; press Esc or click outside the image to close it.</div>
 
 The thin red lines represent the 378 individual protein profiles retained at
 this threshold, and the thick dark-red line is their median centroid. Most
@@ -729,7 +572,7 @@ centroid_plot
 The exported SVG retains the appearance of the interactive Highcharts object
 without embedding its JavaScript libraries in the vignette.
 
-<div class="centroid-lightbox-target">
+<div class="centroid-lightbox-target lightbox-figure">
 
 ```{r centroid-plot-svg, echo=FALSE, out.width='100%', fig.alt='Median standardised profiles for Pattern Profiler clusters 1 and 2 after applying a membership threshold of 0.70.'}
 knitr::include_graphics(
@@ -739,97 +582,11 @@ knitr::include_graphics(
 
 </div>
 
-<div class="figure-zoom-hint">Click the figure to enlarge it; press Esc or click outside the image to close it.</div>
-
 The centroids summarise 378 proteins in cluster 1 and 370 in cluster 2. Cluster
 1 remains high in `A` and `B` before decreasing in `D`, whereas cluster 2 rises
 from `A` to `D`. These opposing trajectories are expressed as within-protein
 z-scores and therefore describe relative patterns rather than absolute
 abundances.
-
-<script>
-(function () {
-  function configureLightbox(targetSelector, lightboxId, clickableClass,
-                             dialogLabel, sourceTitle) {
-    var source = document.querySelector(targetSelector);
-    if (!source) return;
-
-    source.classList.add(clickableClass);
-    source.setAttribute("tabindex", "0");
-    source.setAttribute("title", sourceTitle);
-
-    var lightbox = document.createElement("div");
-    lightbox.id = lightboxId;
-    lightbox.setAttribute("role", "dialog");
-    lightbox.setAttribute("aria-modal", "true");
-    lightbox.setAttribute("aria-label", dialogLabel);
-    lightbox.setAttribute("aria-hidden", "true");
-
-    var enlarged = source.cloneNode(true);
-    enlarged.classList.remove(clickableClass);
-    enlarged.removeAttribute("tabindex");
-    enlarged.removeAttribute("title");
-    enlarged.removeAttribute("width");
-
-    var closeButton = document.createElement("button");
-    closeButton.type = "button";
-    closeButton.setAttribute("aria-label", "Close enlarged figure");
-    closeButton.textContent = "\u00d7";
-
-    lightbox.appendChild(enlarged);
-    lightbox.appendChild(closeButton);
-    document.body.appendChild(lightbox);
-
-    function openLightbox() {
-      lightbox.classList.add("is-open");
-      lightbox.setAttribute("aria-hidden", "false");
-      document.body.classList.add("pattern-lightbox-open");
-      closeButton.focus();
-    }
-
-    function closeLightbox() {
-      lightbox.classList.remove("is-open");
-      lightbox.setAttribute("aria-hidden", "true");
-      document.body.classList.remove("pattern-lightbox-open");
-      source.focus();
-    }
-
-    source.addEventListener("click", openLightbox);
-    source.addEventListener("keydown", function (event) {
-      if (event.key === "Enter" || event.key === " ") {
-        event.preventDefault();
-        openLightbox();
-      }
-    });
-    enlarged.addEventListener("click", function (event) {
-      event.stopPropagation();
-    });
-    closeButton.addEventListener("click", closeLightbox);
-    lightbox.addEventListener("click", closeLightbox);
-    document.addEventListener("keydown", function (event) {
-      if (event.key === "Escape" && lightbox.classList.contains("is-open")) {
-        closeLightbox();
-      }
-    });
-  }
-
-  configureLightbox(
-    ".profile-lightbox-target img",
-    "profile-lightbox",
-    "profile-lightbox-clickable",
-    "Enlarged Pattern Profiler cluster 1 profile plot",
-    "Click to enlarge the cluster 1 profile plot"
-  );
-
-  configureLightbox(
-    ".centroid-lightbox-target img",
-    "centroid-lightbox",
-    "centroid-lightbox-clickable",
-    "Enlarged Pattern Profiler cluster-centroid plot",
-    "Click to enlarge the cluster-centroid plot"
-  );
-}());
-</script>
 
 <div class="figure-space"></div>
 
