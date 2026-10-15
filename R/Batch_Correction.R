@@ -363,9 +363,7 @@ pvca_compute <- function(se,
                          verbose             = TRUE) {
 
   # --- Check required packages ---
-  if (!requireNamespace("lme4", quietly = TRUE))
-    stop("Package 'lme4' is required for pvca_compute(). ",
-         "Install with: install.packages('lme4')")
+  .check_suggests("lme4", "pvca_compute()")
 
   # --- Resolve assay name ---
   all_assays <- SummarizedExperiment::assayNames(se)
@@ -727,15 +725,6 @@ pvca_analysis <- function(se,
 # SECTION 3: BATCH CORRECTION -- INTERNAL HELPERS
 # =============================================================================
 
-#' Check that BERT is available
-#' @keywords internal
-.bc_check_bert <- function() {
-  if (!requireNamespace("BERT", quietly = TRUE))
-    stop("Package 'BERT' is required for batch correction.\n",
-         "  Install with: BiocManager::install('BERT')")
-  invisible(TRUE)
-}
-
 #' Validate batch column in colData
 #' @param se SummarizedExperiment
 #' @param batch_column Character. Column name in colData
@@ -1012,7 +1001,7 @@ batch_correct_proteomics <- function(
 ) {
 
   # --- Check dependencies ---
-  .bc_check_bert()
+  .check_suggests("BERT", "batch_correct_proteomics()")
 
   # --- Validate algorithm ---
   algorithm <- match.arg(algorithm, c("ComBat", "limma", "ref"))

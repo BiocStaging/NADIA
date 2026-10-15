@@ -311,15 +311,7 @@
 #' @keywords internal
 #' @noRd
 .mfuzz_deps_attach <- function() {
-  required <- c("Mfuzz", "Biobase", "e1071")
-  missing_pkgs <- required[!vapply(required, requireNamespace, logical(1),
-                                   quietly = TRUE)]
-  if (length(missing_pkgs) > 0) {
-    stop("The Pattern Profiler requires ", paste(missing_pkgs, collapse = ", "),
-         ". Install them with BiocManager::install(c(",
-         paste(sprintf('"%s"', missing_pkgs), collapse = ", "), ")).",
-         call. = FALSE)
-  }
+  .check_suggests(c("Mfuzz", "Biobase", "e1071"), "The Pattern Profiler")
   # Only Biobase and e1071 need to be attached; Mfuzz is used via Mfuzz::
   attachable <- c("Biobase", "e1071")
   already_on <- paste0("package:", attachable) %in% search()

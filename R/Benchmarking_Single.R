@@ -15,7 +15,7 @@
 #                      expected_logFC
 #
 # Dependencies: dplyr, tidyr, ggplot2, pROC
-# Optional: highcharter (volcano plots), scales, arrow (parquet)
+# Optional: highcharter (volcano plots), scales
 #
 # Author: Sergio Ciordia
 # License: GPL-3
@@ -2268,25 +2268,13 @@ benchmark_volcano_hc_list <- function(
 # EXPORT
 # =============================================================================
 
-#' Export benchmark data to TSV or Parquet
+#' Export benchmark data to TSV
 #'
 #' @param data Data frame to export
 #' @param filepath Full file path (with extension)
-#' @param format "tsv" or "parquet"
 #' @keywords internal
-.export_benchmark_data <- function(data, filepath, format = "tsv") {
-  if (format == "tsv") {
-    .write_tsv(data, filepath)
-  } else if (format == "parquet") {
-    if (!requireNamespace("arrow", quietly = TRUE)) {
-      warning("Package 'arrow' is not installed. Exporting as TSV instead.")
-      filepath <- sub("\\.parquet$", ".tsv", filepath)
-      .write_tsv(data, filepath)
-    } else {
-      arrow::write_parquet(data, filepath)
-    }
-  }
-
+.export_benchmark_data <- function(data, filepath) {
+  .write_tsv(data, filepath)
   invisible(filepath)
 }
 
@@ -2607,43 +2595,43 @@ benchmarking_proteomics <- function(
     # TSV exports
     .export_benchmark_data(
       metrics_table,
-      file.path(output_dir, "benchmark_metrics.tsv"), "tsv"
+      file.path(output_dir, "benchmark_metrics.tsv")
     )
     if (verbose) message("  - benchmark_metrics.tsv")
 
     .export_benchmark_data(
       confusion_by_species_df,
-      file.path(output_dir, "benchmark_confusion_by_species.tsv"), "tsv"
+      file.path(output_dir, "benchmark_confusion_by_species.tsv")
     )
     if (verbose) message("  - benchmark_confusion_by_species.tsv")
 
     .export_benchmark_data(
       confusion_overall_df,
-      file.path(output_dir, "benchmark_confusion_overall.tsv"), "tsv"
+      file.path(output_dir, "benchmark_confusion_overall.tsv")
     )
     if (verbose) message("  - benchmark_confusion_overall.tsv")
 
     .export_benchmark_data(
       dispersion_df,
-      file.path(output_dir, "benchmark_dispersion.tsv"), "tsv"
+      file.path(output_dir, "benchmark_dispersion.tsv")
     )
     if (verbose) message("  - benchmark_dispersion.tsv")
 
     .export_benchmark_data(
       signif_summary_df,
-      file.path(output_dir, "benchmark_significant_summary.tsv"), "tsv"
+      file.path(output_dir, "benchmark_significant_summary.tsv")
     )
     if (verbose) message("  - benchmark_significant_summary.tsv")
 
     .export_benchmark_data(
       opdea_metrics,
-      file.path(output_dir, "benchmark_opdea_metrics.tsv"), "tsv"
+      file.path(output_dir, "benchmark_opdea_metrics.tsv")
     )
     if (verbose) message("  - benchmark_opdea_metrics.tsv")
 
     .export_benchmark_data(
       classified_df,
-      file.path(output_dir, "benchmark_classified.tsv"), "tsv"
+      file.path(output_dir, "benchmark_classified.tsv")
     )
     if (verbose) message("  - benchmark_classified.tsv")
 
@@ -2657,7 +2645,7 @@ benchmarking_proteomics <- function(
     )
     .export_benchmark_data(
       summary_df,
-      file.path(output_dir, "benchmark_summary.tsv"), "tsv"
+      file.path(output_dir, "benchmark_summary.tsv")
     )
     if (verbose) message("  - benchmark_summary.tsv")
 

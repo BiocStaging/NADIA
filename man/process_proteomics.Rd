@@ -138,7 +138,9 @@ technical replicates or paired designs via random effect blocking. Default: NULL
 
 \item{export_imputed}{Export imputed matrix (default: TRUE)}
 
-\item{export_format}{Export format: "tsv", "parquet", or "both" (default: "tsv")}
+\item{export_format}{Export format: "tsv", "parquet", or "both" (default: "tsv").
+Parquet needs the suggested package arrow, which is checked before the
+analysis starts.}
 
 \item{export_volcano}{Export VolcanoPlot_Input (default: TRUE)}
 

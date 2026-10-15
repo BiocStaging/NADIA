@@ -176,10 +176,7 @@
 #'   `chunk` (default 1000), `verbose` (default FALSE)
 #' @keywords internal
 .imp_limpa <- function(x, args = list()) {
-  if (!requireNamespace("limpa", quietly = TRUE)) {
-    stop("imp_method='limpa' requires the 'limpa' package.\n",
-         "  BiocManager::install('limpa')")
-  }
+  .check_suggests("limpa", "imp_method = 'limpa'")
 
   # limpa 1.4.0 turned dpc() into a dispatcher over the two published models --
   # "cn" (complete normal, formerly dpcCN) and "on" (observed normal, formerly
@@ -223,10 +220,7 @@
 #' @param args list with optional `nPcs` (default ncol-1), `maxSteps` (default 100)
 #' @keywords internal
 .imp_bpca <- function(x, args = list()) {
-  if (!requireNamespace("pcaMethods", quietly = TRUE)) {
-    stop("imp_method='bpca' requires the 'pcaMethods' package.\n",
-         "  BiocManager::install('pcaMethods')")
-  }
+  .check_suggests("pcaMethods", "imp_method = 'bpca'")
   # NAguideR/MsCoreUtils: nPcs = ncol(x) - 1 (max PCs possible)
   nPcs     <- args$nPcs     %||% (ncol(x) - 1)
   maxSteps <- args$maxSteps %||% 100
@@ -240,10 +234,7 @@
 #'   `colmax` (default 0.99).
 #' @keywords internal
 .imp_knn <- function(x, args = list()) {
-  if (!requireNamespace("impute", quietly = TRUE)) {
-    stop("imp_method='knn' requires the 'impute' package.\n",
-         "  BiocManager::install('impute')")
-  }
+  .check_suggests("impute", "imp_method = 'knn'")
   k <- args$k %||% 10
   k <- min(k, nrow(x) - 1)
   # The impute.knn defaults for rowmax/colmax are 0.5/0.8: rows/columns that
@@ -268,10 +259,7 @@
 #'   seeds the RNG itself.
 #' @keywords internal
 .imp_mice <- function(x, args = list()) {
-  if (!requireNamespace("mice", quietly = TRUE)) {
-    stop("imp_method='mice' requires the 'mice' package.\n",
-         "  install.packages('mice')")
-  }
+  .check_suggests("mice", "imp_method = 'mice'")
   m      <- args$m      %||% 5
   maxit  <- args$maxit  %||% 5
   method <- args$method %||% "norm"
@@ -296,10 +284,7 @@
 #'   method in NADIA.
 #' @keywords internal
 .imp_missForest <- function(x, args = list()) {
-  if (!requireNamespace("missForest", quietly = TRUE)) {
-    stop("imp_method='missForest' requires the 'missForest' package.\n",
-         "  install.packages('missForest')")
-  }
+  .check_suggests("missForest", "imp_method = 'missForest'")
   maxiter <- args$maxiter %||% 10
   ntree   <- args$ntree   %||% 100
   mtry    <- args$mtry    %||% floor(nrow(x)^(1/3))
@@ -332,10 +317,7 @@
 #' @param args list with optional `tune.sigma` (default 1)
 #' @keywords internal
 .imp_QRILC <- function(x, args = list()) {
-  if (!requireNamespace("imputeLCMD", quietly = TRUE)) {
-    stop("imp_method='QRILC' requires the 'imputeLCMD' package.\n",
-         "  install.packages('imputeLCMD')")
-  }
+  .check_suggests("imputeLCMD", "imp_method = 'QRILC'")
   tune.sigma <- args$tune.sigma %||% 1
   res <- imputeLCMD::impute.QRILC(x, tune.sigma = tune.sigma)
   res[[1]]
@@ -355,10 +337,7 @@
 #'   fresh session is reproducible.
 #' @keywords internal
 .imp_MLE <- function(x, args = list()) {
-  if (!requireNamespace("norm", quietly = TRUE)) {
-    stop("imp_method='MLE' requires the 'norm' package.\n",
-         "  install.packages('norm')")
-  }
+  .check_suggests("norm", "imp_method = 'MLE'")
   # NAguideR: no transpose (features x samples)
   xxm <- as.matrix(x)
   s <- norm::prelim.norm(xxm)
@@ -374,10 +353,7 @@
 #' @param args list with optional `q` (default 0.01), `tune.sigma` (default 1)
 #' @keywords internal
 .imp_MinProb <- function(x, args = list()) {
-  if (!requireNamespace("imputeLCMD", quietly = TRUE)) {
-    stop("imp_method='MinProb' requires the 'imputeLCMD' package.\n",
-         "  install.packages('imputeLCMD')")
-  }
+  .check_suggests("imputeLCMD", "imp_method = 'MinProb'")
   q          <- args$q          %||% 0.01
   tune.sigma <- args$tune.sigma %||% 1
   # impute.MinProb() prints its estimated sigma with a bare print(). It is not

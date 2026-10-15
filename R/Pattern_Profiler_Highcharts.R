@@ -53,7 +53,7 @@ configure_cluster_palette <- function(n_clusters, palette = NULL) {
 
   } else if (grepl("^ggsci::", palette)) {
     # ggsci palettes via paletteer
-    .check_suggests("paletteer", sprintf("The palette '%s'", palette))
+    .check_suggests(c("paletteer", "ggsci"), sprintf("The palette '%s'", palette))
     pal_name <- sub("^ggsci::", "", palette)
     colors <- tryCatch({
       as.character(paletteer::paletteer_d(paste0("ggsci::", pal_name), n_clusters))
@@ -123,6 +123,7 @@ configure_cluster_palette <- function(n_clusters, palette = NULL) {
 #'
 #' @export
 read_pattern_profiler_data <- function(file_path, min_membership = NULL) {
+  .check_suggests("arrow", "read_pattern_profiler_data()")
 
   if (!file.exists(file_path)) {
     stop("File not found: ", file_path)

@@ -251,13 +251,9 @@
   }
 
   if (format %in% c("parquet", "both")) {
-    if (!requireNamespace("arrow", quietly = TRUE)) {
-      warning("Package 'arrow' is not installed. Cannot export to Parquet. ",
-              "Install it with: install.packages('arrow')")
-    } else {
-      parquet_file <- paste0(filepath_base, ".parquet")
-      arrow::write_parquet(data, parquet_file)
-    }
+    # arrow has been checked on entry to process_proteomics()
+    parquet_file <- paste0(filepath_base, ".parquet")
+    arrow::write_parquet(data, parquet_file)
   }
 
   invisible(NULL)
@@ -424,7 +420,9 @@
 #'   technical replicates or paired designs via random effect blocking. Default: NULL
 #' @param export_normalized Export normalized matrix (default: TRUE)
 #' @param export_imputed Export imputed matrix (default: TRUE)
-#' @param export_format Export format: "tsv", "parquet", or "both" (default: "tsv")
+#' @param export_format Export format: "tsv", "parquet", or "both" (default: "tsv").
+#'   Parquet needs the suggested package arrow, which is checked before the
+#'   analysis starts.
 #' @param export_volcano Export VolcanoPlot_Input (default: TRUE)
 #' @param export_boxplot Export BoxPlot_Input (default: TRUE)
 #' @param export_pca Export PCA_Input (default: TRUE)
@@ -520,6 +518,13 @@ process_proteomics <- function(
     stop("The 'preprocessing' argument must be a 'proteomics_data' object, as ",
          "returned by preprocess_spectronaut(), preprocess_diann(), ",
          "preprocess_tmt() or preprocess_lfq().")
+  }
+
+  # Parquet needs arrow, a suggested package. Checked now rather than at export
+  # time, so that a missing package does not throw away a finished analysis.
+  export_format <- match.arg(export_format, c("tsv", "parquet", "both"))
+  if (!is.null(export_dir) && export_format != "tsv") {
+    .check_suggests("arrow", sprintf('export_format = "%s"', export_format))
   }
 
   # Without export_dir nothing is written to disk. The function must not create

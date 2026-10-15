@@ -63,7 +63,8 @@ does not hang on a single partition. Default \code{3}.}
 
 \item{output_file}{Path of the output parquet file. \code{NULL} by default, which
 writes nothing to disk; the long-format data is returned regardless in the
-\code{long_output} element of the result.}
+\code{long_output} element of the result. Writing it needs the suggested
+package arrow, which is checked before the clustering starts.}
 
 \item{verbose}{Show progress messages}
 }

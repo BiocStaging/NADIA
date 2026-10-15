@@ -41,7 +41,8 @@ wrap_heatmap_with_title <- function(hm, title, title_size = 14, title_face = "bo
 #'
 #' @examples
 #' if (requireNamespace("ComplexHeatmap", quietly = TRUE) &&
-#'     requireNamespace("tidyHeatmap", quietly = TRUE)) {
+#'     requireNamespace("tidyHeatmap", quietly = TRUE) &&
+#'     requireNamespace("circlize", quietly = TRUE)) {
 #'   data(nadia_dia)
 #'   res <- process_proteomics(nadia_dia, verbose = FALSE)
 #'   hm <- proteomics_heatmap(res$PCA_Input, mode = "any")
@@ -56,6 +57,7 @@ wrap_heatmap_with_title <- function(hm, title, title_size = 14, title_face = "bo
 #'
 #' @export
 print.proteomics_heatmap <- function(x, ...) {
+  .check_suggests(c("ComplexHeatmap", "tidyHeatmap"), "Drawing a heatmap")
   hm <- x$heatmap
 
   old_ht_message <- ComplexHeatmap::ht_opt("message")
@@ -572,7 +574,8 @@ prepare_heatmap_data <- function(data,
 #'
 #' @examples
 #' if (requireNamespace("ComplexHeatmap", quietly = TRUE) &&
-#'     requireNamespace("tidyHeatmap", quietly = TRUE)) {
+#'     requireNamespace("tidyHeatmap", quietly = TRUE) &&
+#'     requireNamespace("circlize", quietly = TRUE)) {
 #'   data(nadia_dia)
 #'   res <- process_proteomics(nadia_dia, verbose = FALSE)
 #'
@@ -637,6 +640,8 @@ proteomics_heatmap <- function(data,
                                plot_width = 10,
                                plot_height = 8,
                                export_dpi = 300) {
+  .check_suggests(c("ComplexHeatmap", "tidyHeatmap", "circlize"),
+                  "proteomics_heatmap()")
 
   mode <- match.arg(mode)
   scale_data <- match.arg(scale_data)
@@ -933,22 +938,15 @@ proteomics_heatmap <- function(data,
   )
 
   # Build a colorRamp2 function for the values
-  if (requireNamespace("circlize", quietly = TRUE)) {
-    # Determine the value range
-    val_range <- range(hm_data$Intensity, na.rm = TRUE)
-
-    if (scale_data != "none") {
-      # For scaled data, use a symmetric range
-      abs_max <- max(abs(val_range), na.rm = TRUE)
-      val_breaks <- seq(-abs_max, abs_max, length.out = length(value_colors))
-    } else {
-      val_breaks <- seq(val_range[1], val_range[2], length.out = length(value_colors))
-    }
-
-    palette_func <- circlize::colorRamp2(val_breaks, value_colors)
+  val_range <- range(hm_data$Intensity, na.rm = TRUE)
+  if (scale_data != "none") {
+    # For scaled data, use a symmetric range
+    abs_max <- max(abs(val_range), na.rm = TRUE)
+    val_breaks <- seq(-abs_max, abs_max, length.out = length(value_colors))
   } else {
-    palette_func <- value_colors
+    val_breaks <- seq(val_range[1], val_range[2], length.out = length(value_colors))
   }
+  palette_func <- circlize::colorRamp2(val_breaks, value_colors)
 
   # Palette for the Condition annotation
   condition_levels <- unique(hm_data$Condition)
@@ -1312,7 +1310,8 @@ proteomics_heatmap <- function(data,
 #'
 #' @examples
 #' if (requireNamespace("ComplexHeatmap", quietly = TRUE) &&
-#'     requireNamespace("tidyHeatmap", quietly = TRUE)) {
+#'     requireNamespace("tidyHeatmap", quietly = TRUE) &&
+#'     requireNamespace("circlize", quietly = TRUE)) {
 #'   data(nadia_dia)
 #'   res <- process_proteomics(nadia_dia, verbose = FALSE)
 #'
@@ -1374,6 +1373,8 @@ proteomics_heatmap_list <- function(data,
                                     plot_width = 10,
                                     plot_height = 8,
                                     export_dpi = 300) {
+  .check_suggests(c("ComplexHeatmap", "tidyHeatmap", "circlize"),
+                  "proteomics_heatmap_list()")
 
   scale_data <- match.arg(scale_data)
 

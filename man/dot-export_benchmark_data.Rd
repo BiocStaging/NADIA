@@ -2,18 +2,16 @@
 % Please edit documentation in R/Benchmarking_Single.R
 \name{.export_benchmark_data}
 \alias{.export_benchmark_data}
-\title{Export benchmark data to TSV or Parquet}
+\title{Export benchmark data to TSV}
 \usage{
-.export_benchmark_data(data, filepath, format = "tsv")
+.export_benchmark_data(data, filepath)
 }
 \arguments{
 \item{data}{Data frame to export}
 
 \item{filepath}{Full file path (with extension)}
-
-\item{format}{"tsv" or "parquet"}
 }
 \description{
-Export benchmark data to TSV or Parquet
+Export benchmark data to TSV
 }
 \keyword{internal}

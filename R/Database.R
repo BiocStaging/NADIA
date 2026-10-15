@@ -76,14 +76,7 @@
 #' @keywords internal
 #' @noRd
 .db_require <- function() {
-  missing <- c("duckdb", "DBI")[
-    !vapply(c("duckdb", "DBI"), requireNamespace, logical(1), quietly = TRUE)]
-  if (length(missing) > 0) {
-    stop("The .nadia format needs ", paste(missing, collapse = " and "),
-         ". Install with: install.packages(c(\"duckdb\", \"DBI\"))",
-         call. = FALSE)
-  }
-  invisible(TRUE)
+  .check_suggests(c("duckdb", "DBI"), "The .nadia format")
 }
 
 #' Open a connection to a .nadia file

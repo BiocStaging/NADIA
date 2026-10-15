@@ -191,6 +191,8 @@ test_that("pattern_profiler_analysis rejects an assay that does not exist", {
 })
 
 test_that("the heatmap requires a comparison in the targeted mode", {
+    skip_if_not_installed("ComplexHeatmap")
+    skip_if_not_installed("tidyHeatmap")
     data(nadia_dia, package = "NADIA")
     res <- process_proteomics(nadia_dia, verbose = FALSE)
 

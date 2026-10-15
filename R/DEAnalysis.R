@@ -150,10 +150,7 @@
 .perform_limpa_de <- function(elist, condition_vector, comparisons, covariate = NULL,
                                block = NULL,
                                eBayes_trend = FALSE, eBayes_robust = FALSE) {
-  if (!requireNamespace("limpa", quietly = TRUE)) {
-    stop("de_method='limpa' requires the 'limpa' package.\n",
-         "  BiocManager::install('limpa')")
-  }
+  .check_suggests("limpa", "de_method = 'limpa'")
 
   if (!is.null(block)) {
     warning("limpa (dpcDE) does not support blocking via duplicateCorrelation. ",

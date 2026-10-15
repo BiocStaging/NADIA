@@ -783,7 +783,8 @@ build_long_output <- function(cl, eset_std, conditions, min_membership) {
 #'   does not hang on a single partition. Default `3`.
 #' @param output_file Path of the output parquet file. `NULL` by default, which
 #'   writes nothing to disk; the long-format data is returned regardless in the
-#'   `long_output` element of the result.
+#'   `long_output` element of the result. Writing it needs the suggested
+#'   package arrow, which is checked before the clustering starts.
 #' @param verbose Show progress messages
 #'
 #' @return List (invisible) with the clustering results: `optimal_c`, `m`,
@@ -840,6 +841,9 @@ pattern_profiler_analysis <- function(se_proc,
   filter_mode <- match.arg(filter_mode)
   aggregate <- match.arg(aggregate)
   selection_method <- match.arg(selection_method)
+
+  # Writing output_file needs arrow. Checked before the clustering, not after.
+  if (!is.null(output_file)) .check_suggests("arrow", "Writing output_file")
 
   # Mfuzz calls exprs() and cmeans() unqualified, so it needs Biobase and e1071
   # attached on the search path. They are attached here and released on exit, so

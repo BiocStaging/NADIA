@@ -161,7 +161,7 @@ test_that("no package in Imports is checked with requireNamespace()", {
     # The literal check above misses a loop such as
     # `for (pkg in c("ggplot2", ...)) requireNamespace(pkg)`, so a package name
     # held in a variable is only allowed inside the helpers that check Suggests.
-    allowed <- c(".check_suggests", ".db_require", ".mfuzz_deps_attach")
+    allowed <- ".check_suggests"
     offenders <- unlist(lapply(files, function(f) {
         exprs <- parse(f, keep.source = TRUE)
         unlist(lapply(seq_along(exprs), function(k) {
@@ -178,4 +178,34 @@ test_that("no package in Imports is checked with requireNamespace()", {
         }))
     }))
     expect_equal(as.character(offenders), character(0))
+})
+
+
+test_that("every package in Suggests that R/ uses is checked", {
+    files <- .nadia_r_files()
+    skip_if(length(files) == 0, "sources not available (installed package)")
+
+    # Bioconductor review (#186): a package in Suggests may be missing, so it
+    # must be checked with an informative error, not fail with "there is no
+    # package called". This catches a package that is used somewhere and
+    # checked nowhere; that the check comes first is left to review.
+    desc <- read.dcf(file.path(dirname(dirname(files[1])), "DESCRIPTION"),
+                     fields = "Suggests")[1, ]
+    suggests <- trimws(sub("[(].*", "", strsplit(desc, ",")[[1]]))
+    suggests <- setdiff(suggests[nzchar(suggests)],
+                        c("BiocStyle", "knitr", "rmarkdown", "testthat", "withr"))
+    code <- unlist(lapply(files, function(f) {
+        lines <- readLines(f, warn = FALSE)
+        lines[!grepl("^\\s*#", lines)]
+    }))
+    code <- paste(code, collapse = "\n")
+    checks <- c(
+        regmatches(code, gregexpr("requireNamespace[(]\"[A-Za-z0-9.]+\"", code))[[1]],
+        regmatches(code, gregexpr("[.]check_suggests[(]\\s*(c[(][^)]*[)]|\"[^\"]*\")",
+                                  code))[[1]])
+    checked <- unique(unlist(regmatches(checks, gregexpr("\"[A-Za-z0-9.]+\"", checks))))
+    checked <- gsub("\"", "", checked)
+    used <- suggests[vapply(suggests, function(p)
+        grepl(paste0("\\b", p, "::"), code), logical(1))]
+    expect_equal(setdiff(used, checked), character(0))
 })

@@ -305,10 +305,7 @@
 
 
 .norm_vsn <- function(x_raw) {
-  if (!requireNamespace("vsn", quietly = TRUE)) {
-    stop("Package 'vsn' is required for the vsn method. ",
-         "Install it with BiocManager::install('vsn')")
-  }
+  .check_suggests("vsn", "norm_method = 'vsn'")
   vsn::justvsn(x_raw)
 }
 
@@ -324,10 +321,7 @@
 }
 
 .norm_rlr <- function(x_log2) {
-  if (!requireNamespace("MASS", quietly = TRUE)) {
-    stop("Package 'MASS' is required for the Rlr method. ",
-         "Install it with install.packages('MASS')")
-  }
+  .check_suggests("MASS", "norm_method = 'Rlr'")
   row_medians <- apply(x_log2, 1, median, na.rm = TRUE)
   x <- x_log2
   for (j in seq_len(ncol(x_log2))) {

@@ -51,9 +51,7 @@
     if (ext == "tsv" || ext == "txt") {
       input <- .read_delim_file(input)
     } else if (ext == "parquet") {
-      if (!requireNamespace("arrow", quietly = TRUE)) {
-        stop("The 'arrow' package is required to read Parquet files")
-      }
+      .check_suggests("arrow", "Reading a Parquet file")
       input <- arrow::read_parquet(input)
     } else if (ext == "csv") {
       input <- .read_delim_file(input, sep = ",")
@@ -1068,9 +1066,7 @@ results_list_widget <- function(
     } else if (ext == "csv") {
       input <- .read_delim_file(input, sep = ",")
     } else if (ext == "parquet") {
-      if (!requireNamespace("arrow", quietly = TRUE)) {
-        stop("The 'arrow' package is required to read Parquet files")
-      }
+      .check_suggests("arrow", "Reading a Parquet file")
       input <- arrow::read_parquet(input)
     } else {
       stop("Unsupported format: ", ext, ". Use TSV, CSV or Parquet.")
@@ -1399,9 +1395,7 @@ results_list_widget <- function(
     } else if (ext == "csv") {
       input <- .read_delim_file(input, sep = ",")
     } else if (ext == "parquet") {
-      if (!requireNamespace("arrow", quietly = TRUE)) {
-        stop("The 'arrow' package is required to read Parquet files")
-      }
+      .check_suggests("arrow", "Reading a Parquet file")
       input <- arrow::read_parquet(input)
     } else {
       stop("Unsupported format: ", ext, ". Use TSV, CSV or Parquet.")
@@ -1435,9 +1429,7 @@ results_list_widget <- function(
     } else if (ext == "csv") {
       input <- .read_delim_file(input, sep = ",")
     } else if (ext == "parquet") {
-      if (!requireNamespace("arrow", quietly = TRUE)) {
-        stop("The 'arrow' package is required to read Parquet files")
-      }
+      .check_suggests("arrow", "Reading a Parquet file")
       input <- arrow::read_parquet(input)
     } else {
       stop("Unsupported format: ", ext, ". Use TSV, CSV or Parquet.")

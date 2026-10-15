@@ -27,6 +27,14 @@ Changes made in response to the Bioconductor review.
 * `readr` is no longer a dependency: files are read and written with base R.
   Exported tables now quote a field that contains a tab, a newline or a quote,
   which `write_tsv()` wrote unquoted, breaking the table.
+* Every package in `Suggests` is now checked before it is used, with an error
+  that names it and gives the `BiocManager::install()` call. This adds the
+  checks that were missing (`ComplexHeatmap`, `tidyHeatmap` and `circlize` in
+  the heatmap functions, `arrow` in the Pattern Profiler, `ggsci` for its
+  palettes) and gives the existing ones a single format.
+* A Parquet export that needs `arrow` now fails before the analysis starts.
+  `process_proteomics()` used to run to the end and then skip the Parquet
+  files with a warning.
 * `proteomics_heatmap()` no longer changes ComplexHeatmap's `message` option
   for the rest of the session.
 
