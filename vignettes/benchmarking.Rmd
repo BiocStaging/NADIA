@@ -222,17 +222,6 @@ library(NADIA)
 data(nadia_dia)
 ```
 
-Some metrics need `pROC`, which is optional:
-
-```{r deps}
-have_proc <- requireNamespace("pROC", quietly = TRUE)
-have_proc
-```
-
-If it is not installed, the confusion-matrix metrics and static plots are still
-available, but AUC, partial AUC, ROC curves, and the multi-pipeline ranking are
-skipped. Install it with `install.packages("pROC")` to run those sections.
-
 # The experiment
 
 The example dataset originates from a three-proteome spike-in experiment. Each
@@ -830,7 +819,7 @@ spike-in recovery that strong background performance might otherwise conceal.
 
 NADIA reports these five values for every comparison in `opdea_metrics`:
 
-```{r opdea, eval = have_proc}
+```{r opdea}
 knitr::kable(bench$opdea_metrics, digits = 3,
              caption = "OpDEA metrics by comparison.")
 ```
@@ -881,7 +870,7 @@ The first plot shows the complete FPR and TPR ranges from 0 to 1.
 
 <div class="roc-plot-110">
 
-```{r roc, eval = have_proc, fig.width = 6.5, fig.height = 5, fig.alt = "ROC curves for the three comparisons"}
+```{r roc, fig.width = 6.5, fig.height = 5, fig.alt = "ROC curves for the three comparisons"}
 bench$gg_roc
 ```
 
@@ -910,7 +899,7 @@ points can be seen.
 
 <div class="roc-plot-110">
 
-```{r roc-zoom, eval = have_proc, fig.width = 6.5, fig.height = 5, out.width = "110%", fig.alt = "ROC curves zoomed into the low false-positive region"}
+```{r roc-zoom, fig.width = 6.5, fig.height = 5, out.width = "110%", fig.alt = "ROC curves zoomed into the low false-positive region"}
 bench$gg_roc_zoom
 ```
 
@@ -1052,7 +1041,7 @@ rates that would rarely be accepted in practice. We therefore repeat the
 comparison using pAUC at FPR limits of 1%, 5%, and 10%, focusing progressively
 on the region in which a proteomics analysis is more likely to operate.
 
-```{r engines-pauc, eval = have_proc}
+```{r engines-pauc}
 engine_pauc <- cbind(
     Engine = rep(c("Spectronaut", "DIA-NN"), each = 3),
     rbind(bench$opdea_metrics, bench_dn$opdea_metrics)[
@@ -1277,7 +1266,7 @@ tables needed below are then combined and passed to `benchmarking_multiple()`.
 <details class="code-details">
 <summary>Show the code used to run and combine the three pipelines</summary>
 
-```{r multiple, message = FALSE, warning = FALSE, eval = have_proc}
+```{r multiple, message = FALSE, warning = FALSE}
 pipelines <- list(
     cycloess_combo = list(norm_method = "cycloess", imp_method = "combo"),
     quantile_combo = list(norm_method = "quantile", imp_method = "combo"),
@@ -1317,7 +1306,7 @@ negatives or incorrectly calls background proteins as false positives. Because
 all nine rows contain the same 1,997 proteins, their counts are directly
 comparable.
 
-```{r multiple-counts, eval = have_proc}
+```{r multiple-counts}
 count_cols <- c("Assay", "Comparison", "TP", "FP", "TN", "FN")
 knitr::kable(
     multi_bench$confusion_combined[, count_cols],
@@ -1331,7 +1320,7 @@ avoid overlap; the table retains every exact count.
 
 <div class="multiple-confusion-plot-110">
 
-```{r multiple-confusion, eval = have_proc, fig.width = 8.5, fig.height = 5, out.width = "110%", fig.alt = "Confusion matrix counts per pipeline and comparison"}
+```{r multiple-confusion, fig.width = 8.5, fig.height = 5, out.width = "110%", fig.alt = "Confusion matrix counts per pipeline and comparison"}
 confusion_plot <- multi_bench$gg_confusion_stacked
 bar_total <- ave(
     confusion_plot$data$Count,
@@ -1363,7 +1352,7 @@ comparisons, ranks the pipelines from the highest metric value to the lowest,
 and calculates `rank_final` as the mean of the five metric-specific ranks. A
 lower final rank indicates better and more consistent performance.
 
-```{r multiple-rank, eval = have_proc}
+```{r multiple-rank}
 multi_bench$mean_ranking
 ```
 
@@ -1379,7 +1368,7 @@ the best result remains visually identifiable.
 
 <div class="multiple-ranking-plot-110">
 
-```{r multiple-plot, eval = have_proc, fig.width = 7, fig.height = 4.5, out.width = "110%", fig.alt = "Ranking of the pipelines across the OpDEA metrics"}
+```{r multiple-plot, fig.width = 7, fig.height = 4.5, out.width = "110%", fig.alt = "Ranking of the pipelines across the OpDEA metrics"}
 multi_bench$gg_ranking_bars_mean
 ```
 

@@ -13,6 +13,8 @@ Changes made in response to the Bioconductor review.
 * `pattern_profiler_analysis()` replaces `seeds` with `n_starts`, the number of
   random starts used to evaluate each candidate number of clusters (default 3,
   as before).
+* `limma`, `rrcovNA` and `pROC` move from `Suggests` to `Imports`: the default
+  workflow and the benchmark metrics now run with a standard installation.
 * `proteomics_heatmap()` no longer changes ComplexHeatmap's `message` option
   for the rest of the session.
 

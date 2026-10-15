@@ -206,7 +206,7 @@ The OpDEA ranking (Peng et al., *Nature Communications* 2024) averages the
 ranks of nMCC, G_mean and the three pAUCs. An extended 11-metric ranking is
 also produced when the per-comparison metrics are available.
 
-`pROC` is needed for AUC/pAUC and `vegan` for PSS; both are in `Suggests`.
+`pROC`, needed for AUC/pAUC, is installed with NADIA; `vegan`, needed for PSS, is in `Suggests`.
 
 ## What to say afterwards
 
