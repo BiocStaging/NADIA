@@ -4,7 +4,7 @@
 \alias{run_mfuzz_clustering}
 \title{Run Mfuzz clustering}
 \usage{
-run_mfuzz_clustering(eset_std, c, m, seed = 42)
+run_mfuzz_clustering(eset_std, c, m)
 }
 \arguments{
 \item{eset_std}{Standardised ExpressionSet}
@@ -12,12 +12,13 @@ run_mfuzz_clustering(eset_std, c, m, seed = 42)
 \item{c}{Number of clusters}
 
 \item{m}{Fuzziness parameter}
-
-\item{seed}{Seed for reproducibility}
 }
 \value{
 Mfuzz clustering object
 }
 \description{
 Run Mfuzz clustering
+}
+\details{
+The initial partition is drawn from the caller's RNG.
 }

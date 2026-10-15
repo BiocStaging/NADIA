@@ -2,6 +2,17 @@
 
 Changes made in response to the Bioconductor review.
 
+* NADIA no longer sets the random seed. The functions that use random numbers
+  draw them from the session's generator, so call `set.seed()` beforehand to
+  reproduce their results. The `seed` argument is removed from
+  `normalization_metrics()`, `nm_compute_metrics()`, `nm_plot_metrics()`,
+  `imputation_metrics()`, `im_compute_metrics()` and
+  `pattern_profiler_analysis()`. The `PI`, `MLE` and `mice` imputation methods
+  no longer use a fixed default seed; `MLE` and `mice` still accept one through
+  `method_args`.
+* `pattern_profiler_analysis()` replaces `seeds` with `n_starts`, the number of
+  random starts used to evaluate each candidate number of clusters (default 3,
+  as before).
 * `proteomics_heatmap()` no longer changes ComplexHeatmap's `message` option
   for the rest of the session.
 

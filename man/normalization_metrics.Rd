@@ -15,7 +15,6 @@ normalization_metrics(
   methods = NULL,
   method_args = list(),
   base_assay = "log2",
-  seed = 42L,
   verbose = TRUE,
   output_dir = NULL,
   export_plots = TRUE,
@@ -65,10 +64,6 @@ auto-normalization and use existing assays.}
 \item{base_assay}{Name of the baseline assay to normalize from when using
 auto-normalization. Default \code{"log2"}.}
 
-\item{seed}{Integer. Seed passed to \code{nm_compute_metrics()} for the two
-metrics that use randomness, the Hopkins statistic and the PERMANOVA
-p-value. Default 42.}
-
 \item{verbose}{Logical. Print progress messages. Default \code{TRUE}.}
 
 \item{output_dir}{Character. Path to export directory. If \code{NULL} (default),
@@ -107,6 +102,14 @@ When \code{methods} is provided, the function first runs
 methods from the \code{base_assay}, then computes metrics and generates plots on
 the resulting multi-assay SE.
 }
+\section{Reproducibility}{
+
+Two columns use random numbers: \code{Hopkins}, which samples random reference
+points, and \code{PERMANOVA_pval}, which permutes the group labels. Both draw
+from the caller's RNG, so call \code{set.seed()} beforehand to reproduce them.
+Every other column is deterministic.
+}
+
 \examples{
 data(nadia_dia)
 se <- nm_prepare_se(nadia_dia, verbose = FALSE)

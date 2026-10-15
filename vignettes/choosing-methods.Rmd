@@ -331,6 +331,8 @@ assayNames(se_norm)
 and plots. `output_dir = NULL` prevents files from being written to disk.
 
 ```{r norm-metrics, message = FALSE, warning = FALSE}
+# Two diagnostics (Hopkins and the PERMANOVA p-value) use random numbers.
+set.seed(42)
 nm <- normalization_metrics(
     se_norm,
     output_dir = NULL,
@@ -617,6 +619,8 @@ se_imp <- im_prepare_se(
     norm_method = norm_winner,
     verbose = FALSE)
 
+# The cells masked to build the ground truth are drawn at random.
+set.seed(42)
 im <- imputation_metrics(
     se_imp,
     assay_name = norm_winner,

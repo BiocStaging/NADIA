@@ -117,10 +117,10 @@ if (run_pattern_profiler &&
                quietly = TRUE))) {
     # assay_name left at its default is resolved from DEPs_results$Assay; it is
     # spelled out here because the script already knows the name.
+    set.seed(123)  # fuzzy c-means starts from a random partition
     pp <- pattern_profiler_analysis(res$se_proc, res$DEPs_results,
                                     assay_name = imputed_assay,
-                                    filter_mode = "any", seed = 123,
-                                    verbose = FALSE)
+                                    filter_mode = "any", verbose = FALSE)
     message(sprintf("Optimal number of clusters: %d", pp$optimal_c))
 
     # DE statistics joined to the dominant cluster: the input for enrichment.

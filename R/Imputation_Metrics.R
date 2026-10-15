@@ -215,7 +215,6 @@
 #' @param na_prop Numeric (0-1). Proportion of values to set as NA.
 #'   Default 0.20. Only used when `pattern = "random"`;
 #'   ignored when `pattern = "from_data"`.
-#' @param seed Integer. Random seed. Default 42.
 #' @param pattern Character: `"random"` for uniform random NAs, or
 #'   `"from_data"` to replicate NAguideR's simulation strategy using
 #'   the actual NA structure from `ref_mat`.
@@ -228,13 +227,10 @@
 #'   \item{summary}{List with n_total, n_na, na_rate, rows_affected,
 #'     row_ratio (from_data only)}
 #' @keywords internal
-.im_introduce_na <- function(mat, na_prop = 0.20, seed = 42L,
+.im_introduce_na <- function(mat, na_prop = 0.20,
                              pattern = "random", ref_mat = NULL) {
-  # This function sets the seed several times (globally, per column and per
-  # cell) in order to reproduce the NAguideR strategy; the user's RNG state is
-  # restored on exit so that code running afterwards is not affected.
-  old_rng <- .rng_state()
-  on.exit(.rng_restore(old_rng), add = TRUE)
+  # The masked cells are drawn from the caller's RNG: set.seed() beforehand
+  # reproduces them. NAguideR's strategy is the proportions below, not its seeds.
 
   nr <- nrow(mat)
   nc <- ncol(mat)
@@ -269,14 +265,12 @@
       # 3. Select which rows in ground-truth will receive NAs
       nanum <- round(naratiox * nr)
       nanum <- max(1L, min(nanum, nr - 1L))  # at least 1, keep at least 1 clean
-      set.seed(seed)
       samplenaindex <- sample.int(nr, nanum)
 
       # 4. Per column: sample a subset of those rows and set to NA
       for (j in seq_len(nc)) {
         n_na_col <- round(nacolratio[j] * nanum)
         if (n_na_col > 0 && n_na_col <= length(samplenaindex)) {
-          set.seed(seed + j)  # per-column reproducibility (NAguideR: set.seed(i))
           rows_j <- sample(samplenaindex, n_na_col)
           na_mask[rows_j, j] <- TRUE
         }
@@ -289,7 +283,6 @@
       if (length(rows_no_na) > 0) {
         eachrownaratio <- max(1L, round(naratiox * nc))
         for (idx in seq_along(rows_no_na)) {
-          set.seed(seed + nc + idx)
           cols_k <- sample.int(nc, min(eachrownaratio, nc))
           na_mask[rows_no_na[idx], cols_k] <- TRUE
         }
@@ -299,7 +292,6 @@
 
   if (pattern == "random") {
     na_prop <- na_prop %||% 0.20
-    set.seed(seed)
     n_total <- nr * nc
     n_na    <- round(n_total * na_prop)
     idx     <- sample.int(n_total, n_na)
@@ -729,7 +721,6 @@ im_prepare_se <- function(preprocessing,
 #' @param na_prop Numeric (0-1). Proportion of artificial NAs. Default 0.20.
 #'   Only used when `pattern = "random"`. Ignored when `pattern = "from_data"`
 #'   (NA proportion is derived from the data, replicating NAguideR).
-#' @param seed Integer. Random seed. Default 42.
 #' @param pattern Character. NA introduction pattern: `"random"` for uniform
 #'   random NAs, or `"from_data"` to replicate NAguideR's simulation strategy
 #'   (row ratio + per-column distribution from the actual data).
@@ -740,12 +731,20 @@ im_prepare_se <- function(preprocessing,
 #'   NRMSE_Rank, SOR_Rank, PSS_Rank, ACC_OI_Rank, Rank_Mean.
 #'   Ordered by Rank_Mean (best first).
 #'
+#' @section Reproducibility:
+#' The cells masked to build the ground truth are drawn from the caller's RNG,
+#' and so are the imputations of the stochastic methods (`MinProb`, `QRILC`,
+#' `PI`, `mice`, `missForest`, `MLE`). Call `set.seed()` beforehand to
+#' reproduce a run.
+#'
 #' @examples
 #' data(nadia_dia)
 #' se <- im_prepare_se(nadia_dia, norm_method = "cycloess", verbose = FALSE)
 #'
 #' # Ground-truth simulation: complete rows are masked and re-imputed, so the
-#' # error of each method can be measured against the values it did not see
+#' # error of each method can be measured against the values it did not see.
+#' # The masked cells are drawn at random: set.seed() makes them reproducible.
+#' set.seed(42)
 #' metrics <- im_compute_metrics(se, methods = c("min", "zero", "knn"),
 #'                               verbose = FALSE)
 #' metrics[, c("Method", "NRMSE", "SOR", "Rank_Mean")]
@@ -756,7 +755,6 @@ im_compute_metrics <- function(se,
                                combo_methods = list(),
                                condition_col = "Condition",
                                na_prop       = 0.20,
-                               seed          = 42L,
                                pattern       = "random",
                                method_args   = list(),
                                with_value    = NA_real_,
@@ -794,7 +792,7 @@ im_compute_metrics <- function(se,
 
   # --- Introduce artificial NAs ---
   ref_mat <- if (pattern == "from_data") mat_full else NULL
-  na_result <- .im_introduce_na(mat_complete, na_prop = na_prop, seed = seed,
+  na_result <- .im_introduce_na(mat_complete, na_prop = na_prop,
                                 pattern = pattern, ref_mat = ref_mat)
 
   if (verbose) {
@@ -1260,7 +1258,6 @@ im_plot_metrics <- function(metrics_df, ...) {
 #' @param na_prop Numeric (0-1). Proportion of artificial NAs. Default 0.20.
 #'   Only used when `pattern = "random"`. Ignored when `pattern = "from_data"`
 #'   (NA proportion is derived from the data, replicating NAguideR).
-#' @param seed Integer. Random seed. Default 42.
 #' @param pattern Character. `"random"` or `"from_data"`. Default `"random"`.
 #' @param method_args Named list of per-method argument lists.
 #' @param with_value Constant for method `"with"`.
@@ -1280,11 +1277,14 @@ im_plot_metrics <- function(metrics_df, ...) {
 #' @return Named list of ggplot objects (or NULL for failed plots), plus
 #'   `metrics_table`: a data.frame from `im_compute_metrics()`.
 #'
+#' @inheritSection im_compute_metrics Reproducibility
+#'
 #' @examples
 #' data(nadia_dia)
 #' se <- im_prepare_se(nadia_dia, norm_method = "cycloess", verbose = FALSE)
 #'
 #' # The default sweeps 16 methods; a handful is enough to illustrate it
+#' set.seed(42)
 #' res <- imputation_metrics(se, methods = c("min", "zero", "knn"),
 #'                           plots = "ranking", verbose = FALSE)
 #' res$metrics_table
@@ -1302,7 +1302,6 @@ imputation_metrics <- function(se,
                                combo_methods = list(),
                                condition_col = "Condition",
                                na_prop       = 0.20,
-                               seed          = 42L,
                                pattern       = "random",
                                method_args   = list(),
                                with_value    = NA_real_,
@@ -1329,7 +1328,6 @@ imputation_metrics <- function(se,
     combo_methods = combo_methods,
     condition_col = condition_col,
     na_prop       = na_prop,
-    seed          = seed,
     pattern       = pattern,
     method_args   = method_args,
     with_value    = with_value,

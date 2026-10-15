@@ -65,6 +65,7 @@ Soft (fuzzy) clustering with Mfuzz. **A separate step, not part of
 `process_proteomics()`.**
 
 ```r
+set.seed(123)                      # fuzzy c-means starts from a random partition
 pp <- pattern_profiler_analysis(
   res$se_proc,
   res$DEPs_results,
@@ -75,7 +76,7 @@ pp <- pattern_profiler_analysis(
   auto_select_c   = TRUE,
   selection_method = "xb",         # "xb" | "consensus" | "elbow"
   min_membership  = 0.25,
-  seed = 123,
+  n_starts = 3,                    # random starts per candidate c
   verbose = FALSE
 )
 

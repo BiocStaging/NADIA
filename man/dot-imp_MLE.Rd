@@ -7,17 +7,21 @@
 .imp_MLE(x, args = list())
 }
 \arguments{
-\item{args}{list with optional \code{seed} (default 123).
+\item{args}{list with optional \code{seed} (default \code{NULL}).
 NAguideR strategy: no transpose (features x samples).}
 }
 \description{
 MLE: Maximum Likelihood Estimation (norm)
 }
 \details{
-The seed is handed to \code{norm::rngseed()}, which seeds the internal
-RNG of the \code{norm} package rather than R's \code{.Random.seed}. That state cannot
-be read or restored, so -- unlike every other seeded method here -- this one
-is not wrapped in \code{.rng_state()}/\code{.rng_restore()}. It leaves R's own RNG
-untouched, but successive calls within a session are not independent.
+\code{norm} has an RNG of its own, separate from R's, which
+\code{norm::rngseed()} initialises. When no \code{seed} is given, it is drawn from the
+caller's RNG, so \code{set.seed()} before \code{impute_proteomics()} reproduces a run
+here as it does for every other stochastic method. A \code{seed} passed
+explicitly is handed to \code{norm::rngseed()} unchanged. One limitation belongs
+to \code{norm} and no seed removes it: its generator keeps state that
+\code{rngseed()} does not reset, so a second \code{MLE} imputation in the same R
+session differs from the first even with the same seed. A script run in a
+fresh session is reproducible.
 }
 \keyword{internal}

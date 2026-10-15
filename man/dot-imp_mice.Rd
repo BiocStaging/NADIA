@@ -8,10 +8,16 @@
 }
 \arguments{
 \item{args}{list with optional \code{m} (default 5), \code{maxit} (default 5),
-\code{method} (default "norm"), \code{seed} (default 1234).
+\code{method} (default "norm") and \code{seed} (default \code{NA}).
 NAguideR strategy: no transpose, method="norm", average of m imputations.}
 }
 \description{
 mice: Multiple Imputation by Chained Equations
+}
+\details{
+With the default \code{seed = NA}, \code{mice::mice()} draws from the
+caller's RNG, so \code{set.seed()} before \code{impute_proteomics()} reproduces a
+run. A \code{seed} passed explicitly is handed to \code{mice::mice()}, which then
+seeds the RNG itself.
 }
 \keyword{internal}

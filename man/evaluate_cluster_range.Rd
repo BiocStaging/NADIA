@@ -8,7 +8,7 @@ evaluate_cluster_range(
   eset_std,
   c_range = 2:10,
   m = NULL,
-  seeds = c(42, 123, 456),
+  n_starts = 3L,
   verbose = TRUE
 )
 }
@@ -19,7 +19,8 @@ evaluate_cluster_range(
 
 \item{m}{Fuzziness parameter}
 
-\item{seeds}{Seeds for reproducibility}
+\item{n_starts}{Number of random starts per candidate number of clusters;
+the metrics are averaged over them. Drawn from the caller's RNG.}
 
 \item{verbose}{Show progress}
 }

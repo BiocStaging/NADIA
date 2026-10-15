@@ -11,7 +11,6 @@ imputation_metrics(
   combo_methods = list(),
   condition_col = "Condition",
   na_prop = 0.2,
-  seed = 42L,
   pattern = "random",
   method_args = list(),
   with_value = NA_real_,
@@ -45,8 +44,6 @@ Default \code{"Condition"}.}
 \item{na_prop}{Numeric (0-1). Proportion of artificial NAs. Default 0.20.
 Only used when \code{pattern = "random"}. Ignored when \code{pattern = "from_data"}
 (NA proportion is derived from the data, replicating NAguideR).}
-
-\item{seed}{Integer. Random seed. Default 42.}
 
 \item{pattern}{Character. \code{"random"} or \code{"from_data"}. Default \code{"random"}.}
 
@@ -84,11 +81,20 @@ Computes NRMSE, SOR, PSS, ACC_OI via ground-truth simulation, then
 generates up to 6 diagnostic plots. Each plot is wrapped in \code{tryCatch()}
 so that a failure in one does not abort all.
 }
+\section{Reproducibility}{
+
+The cells masked to build the ground truth are drawn from the caller's RNG,
+and so are the imputations of the stochastic methods (\code{MinProb}, \code{QRILC},
+\code{PI}, \code{mice}, \code{missForest}, \code{MLE}). Call \code{set.seed()} beforehand to
+reproduce a run.
+}
+
 \examples{
 data(nadia_dia)
 se <- im_prepare_se(nadia_dia, norm_method = "cycloess", verbose = FALSE)
 
 # The default sweeps 16 methods; a handful is enough to illustrate it
+set.seed(42)
 res <- imputation_metrics(se, methods = c("min", "zero", "knn"),
                           plots = "ranking", verbose = FALSE)
 res$metrics_table

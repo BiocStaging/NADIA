@@ -491,14 +491,15 @@ standardize_eset <- function(eset, verbose = TRUE) {
 #' @param eset_std Standardised ExpressionSet
 #' @param c_range Vector of cluster numbers to evaluate
 #' @param m Fuzziness parameter
-#' @param seeds Seeds for reproducibility
+#' @param n_starts Number of random starts per candidate number of clusters;
+#'   the metrics are averaged over them. Drawn from the caller's RNG.
 #' @param verbose Show progress
 #'
 #' @return DataFrame with the metrics per number of clusters
 evaluate_cluster_range <- function(eset_std,
                                     c_range = 2:10,
                                     m = NULL,
-                                    seeds = c(42, 123, 456),
+                                    n_starts = 3L,
                                     verbose = TRUE) {
 
   # Estimate m if it is not supplied
@@ -510,24 +511,17 @@ evaluate_cluster_range <- function(eset_std,
   X <- Biobase::exprs(eset_std)
   results <- list()
 
-  # One seed is set per replicate inside the loop; the user's RNG is restored on
-  # exit from the function.
-  old_rng <- .rng_state()
-  on.exit(.rng_restore(old_rng), add = TRUE)
-
   for (c in c_range) {
     if (verbose) message(sprintf("Evaluating c = %d...", c))
 
-    # NA (not 0): a seed that fails must not count as 0 in the mean, because XB
+    # NA (not 0): a start that fails must not count as 0 in the mean, because XB
     # is minimised and a spurious 0 would bias the choice of c.
-    xb_vals <- rep(NA_real_, length(seeds))
-    fpc_vals <- rep(NA_real_, length(seeds))
-    amm_vals <- rep(NA_real_, length(seeds))
-    dmin_vals <- rep(NA_real_, length(seeds))
+    xb_vals <- rep(NA_real_, n_starts)
+    fpc_vals <- rep(NA_real_, n_starts)
+    amm_vals <- rep(NA_real_, n_starts)
+    dmin_vals <- rep(NA_real_, n_starts)
 
-    for (s in seq_along(seeds)) {
-      set.seed(seeds[s])
-
+    for (s in seq_len(n_starts)) {
       cl <- tryCatch({
         Mfuzz::mfuzz(eset_std, c = c, m = m)
       }, error = function(e) NULL)
@@ -567,7 +561,8 @@ evaluate_cluster_range <- function(eset_std,
 #' @param c_range Range of cluster numbers to evaluate
 #' @param m Fuzziness parameter
 #' @param method Method: "xb", "consensus", "elbow"
-#' @param seeds Seeds passed on to `evaluate_cluster_range()`
+#' @param n_starts Random starts per candidate, passed on to
+#'   `evaluate_cluster_range()`
 #' @param verbose Show progress
 #'
 #' @return List with optimal_c, metrics, m
@@ -575,7 +570,7 @@ select_optimal_clusters <- function(eset_std,
                                      c_range = 2:10,
                                      m = NULL,
                                      method = c("xb", "consensus", "elbow"),
-                                     seeds = c(42, 123, 456),
+                                     n_starts = 3L,
                                      verbose = TRUE) {
 
   method <- match.arg(method)
@@ -584,7 +579,7 @@ select_optimal_clusters <- function(eset_std,
     m <- Mfuzz::mestimate(eset_std)
   }
 
-  metrics <- evaluate_cluster_range(eset_std, c_range, m, seeds = seeds,
+  metrics <- evaluate_cluster_range(eset_std, c_range, m, n_starts = n_starts,
                                     verbose = verbose)
 
   if (method == "xb") {
@@ -625,16 +620,12 @@ select_optimal_clusters <- function(eset_std,
 #' @param eset_std Standardised ExpressionSet
 #' @param c Number of clusters
 #' @param m Fuzziness parameter
-#' @param seed Seed for reproducibility
+#'
+#' @details The initial partition is drawn from the caller's RNG.
 #'
 #' @return Mfuzz clustering object
-run_mfuzz_clustering <- function(eset_std, c, m, seed = 42) {
+run_mfuzz_clustering <- function(eset_std, c, m) {
 
-  # The user's RNG is restored on exit (mfuzz depends on the seed).
-  old_rng <- .rng_state()
-  on.exit(.rng_restore(old_rng), add = TRUE)
-
-  set.seed(seed)
   cl <- Mfuzz::mfuzz(eset_std, c = c, m = m)
 
   cl
@@ -786,14 +777,10 @@ build_long_output <- function(cl, eset_std, conditions, min_membership) {
 #' @param c Fixed number of clusters (if auto_select_c=FALSE)
 #' @param selection_method Selection method: "xb", "consensus", "elbow"
 #' @param min_membership Minimum membership threshold for inclusion in the output
-#' @param seed Integer. Seed for the Mfuzz clustering itself. Fuzzy c-means
-#'   starts from a random partition, so the cluster labels and the memberships
-#'   depend on it; fix it to make a run reproducible. The caller's RNG state is
-#'   restored on exit. Default 42.
-#' @param seeds Numeric vector of seeds used when `auto_select_c = TRUE`: each
-#'   candidate number of clusters is fitted once per seed and the metrics are
-#'   averaged, so that the choice of `c` does not hang on a single partition.
-#'   Default `c(42, 123, 456)`.
+#' @param n_starts Integer. Number of random starts used when
+#'   `auto_select_c = TRUE`: each candidate number of clusters is fitted
+#'   `n_starts` times and the metrics are averaged, so that the choice of `c`
+#'   does not hang on a single partition. Default `3`.
 #' @param output_file Path of the output parquet file. `NULL` by default, which
 #'   writes nothing to disk; the long-format data is returned regardless in the
 #'   `long_output` element of the result.
@@ -804,6 +791,12 @@ build_long_output <- function(cl, eset_std, conditions, min_membership) {
 #'   Mfuzz `cl` object, the standardised `eset_std` and `long_output`, the
 #'   long-format data.frame that is written when `output_file` is given.
 #'
+#' @section Reproducibility:
+#' Fuzzy c-means starts from a random partition, so the cluster labels, the
+#' memberships and, with `auto_select_c = TRUE`, the chosen number of clusters
+#' depend on the caller's RNG. Call `set.seed()` immediately before the function
+#' to make a run reproducible on its own, whatever ran before it.
+#'
 #' @examples
 #' if (requireNamespace("Mfuzz", quietly = TRUE) &&
 #'     requireNamespace("e1071", quietly = TRUE)) {
@@ -811,6 +804,7 @@ build_long_output <- function(cl, eset_std, conditions, min_membership) {
 #'   res <- process_proteomics(nadia_dia, verbose = FALSE)
 #'
 #'   # auto_select_c = TRUE would cluster once per value of c_range
+#'   set.seed(42)
 #'   pp <- pattern_profiler_analysis(
 #'     res$se_proc,
 #'     DEPs_results    = res$DEPs_results,
@@ -839,8 +833,7 @@ pattern_profiler_analysis <- function(se_proc,
                                        c = NULL,
                                        selection_method = c("xb", "consensus", "elbow"),
                                        min_membership = 0.25,
-                                       seed = 42,
-                                       seeds = c(42, 123, 456),
+                                       n_starts = 3L,
                                        output_file = NULL,
                                        verbose = TRUE) {
 
@@ -953,7 +946,7 @@ pattern_profiler_analysis <- function(se_proc,
       eset_std,
       c_range = c_range,
       method = selection_method,
-      seeds = seeds,
+      n_starts = n_starts,
       verbose = verbose
     )
 
@@ -979,7 +972,7 @@ pattern_profiler_analysis <- function(se_proc,
   # -------------------------------------------------------------------------
   if (verbose) message(sprintf("\n7. Running Mfuzz clustering (c=%d)...", optimal_c))
 
-  cl <- run_mfuzz_clustering(eset_std, c = optimal_c, m = m, seed = seed)
+  cl <- run_mfuzz_clustering(eset_std, c = optimal_c, m = m)
 
   # Count the proteins per cluster (hard assignment)
   hard_assignment <- apply(cl$membership, 1, which.max)
@@ -1050,9 +1043,9 @@ pattern_profiler_analysis <- function(se_proc,
     long_output = long_output,
     cl = cl,
     eset_std = eset_std,
-    # Mfuzz clustering is stochastic and its result depends on `seed`, `seeds`,
-    # `c_range` and the filtering arguments. Recording the call is what makes a
-    # set of clusters reproducible from the result itself.
+    # Mfuzz clustering is stochastic: its result depends on the caller's RNG,
+    # `n_starts`, `c_range` and the filtering arguments. The call records all
+    # but the first, which the caller fixes with set.seed().
     call = match.call()
   )
 

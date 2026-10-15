@@ -100,37 +100,38 @@ test_that("the widgets that lost their defaults now say so", {
 })
 
 # -----------------------------------------------------------------------------
-# The seeds that phase 6 made reachable
+# The RNG belongs to the caller
 # -----------------------------------------------------------------------------
+# Bioconductor asks packages not to call set.seed(). The functions that need
+# random numbers draw them from the caller's RNG, so set.seed() before the call
+# reproduces it, and a different seed gives a different answer.
 
-test_that("nm_compute_metrics() propagates its seed down to the Hopkins statistic", {
+test_that("no function takes a seed any more", {
+    for (f in c("nm_compute_metrics", "nm_plot_metrics", "normalization_metrics",
+                "im_compute_metrics", "imputation_metrics",
+                "pattern_profiler_analysis", "select_optimal_clusters",
+                "evaluate_cluster_range", "run_mfuzz_clustering")) {
+        args <- names(formals(get(f, envir = asNamespace("NADIA"))))
+        expect_false(any(c("seed", "seeds") %in% args), info = f)
+    }
+    # The repeated starts of the cluster-number selection are now a count.
+    for (f in c("pattern_profiler_analysis", "select_optimal_clusters",
+                "evaluate_cluster_range")) {
+        expect_true("n_starts" %in% names(formals(get(f, envir = asNamespace("NADIA")))),
+                    info = f)
+    }
+})
+
+test_that("nm_compute_metrics() draws its random columns from the caller's RNG", {
     se <- .nadia_toy_se(n_prot = 40, na_prop = 0)
 
-    a <- nm_compute_metrics(se, seed = 1L)$Hopkins
-    b <- nm_compute_metrics(se, seed = 1L)$Hopkins
-    d <- nm_compute_metrics(se, seed = 99L)$Hopkins
+    set.seed(1)
+    a <- nm_compute_metrics(se)$Hopkins
+    set.seed(1)
+    b <- nm_compute_metrics(se)$Hopkins
+    set.seed(99)
+    d <- nm_compute_metrics(se)$Hopkins
 
     expect_equal(a, b)                       # same seed, same answer
-    expect_false(isTRUE(all.equal(a, d)))    # and the argument actually reaches it
-})
-
-test_that("pattern_profiler_analysis() takes a seed for the clustering", {
-    skip_if_not_installed("Mfuzz")
-    skip_if_not_installed("e1071")
-    skip_if_not_installed("Biobase")
-
-    expect_true("seed"  %in% names(formals(pattern_profiler_analysis)))
-    expect_true("seeds" %in% names(formals(pattern_profiler_analysis)))
-    # It has to arrive at the two functions that consume it, not merely exist.
-    expect_true("seeds" %in% names(formals(select_optimal_clusters)))
-    expect_true("seed"  %in% names(formals(run_mfuzz_clustering)))
-})
-
-test_that("the seeded functions still leave the caller's RNG untouched", {
-    se <- .nadia_toy_se(n_prot = 40, na_prop = 0)
-
-    set.seed(7)
-    before <- .Random.seed
-    invisible(nm_compute_metrics(se, seed = 123L))
-    expect_identical(.Random.seed, before)
+    expect_false(isTRUE(all.equal(a, d)))    # no seed of its own overrides it
 })

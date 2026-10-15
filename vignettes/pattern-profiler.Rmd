@@ -302,8 +302,8 @@ clusters and uses the Xie--Beni index to choose among them.
 <dt><code>min_membership</code></dt>
 <dd>The minimum fuzzy membership required for a protein--cluster pair to be included in <code>long_output</code> (default: <code>0.25</code>).</dd>
 
-<dt><code>seed</code> and <code>seeds</code></dt>
-<dd><code>seed</code> makes the final clustering reproducible. <code>seeds</code> supplies repeated starts when candidate cluster numbers are evaluated.</dd>
+<dt><code>n_starts</code></dt>
+<dd>The number of random starts used to evaluate each candidate number of clusters; their metrics are averaged (default: <code>3</code>).</dd>
 
 <dt><code>output_file</code></dt>
 <dd>An optional path for writing <code>long_output</code> as a Parquet file. Nothing is written when it is <code>NULL</code>.</dd>
@@ -315,6 +315,7 @@ clusters and uses the Xie--Beni index to choose among them.
 </details>
 
 ```{r run-pattern-profiler, eval=have_pattern_profiler, results='hide'}
+set.seed(42)
 pp <- pattern_profiler_analysis(
   se_proc          = res$se_proc,
   DEPs_results     = res$DEPs_results,
@@ -327,8 +328,7 @@ pp <- pattern_profiler_analysis(
   auto_select_c    = TRUE,
   selection_method = "xb",
   min_membership   = 0.25,
-  seed             = 42,
-  seeds            = c(42, 123, 456),
+  n_starts         = 3,
   verbose          = FALSE
 )
 ```
@@ -446,7 +446,7 @@ the dominant clusters less specific to the biological response.
 The number of clusters determines the resolution of the analysis. Too few
 clusters can merge distinct profiles, whereas too many can divide one pattern
 into small, weakly supported groups. When `auto_select_c = TRUE`, NADIA fits each
-candidate value in `c_range` with multiple seeds and reports four complementary
+candidate value in `c_range` from several random starts and reports four complementary
 diagnostics.
 
 | Metric | What it evaluates | Preferred value |
@@ -498,10 +498,12 @@ proof; candidate solutions should still be checked visually and interpreted in
 the context of the experiment.
 
 <div class="pattern-note">
-Fuzzy c-means starts from a random partition. Keep <code>seed</code> fixed for a
-reproducible final fit, and use several values in <code>seeds</code> when selecting
-the number of clusters. Cluster numbers are arbitrary labels and may be swapped
-between runs even when the underlying patterns are equivalent.
+Fuzzy c-means starts from a random partition, drawn from R's random number
+generator. Call <code>set.seed()</code> immediately before
+<code>pattern_profiler_analysis()</code> to make a run reproducible, and raise
+<code>n_starts</code> for a more stable choice of the number of clusters. Cluster
+numbers are arbitrary labels and may be swapped between runs even when the
+underlying patterns are equivalent.
 </div>
 
 Before clustering, NADIA removes profiles that cannot be standardised reliably,
@@ -847,7 +849,8 @@ Use the `.parquet` extension because the function writes a Parquet file.
 ```{r parquet-roundtrip, eval=have_pattern_profiler && requireNamespace("arrow", quietly=TRUE)}
 parquet_file <- file.path(tempdir(), "pattern_profiler.parquet")
 
-invisible(capture.output(pattern_profiler_analysis(
+set.seed(42)
+invisible(capture.output(pp_saved <- pattern_profiler_analysis(
   se_proc          = res$se_proc,
   DEPs_results     = res$DEPs_results,
   assay_name       = "Impseqrob_min",
@@ -856,7 +859,6 @@ invisible(capture.output(pattern_profiler_analysis(
   auto_select_c    = FALSE,
   c                = pp$optimal_c,
   min_membership   = 0.25,
-  seed             = 42,
   output_file      = parquet_file,
   verbose          = FALSE
 )))
@@ -867,7 +869,7 @@ reloaded <- read_pattern_profiler_data(
 )
 
 data.frame(
-  Rows_saved = nrow(pp$long_output),
+  Rows_saved = nrow(pp_saved$long_output),
   Rows_reloaded_at_0.70 = nrow(reloaded)
 )
 
@@ -934,8 +936,8 @@ easier to reproduce and interpret:
   answer a specific biological question;
 - inspect all cluster-selection diagnostics rather than treating one index as
   definitive;
-- keep random seeds fixed and check that the main profiles remain stable across
-  plausible cluster numbers;
+- call `set.seed()` before each run, and check that the main profiles remain
+  stable across seeds and plausible cluster numbers;
 - use membership to distinguish representative proteins from ambiguous ones;
 - interpret standardised trajectories as relative shapes, not abundance
   differences; and

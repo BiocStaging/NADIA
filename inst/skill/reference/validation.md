@@ -18,13 +18,13 @@ methods <- c("log2Norm", "GlobalMedian", "GlobalMean", "eqmedians", "vsn",
              "medianNorm", "meanNorm", "quantile", "Rlr", "MAD", "cycloess",
              "quantile.robust")
 
+set.seed(42)                   # Hopkins and the PERMANOVA p-value are random
 nm <- normalization_metrics(
   se,                          # a SummarizedExperiment; res$se_proc works
   methods       = methods,     # WITHOUT THIS IT COMPARES SOMETHING ELSE. See below.
   condition_col = "Condition",
   base_assay    = "log2",
   output_dir    = "results/norm_metrics",
-  seed          = 42L,
   verbose       = FALSE
 )
 
@@ -54,11 +54,11 @@ within noise, and then the choice can be made on other grounds.
 ### Imputation
 
 ```r
+set.seed(42)                   # the masked cells are drawn at random
 im <- imputation_metrics(
   se,
   assay_name = "cycloess",     # the NORMALISED assay, pre-imputation
   na_prop    = 0.2,            # fraction of observed cells masked
-  seed       = 42L,
   output_dir = "results/imp_metrics",
   verbose    = FALSE
 )

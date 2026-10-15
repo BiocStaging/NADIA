@@ -130,18 +130,21 @@ test_that(".norm_quantile_robust bias does not grow with the missingness rate", 
 # --- Hopkins statistic: reproducible -----------------------------------------
 
 test_that(".nm_hopkins is reproducible", {
-    # Defect: set.seed() was called AFTER the random points were generated, so
-    # the statistic was not reproducible despite taking a seed.
+    # Defect: the seed was set AFTER the random points were generated, so the
+    # statistic was not reproducible. Every random value is now drawn from the
+    # caller's RNG, so set.seed() before the call fixes all of them.
     set.seed(5)
     mat <- matrix(rnorm(40 * 6), nrow = 40)
 
-    a <- NADIA:::.nm_hopkins(mat, seed = 42L)
-    b <- NADIA:::.nm_hopkins(mat, seed = 42L)
+    set.seed(42)
+    a <- NADIA:::.nm_hopkins(mat)
+    set.seed(42)
+    b <- NADIA:::.nm_hopkins(mat)
     expect_identical(a, b)
 
-    # And a different seed should generally give a different value, otherwise
-    # the seed is being ignored altogether.
-    d <- NADIA:::.nm_hopkins(mat, seed = 7L)
+    # And a different seed should generally give a different value.
+    set.seed(7)
+    d <- NADIA:::.nm_hopkins(mat)
     expect_false(isTRUE(all.equal(a, d)))
 })
 
@@ -576,11 +579,12 @@ test_that("pattern_profiler_analysis() resolves assay_name from DEPs_results", {
     res <- suppressMessages(process_proteomics(nadia_dia, verbose = FALSE))
     imputed <- utils::tail(SummarizedExperiment::assayNames(res$se_proc), 1)
 
+    set.seed(123)
     auto <- suppressMessages(pattern_profiler_analysis(
-        res$se_proc, res$DEPs_results, seed = 123, verbose = FALSE))
+        res$se_proc, res$DEPs_results, verbose = FALSE))
+    set.seed(123)
     named <- suppressMessages(pattern_profiler_analysis(
-        res$se_proc, res$DEPs_results, assay_name = imputed,
-        seed = 123, verbose = FALSE))
+        res$se_proc, res$DEPs_results, assay_name = imputed, verbose = FALSE))
 
     # Leaving it out must be the same run as naming it: this is a new default,
     # not new behaviour.
@@ -634,19 +638,21 @@ test_that("pattern_profiler_analysis(verbose = FALSE) is actually silent", {
     res <- suppressMessages(process_proteomics(nadia_dia, verbose = FALSE))
 
     quiet <- NULL
+    set.seed(123)
     on_out <- utils::capture.output(type = "output",
         on_err <- utils::capture.output(type = "message",
             quiet <- pattern_profiler_analysis(
-                res$se_proc, res$DEPs_results, seed = 123, verbose = FALSE)))
+                res$se_proc, res$DEPs_results, verbose = FALSE)))
 
     expect_identical(on_out, character(0))
     expect_identical(on_err, character(0))
 
     # And verbose = TRUE still reports, without changing the result.
     loud <- NULL
+    set.seed(123)
     said <- utils::capture.output(type = "message",
         loud <- suppressWarnings(pattern_profiler_analysis(
-            res$se_proc, res$DEPs_results, seed = 123, verbose = TRUE)))
+            res$se_proc, res$DEPs_results, verbose = TRUE)))
 
     expect_gt(length(said), 0L)
     expect_identical(quiet$long_output, loud$long_output)

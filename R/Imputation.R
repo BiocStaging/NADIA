@@ -134,18 +134,14 @@
 }
 
 #' PI: Perseus-style imputation (down-shifted normal distribution)
-#' @param args list with optional `width` (default 0.3), `downshift` (default 1.8)
-#'   and `seed` (default 1234, for reproducibility of rnorm).
+#' @param args list with optional `width` (default 0.3) and `downshift`
+#'   (default 1.8).
+#' @details The imputed values are drawn with `rnorm()` from the caller's RNG.
+#'   To reproduce a run, call `set.seed()` before `impute_proteomics()`.
 #' @keywords internal
 .imp_PI <- function(x, args = list()) {
   width     <- args$width     %||% 0.3
   downshift <- args$downshift %||% 1.8
-  seed      <- args$seed      %||% 1234
-  # Restore the user's RNG on exit: setting the seed is needed to reproduce the
-  # rnorm() draws, but it must not alter the caller's session.
-  old_rng <- .rng_state()
-  on.exit(.rng_restore(old_rng), add = TRUE)
-  set.seed(seed)
   for (j in seq_len(ncol(x))) {
     na_idx <- which(is.na(x[, j]))
     if (length(na_idx) == 0L) next
@@ -264,8 +260,12 @@
 
 #' mice: Multiple Imputation by Chained Equations
 #' @param args list with optional `m` (default 5), `maxit` (default 5),
-#'   `method` (default "norm"), `seed` (default 1234).
+#'   `method` (default "norm") and `seed` (default `NA`).
 #'   NAguideR strategy: no transpose, method="norm", average of m imputations.
+#' @details With the default `seed = NA`, `mice::mice()` draws from the
+#'   caller's RNG, so `set.seed()` before `impute_proteomics()` reproduces a
+#'   run. A `seed` passed explicitly is handed to `mice::mice()`, which then
+#'   seeds the RNG itself.
 #' @keywords internal
 .imp_mice <- function(x, args = list()) {
   if (!requireNamespace("mice", quietly = TRUE)) {
@@ -275,7 +275,7 @@
   m      <- args$m      %||% 5
   maxit  <- args$maxit  %||% 5
   method <- args$method %||% "norm"
-  seed   <- args$seed   %||% 1234
+  seed   <- args$seed   %||% NA
   # NAguideR: no transpose (features x samples), method="norm", average m imputations
   df1 <- as.data.frame(x)
   imp <- mice::mice(df1, m = m, maxit = maxit, method = method,
@@ -292,8 +292,8 @@
 #'   `mtry` (default floor(nrow(x)^(1/3)), NAguideR cube root strategy)
 #' @details This method is stochastic and takes no seed of its own, because
 #'   `missForest::missForest()` does not accept one. To reproduce a run, call
-#'   `set.seed()` before `impute_proteomics()`; unlike the seeded methods, this
-#'   one draws from -- and therefore advances -- the caller's RNG.
+#'   `set.seed()` before `impute_proteomics()`, as for every stochastic
+#'   method in NADIA.
 #' @keywords internal
 .imp_missForest <- function(x, args = list()) {
   if (!requireNamespace("missForest", quietly = TRUE)) {
@@ -350,13 +350,17 @@
 }
 
 #' MLE: Maximum Likelihood Estimation (norm)
-#' @param args list with optional `seed` (default 123).
+#' @param args list with optional `seed` (default `NULL`).
 #'   NAguideR strategy: no transpose (features x samples).
-#' @details The seed is handed to `norm::rngseed()`, which seeds the internal
-#'   RNG of the `norm` package rather than R's `.Random.seed`. That state cannot
-#'   be read or restored, so -- unlike every other seeded method here -- this one
-#'   is not wrapped in `.rng_state()`/`.rng_restore()`. It leaves R's own RNG
-#'   untouched, but successive calls within a session are not independent.
+#' @details `norm` has an RNG of its own, separate from R's, which
+#'   `norm::rngseed()` initialises. When no `seed` is given, it is drawn from the
+#'   caller's RNG, so `set.seed()` before `impute_proteomics()` reproduces a run
+#'   here as it does for every other stochastic method. A `seed` passed
+#'   explicitly is handed to `norm::rngseed()` unchanged. One limitation belongs
+#'   to `norm` and no seed removes it: its generator keeps state that
+#'   `rngseed()` does not reset, so a second `MLE` imputation in the same R
+#'   session differs from the first even with the same seed. A script run in a
+#'   fresh session is reproducible.
 #' @keywords internal
 .imp_MLE <- function(x, args = list()) {
   if (!requireNamespace("norm", quietly = TRUE)) {
@@ -367,7 +371,7 @@
   xxm <- as.matrix(x)
   s <- norm::prelim.norm(xxm)
   thetahat <- norm::em.norm(s, showits = FALSE)
-  seed <- args$seed %||% 123
+  seed <- args$seed %||% sample.int(.Machine$integer.max, 1L)
   norm::rngseed(seed)
   res <- norm::imp.norm(s, thetahat, xxm)
   dimnames(res) <- dimnames(x)
@@ -679,8 +683,7 @@
 #' @param mar_method MAR imputation method (default: "Impseqrob", deterministic
 #'   and with no additional dependencies; the impute_proteomics wrapper passes
 #'   this value). Note: if a stochastic MAR/MNAR method is chosen (e.g.
-#'   "missForest"), softHybrid does not set a seed of its own -- pass one via
-#'   method_args for reproducibility.
+#'   "missForest"), call `set.seed()` before the imputation to reproduce it.
 #' @param mnar_method MNAR imputation method (default: "min")
 #' @param method_args Named list of per-method argument lists
 #' @param with_value Constant value for method "with"

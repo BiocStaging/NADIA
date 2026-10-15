@@ -7,11 +7,6 @@
 # loaded won and silently changed the behaviour of the modules already loaded.
 # There is now a single canonical definition.
 #
-# The modules that need the RNG helpers loaded this file through the
-# `if (!exists(".rng_state", mode = "function"))` block in their header. That
-# block disappears once the project becomes a package: all the files under R/
-# share one and the same namespace.
-#
 # Author: Sergio Ciordia
 # License: GPL-3
 # =============================================================================
@@ -33,50 +28,6 @@
 #' @keywords internal
 #' @noRd
 `%||%` <- function(a, b) if (is.null(a)) b else a
-
-
-#' Capture the state of the random number generator
-#'
-#' Functions that call `set.seed()` alter the RNG of the user's session, so any
-#' code run afterwards is no longer reproducible. These two helpers make it
-#' possible to leave the RNG exactly as it was:
-#'
-#' ```
-#' old_rng <- .rng_state()
-#' on.exit(.rng_restore(old_rng), add = TRUE)
-#' set.seed(seed)
-#' ```
-#'
-#' @return The value of `.Random.seed`, or `NULL` if the RNG has not been used
-#'   yet in this session.
-#' @keywords internal
-#' @noRd
-.rng_state <- function() {
-  if (exists(".Random.seed", envir = globalenv(), inherits = FALSE)) {
-    get(".Random.seed", envir = globalenv(), inherits = FALSE)
-  } else {
-    NULL
-  }
-}
-
-#' Restore the state of the random number generator
-#'
-#' @param state Value previously returned by `.rng_state()`.
-#' @return `NULL`, invisibly. Called for its side effect.
-#' @keywords internal
-#' @noRd
-.rng_restore <- function(state) {
-  if (is.null(state)) {
-    # The RNG had not been initialised before the call: the seed created by
-    # set.seed() is removed so that no trace is left behind.
-    if (exists(".Random.seed", envir = globalenv(), inherits = FALSE)) {
-      rm(".Random.seed", envir = globalenv())
-    }
-  } else {
-    assign(".Random.seed", state, envir = globalenv())
-  }
-  invisible(NULL)
-}
 
 
 # =============================================================================

@@ -225,14 +225,12 @@
 #'
 #' @param mat Numeric matrix (proteins x samples), no NAs.
 #' @param groups Factor or character vector of group labels.
-#' @param seed Integer. Seed for the permutations. `adonis2()` obtains its
-#'   p-value by permuting the group labels, so without a seed the same data give
-#'   a different p-value on every call -- and this one is exported as a column of
-#'   `nm_compute_metrics()`. `R2` is deterministic and unaffected. The caller's
-#'   RNG state is restored on exit.
+#' @details `adonis2()` obtains its p-value by permuting the group labels with
+#'   the caller's RNG, so the p-value is reproducible only after `set.seed()`.
+#'   `R2` is deterministic.
 #' @return Named list with `R2` and `p_value`, or NA if vegan unavailable.
 #' @keywords internal
-.nm_permanova_r2 <- function(mat, groups, seed = 42L) {
+.nm_permanova_r2 <- function(mat, groups) {
   na_result <- list(R2 = NA_real_, p_value = NA_real_)
   if (!requireNamespace("vegan", quietly = TRUE)) return(na_result)
   if (ncol(mat) < 2 || nrow(mat) < 2) return(na_result)
@@ -240,10 +238,6 @@
   if (nlevels(groups) < 2) return(na_result)
   d  <- dist(t(mat))
   df <- data.frame(Condition = groups)
-
-  old_rng <- .rng_state()
-  on.exit(.rng_restore(old_rng), add = TRUE)
-  set.seed(seed)
 
   res <- vegan::adonis2(d ~ Condition, data = df, permutations = 999)
   list(R2 = res[["R2"]][1], p_value = res[["Pr(>F)"]][1])
@@ -367,23 +361,16 @@
 #' @param mat Numeric matrix (proteins x samples), no NAs.
 #' @param n_sample Integer. Number of points to sample (default 10, capped at
 #'   ncol - 1).
-#' @param seed Integer. Seed used for the random reference points, so the
-#'   statistic is reproducible across calls. The caller's RNG state is restored
-#'   on exit.
+#' @details The random reference points and the sampled data points are drawn
+#'   from the caller's RNG, so the statistic is reproducible only after
+#'   `set.seed()`.
 #' @return Numeric scalar (0-1).
 #' @keywords internal
-.nm_hopkins <- function(mat, n_sample = 10L, seed = 42L) {
+.nm_hopkins <- function(mat, n_sample = 10L) {
   x <- t(mat)                          # samples as rows
   n <- nrow(x)
   if (n < 3 || ncol(x) < 1) return(NA_real_)
   m <- min(n_sample, n - 1L)
-
-  # Set the seed BEFORE generating any random value (rand_pts and idx) so the
-  # Hopkins statistic is reproducible across calls, restoring the user's RNG
-  # state afterwards.
-  old_rng <- .rng_state()
-  on.exit(.rng_restore(old_rng), add = TRUE)
-  set.seed(seed)
 
   # Random reference points within data bounding box
   mins <- apply(x, 2, min)
@@ -1548,14 +1535,15 @@ nm_plot_qq <- function(se, assay_names = NULL,
 #' metrics_df <- nm_compute_metrics(se)
 #' metrics_df[, c("Method", "PC1_VarPct", "PC1_F_ratio", "Silhouette_mean")]
 #'
-#' @param seed Integer. Seed for the two metrics that use randomness: the
-#'   Hopkins statistic, which samples random reference points, and the PERMANOVA
-#'   p-value, which permutes the group labels. Without it neither column is
-#'   reproducible between runs. The caller's RNG state is restored on exit.
-#'   Default 42.
+#' @section Reproducibility:
+#' Two columns use random numbers: `Hopkins`, which samples random reference
+#' points, and `PERMANOVA_pval`, which permutes the group labels. Both draw
+#' from the caller's RNG, so call `set.seed()` beforehand to reproduce them.
+#' Every other column is deterministic.
+#'
 #' @export
 nm_compute_metrics <- function(se, assay_names = NULL,
-                               condition_col = "Condition", seed = 42L, ...) {
+                               condition_col = "Condition", ...) {
   assay_names <- .nm_assay_names(se, assay_names)
   condition   <- .nm_condition(se, condition_col)
 
@@ -1571,7 +1559,7 @@ nm_compute_metrics <- function(se, assay_names = NULL,
     mat_ok <- mat[complete.cases(mat), ]
     groups <- condition
 
-    perm <- .nm_permanova_r2(mat_ok, groups, seed = seed)
+    perm <- .nm_permanova_r2(mat_ok, groups)
 
     rows[[i]] <- data.frame(
       Method          = assay_names[i],
@@ -1584,7 +1572,7 @@ nm_compute_metrics <- function(se, assay_names = NULL,
       MDS_CophCor        = .nm_cophenetic_cor(mat_ok),
       Spectral_Entropy   = .nm_spectral_entropy(mat_ok),
       CumVar_PC2         = .nm_cumvar_pc2(mat_ok),
-      Hopkins            = .nm_hopkins(mat_ok, seed = seed),
+      Hopkins            = .nm_hopkins(mat_ok),
       Condition_Number   = .nm_condition_number(mat_ok),
       stringsAsFactors = FALSE
     )
@@ -1611,9 +1599,9 @@ nm_compute_metrics <- function(se, assay_names = NULL,
 #'
 #' @export
 nm_plot_metrics <- function(se, assay_names = NULL,
-                            condition_col = "Condition", seed = 42L, ...) {
+                            condition_col = "Condition", ...) {
   assay_names <- .nm_assay_names(se, assay_names)
-  metrics_df  <- nm_compute_metrics(se, assay_names, condition_col, seed = seed)
+  metrics_df  <- nm_compute_metrics(se, assay_names, condition_col)
   col_vector  <- .nm_prone_colors(length(assay_names))
 
   # Pivot to long format (exclude PERMANOVA_pval from plot)
@@ -2186,9 +2174,6 @@ nm_plot_final_ranking <- function(se, assay_names = NULL,
 #'   `list(cycloess = list(method = "fast", span = 0.8))`.
 #' @param base_assay Name of the baseline assay to normalize from when using
 #'   auto-normalization. Default `"log2"`.
-#' @param seed Integer. Seed passed to `nm_compute_metrics()` for the two
-#'   metrics that use randomness, the Hopkins statistic and the PERMANOVA
-#'   p-value. Default 42.
 #' @param verbose Logical. Print progress messages. Default `TRUE`.
 #' @param output_dir Character. Path to export directory. If `NULL` (default),
 #'   no files are exported. When set, tables (TSV) and/or plots (PNG) are
@@ -2207,6 +2192,8 @@ nm_plot_final_ranking <- function(se, assay_names = NULL,
 #'   (combined ranking as the mean of the five ranks `Rank_PCV`, `Rank_PMAD`,
 #'   `Rank_PEV`, `Rank_Cor` and `Rank_Sep`; `pc1_rank` and `mds1_rank` are
 #'   standalone diagnostics and do not enter it).
+#'
+#' @inheritSection nm_compute_metrics Reproducibility
 #'
 #' @examples
 #' data(nadia_dia)
@@ -2229,7 +2216,6 @@ normalization_metrics <- function(se,
                                   methods       = NULL,
                                   method_args   = list(),
                                   base_assay    = "log2",
-                                  seed          = 42L,
                                   verbose       = TRUE,
                                   output_dir    = NULL,
                                   export_plots  = TRUE,
@@ -2349,7 +2335,7 @@ normalization_metrics <- function(se,
 
   # --- Always compute metrics_table ---
   result[["metrics_table"]] <- tryCatch(
-    nm_compute_metrics(se, assay_names, condition_col, seed = seed),
+    nm_compute_metrics(se, assay_names, condition_col),
     error = function(e) {
       warning("nm_compute_metrics() failed: ", conditionMessage(e))
       NULL

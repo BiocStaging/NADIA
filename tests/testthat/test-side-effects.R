@@ -70,63 +70,45 @@ test_that("process_proteomics writes to export_dir when asked", {
 
 
 # --- The random number generator ---------------------------------------------
+#
+# NADIA never seeds the RNG itself (Bioconductor asks packages not to call
+# set.seed()). The functions that need random numbers draw them from the
+# caller's RNG: the same seed must give the same result, and a different seed a
+# different one -- which is what shows that no seed of their own overrides it.
 
-test_that(".rng_state/.rng_restore round-trip an initialised RNG", {
-    set.seed(123)
-    invisible(runif(1))
-    before <- NADIA:::.rng_state()
-
-    invisible(runif(10))                 # move the RNG on
-    expect_false(identical(NADIA:::.rng_state(), before))
-
-    NADIA:::.rng_restore(before)
-    expect_identical(NADIA:::.rng_state(), before)
-})
-
-test_that(".rng_restore leaves a virgin RNG virgin", {
-    # The least-exercised branch: if .Random.seed did not exist before the call,
-    # restoring must REMOVE the seed that set.seed() created, not leave one
-    # behind. Otherwise the helper silently initialises the user's RNG.
-    if (exists(".Random.seed", envir = globalenv(), inherits = FALSE)) {
-        saved <- get(".Random.seed", envir = globalenv(), inherits = FALSE)
-        on.exit(assign(".Random.seed", saved, envir = globalenv()), add = TRUE)
-        rm(".Random.seed", envir = globalenv())
+test_that("imputation_metrics follows the caller's seed", {
+    data(nadia_dia, package = "NADIA")
+    se_i <- im_prepare_se(nadia_dia, norm_method = "cycloess", verbose = FALSE)
+    run <- function(seed) {
+        set.seed(seed)
+        imputation_metrics(se_i, assay_name = "cycloess", methods = "MinDet",
+                           output_dir = NULL, verbose = FALSE)$metrics_table
     }
-
-    state <- NADIA:::.rng_state()
-    expect_null(state)
-
-    set.seed(99)                         # creates .Random.seed
-    expect_true(exists(".Random.seed", envir = globalenv(), inherits = FALSE))
-
-    NADIA:::.rng_restore(state)
-    expect_false(exists(".Random.seed", envir = globalenv(), inherits = FALSE))
+    a <- run(7)
+    expect_equal(a, run(7))
+    expect_false(isTRUE(all.equal(a, run(8))))
 })
 
-test_that("functions that call set.seed leave the caller's RNG untouched", {
-    data(nadia_dia, package = "NADIA")
+test_that("the stochastic imputation methods follow the caller's seed", {
+    set.seed(1)
+    x <- matrix(rnorm(60 * 6, mean = 20), nrow = 60)
+    x[sample(length(x), 40)] <- NA
 
-    set.seed(4242)
-    invisible(runif(1))
-    before <- NADIA:::.rng_state()
+    # MLE is left out: norm's generator keeps state that rngseed() does not
+    # reset, so a second call in the same session differs even with the same
+    # seed. It is reproducible only across fresh sessions.
+    methods <- "PI"
+    if (requireNamespace("mice", quietly = TRUE)) methods <- c(methods, "mice")
 
-    se_i <- im_prepare_se(nadia_dia, norm_method = "cycloess", verbose = FALSE)
-    invisible(imputation_metrics(se_i, assay_name = "cycloess",
-                                 methods = "min", output_dir = NULL,
-                                 verbose = FALSE))
-
-    expect_identical(NADIA:::.rng_state(), before)
-})
-
-test_that("a seeded analysis is reproducible", {
-    data(nadia_dia, package = "NADIA")
-    se_i <- im_prepare_se(nadia_dia, norm_method = "cycloess", verbose = FALSE)
-
-    a <- imputation_metrics(se_i, assay_name = "cycloess", methods = "MinDet",
-                            seed = 7L, output_dir = NULL, verbose = FALSE)
-    b <- imputation_metrics(se_i, assay_name = "cycloess", methods = "MinDet",
-                            seed = 7L, output_dir = NULL, verbose = FALSE)
-    expect_equal(a$metrics_table, b$metrics_table)
+    for (m in methods) {
+        run <- function(seed) {
+            set.seed(seed)
+            suppressWarnings(NADIA:::.dispatch_imputation(x, m, list()))
+        }
+        a <- run(3)
+        expect_identical(a, run(3), info = m)
+        expect_false(identical(a, run(4)), info = m)
+    }
 })
 
 

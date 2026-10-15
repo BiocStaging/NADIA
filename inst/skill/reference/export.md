@@ -146,6 +146,10 @@ it works offline as long as the `lib/` directory travels with the HTML.
 - a `.nadia` archive, or the exported tables;
 - the processing parameters and software versions (`res$parameters`,
   `sessionInfo()`);
+- the `set.seed()` called before each random step (the metrics,
+  `pattern_profiler_analysis()`, and the stochastic imputation methods). NADIA
+  never seeds the generator itself, so without it those results change between
+  runs;
 - any HTML dependency directory, if you shared interactive pages.
 
 A `.nadia` file reduces the number of files to coordinate, but it complements

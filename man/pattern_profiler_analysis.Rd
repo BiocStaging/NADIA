@@ -18,8 +18,7 @@ pattern_profiler_analysis(
   c = NULL,
   selection_method = c("xb", "consensus", "elbow"),
   min_membership = 0.25,
-  seed = 42,
-  seeds = c(42, 123, 456),
+  n_starts = 3L,
   output_file = NULL,
   verbose = TRUE
 )
@@ -57,15 +56,10 @@ comparison), "all" (ALL features, with no significance filtering),
 
 \item{min_membership}{Minimum membership threshold for inclusion in the output}
 
-\item{seed}{Integer. Seed for the Mfuzz clustering itself. Fuzzy c-means
-starts from a random partition, so the cluster labels and the memberships
-depend on it; fix it to make a run reproducible. The caller's RNG state is
-restored on exit. Default 42.}
-
-\item{seeds}{Numeric vector of seeds used when \code{auto_select_c = TRUE}: each
-candidate number of clusters is fitted once per seed and the metrics are
-averaged, so that the choice of \code{c} does not hang on a single partition.
-Default \code{c(42, 123, 456)}.}
+\item{n_starts}{Integer. Number of random starts used when
+\code{auto_select_c = TRUE}: each candidate number of clusters is fitted
+\code{n_starts} times and the metrics are averaged, so that the choice of \code{c}
+does not hang on a single partition. Default \code{3}.}
 
 \item{output_file}{Path of the output parquet file. \code{NULL} by default, which
 writes nothing to disk; the long-format data is returned regardless in the
@@ -83,6 +77,14 @@ long-format data.frame that is written when \code{output_file} is given.
 Complete clustering pipeline starting from a SummarizedExperiment.
 Writes a parquet file in LONG format for visualisation.
 }
+\section{Reproducibility}{
+
+Fuzzy c-means starts from a random partition, so the cluster labels, the
+memberships and, with \code{auto_select_c = TRUE}, the chosen number of clusters
+depend on the caller's RNG. Call \code{set.seed()} immediately before the function
+to make a run reproducible on its own, whatever ran before it.
+}
+
 \examples{
 if (requireNamespace("Mfuzz", quietly = TRUE) &&
     requireNamespace("e1071", quietly = TRUE)) {
@@ -90,6 +92,7 @@ if (requireNamespace("Mfuzz", quietly = TRUE) &&
   res <- process_proteomics(nadia_dia, verbose = FALSE)
 
   # auto_select_c = TRUE would cluster once per value of c_range
+  set.seed(42)
   pp <- pattern_profiler_analysis(
     res$se_proc,
     DEPs_results    = res$DEPs_results,

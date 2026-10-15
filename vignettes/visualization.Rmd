@@ -1438,7 +1438,7 @@ Pattern Profiler vignette provides the complete analysis reference.
   <li><code>auto_select_c</code>, <code>c_range</code>, and <code>selection_method</code>: evaluate and select a cluster number automatically.</li>
   <li><code>c</code>: fixed number of clusters used when <code>auto_select_c = FALSE</code>.</li>
   <li><code>min_membership</code>: minimum fuzzy membership retained in <code>long_output</code>.</li>
-  <li><code>seed</code> and <code>seeds</code>: make the final clustering and automatic cluster-number evaluation reproducible.</li>
+  <li><code>n_starts</code>: random starts per candidate number of clusters during automatic selection. Call <code>set.seed()</code> beforehand to make the clustering reproducible.</li>
 </ul>
 
 <p><strong>Centroid and profile charts</strong></p>
@@ -1467,6 +1467,7 @@ be compared with `auto_select_c = TRUE` and interpreted using the diagnostics
 described in the dedicated Pattern Profiler vignette.
 
 ```{r pattern-profiler-run, eval=have_pattern_profiler, results="hide"}
+set.seed(42)
 pp_vis <- pattern_profiler_analysis(
   se_proc = res$se_proc,
   DEPs_results = res$DEPs_results,
@@ -1478,7 +1479,6 @@ pp_vis <- pattern_profiler_analysis(
   auto_select_c = FALSE,
   c = 2,
   min_membership = 0.25,
-  seed = 42,
   verbose = FALSE
 )
 ```

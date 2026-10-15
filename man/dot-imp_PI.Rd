@@ -7,10 +7,14 @@
 .imp_PI(x, args = list())
 }
 \arguments{
-\item{args}{list with optional \code{width} (default 0.3), \code{downshift} (default 1.8)
-and \code{seed} (default 1234, for reproducibility of rnorm).}
+\item{args}{list with optional \code{width} (default 0.3) and \code{downshift}
+(default 1.8).}
 }
 \description{
 PI: Perseus-style imputation (down-shifted normal distribution)
+}
+\details{
+The imputed values are drawn with \code{rnorm()} from the caller's RNG.
+To reproduce a run, call \code{set.seed()} before \code{impute_proteomics()}.
 }
 \keyword{internal}

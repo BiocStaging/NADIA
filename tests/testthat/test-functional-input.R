@@ -28,10 +28,11 @@ fi_fixture <- function(min_membership = 0.25) {
 
     data(nadia_dia, package = "NADIA", envir = environment())
     res <- suppressMessages(process_proteomics(nadia_dia, verbose = FALSE))
+    set.seed(123)
     pp  <- suppressMessages(pattern_profiler_analysis(
         res$se_proc, res$DEPs_results, assay_name = "Impseqrob_min",
         auto_select_c = FALSE, c = 4, min_membership = min_membership,
-        seed = 123, verbose = FALSE))
+        verbose = FALSE))
 
     .fi_cache[[key]] <- list(pre = nadia_dia, res = res, pp = pp)
     .fi_cache[[key]]

@@ -1057,12 +1057,13 @@ Pattern Profiler analysis. The following code generates the clustering result
 <summary>Show the code used to run and store Pattern Profiler</summary>
 
 ```{r run-pattern-profiler, eval = have_pattern_profiler && requireNamespace("duckdb", quietly = TRUE), results = "hide"}
-# Generate expression-pattern clusters.
+# Generate expression-pattern clusters. Fuzzy c-means starts from a random
+# partition, so set.seed() makes the clusters reproducible.
+set.seed(123)
 pp <- pattern_profiler_analysis(
   res$se_proc,
   res$DEPs_results,
   assay_name = "Impseqrob_min",
-  seed       = 123,
   verbose    = FALSE
 )
 

@@ -11,7 +11,6 @@ im_compute_metrics(
   combo_methods = list(),
   condition_col = "Condition",
   na_prop = 0.2,
-  seed = 42L,
   pattern = "random",
   method_args = list(),
   with_value = NA_real_,
@@ -40,8 +39,6 @@ required for combo methods. Default \code{"Condition"}.}
 Only used when \code{pattern = "random"}. Ignored when \code{pattern = "from_data"}
 (NA proportion is derived from the data, replicating NAguideR).}
 
-\item{seed}{Integer. Random seed. Default 42.}
-
 \item{pattern}{Character. NA introduction pattern: \code{"random"} for uniform
 random NAs, or \code{"from_data"} to replicate NAguideR's simulation strategy
 (row ratio + per-column distribution from the actual data).}
@@ -62,12 +59,22 @@ Extracts complete-case rows from the assay, introduces artificial NAs,
 re-imputes with each method, and computes four quality metrics plus
 a combined ranking.
 }
+\section{Reproducibility}{
+
+The cells masked to build the ground truth are drawn from the caller's RNG,
+and so are the imputations of the stochastic methods (\code{MinProb}, \code{QRILC},
+\code{PI}, \code{mice}, \code{missForest}, \code{MLE}). Call \code{set.seed()} beforehand to
+reproduce a run.
+}
+
 \examples{
 data(nadia_dia)
 se <- im_prepare_se(nadia_dia, norm_method = "cycloess", verbose = FALSE)
 
 # Ground-truth simulation: complete rows are masked and re-imputed, so the
-# error of each method can be measured against the values it did not see
+# error of each method can be measured against the values it did not see.
+# The masked cells are drawn at random: set.seed() makes them reproducible.
+set.seed(42)
 metrics <- im_compute_metrics(se, methods = c("min", "zero", "knn"),
                               verbose = FALSE)
 metrics[, c("Method", "NRMSE", "SOR", "Rank_Mean")]

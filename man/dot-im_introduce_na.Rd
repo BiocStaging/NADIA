@@ -4,13 +4,7 @@
 \alias{.im_introduce_na}
 \title{Introduce artificial NAs into a complete-case matrix}
 \usage{
-.im_introduce_na(
-  mat,
-  na_prop = 0.2,
-  seed = 42L,
-  pattern = "random",
-  ref_mat = NULL
-)
+.im_introduce_na(mat, na_prop = 0.2, pattern = "random", ref_mat = NULL)
 }
 \arguments{
 \item{mat}{Numeric matrix (proteins x samples), no NAs (ground truth)}
@@ -18,8 +12,6 @@
 \item{na_prop}{Numeric (0-1). Proportion of values to set as NA.
 Default 0.20. Only used when \code{pattern = "random"};
 ignored when \code{pattern = "from_data"}.}
-
-\item{seed}{Integer. Random seed. Default 42.}
 
 \item{pattern}{Character: \code{"random"} for uniform random NAs, or
 \code{"from_data"} to replicate NAguideR's simulation strategy using
