@@ -28,6 +28,10 @@ have_pattern_profiler <- all(vapply(
   logical(1),
   quietly = TRUE
 ))
+
+# have_highcharter and prepare_vignette_highchart()
+source("highcharts-setup.R")
+have_pp_charts <- have_pattern_profiler && have_highcharter
 ```
 
 # Introduction
@@ -58,7 +62,8 @@ if (!requireNamespace("BiocManager", quietly = TRUE))
 BiocManager::install("NADIA")
 ```
 
-This vignette also uses `Mfuzz`, `arrow` and `duckdb`, which are optional;
+This vignette also uses `Mfuzz`, `highcharter`, `arrow` and `duckdb`, which
+are optional;
 `BiocManager::install("NADIA", dependencies = TRUE)` installs them together
 with NADIA.
 
@@ -515,7 +520,7 @@ Individual protein lines reveal within-cluster heterogeneity, while the centroid
 summarises the dominant pattern. Here, a membership threshold of 0.70 is used as
 a conservative starting point for displaying reliable cluster profiles.
 
-```{r individual-profile-code, eval=FALSE}
+```{r individual-profile-code, eval = if (have_pp_charts) 1 else FALSE}
 profile_plots <- cluster_profile_highchart_list(
   pp$long_output,
   conditions = pp$conditions,
@@ -526,28 +531,42 @@ profile_plots <- cluster_profile_highchart_list(
 profile_plots[[1]]
 ```
 
-The first cluster is shown below. Its interactive Highcharts object was exported
-as SVG so that the figure remains compact and can be enlarged without losing
-quality.
-
-<div class="profile-lightbox-target lightbox-figure">
-
-```{r cluster-profile-svg, echo=FALSE, out.width='100%', fig.alt='Standardised expression profiles for the 378 proteins assigned to Pattern Profiler cluster 1 with membership of at least 0.70.'}
-knitr::include_graphics(
-  "figures/pattern-profiler_cluster1-n-378-ms_0p7.svg"
+```{r cluster-shapes, include = FALSE}
+# Size and shape of each cluster at the 0.70 threshold, so that the text below
+# follows the clustering rather than describing one particular run of it: the
+# numbering of the clusters is arbitrary and changes with the random starts.
+if (have_pattern_profiler) {
+  strong <- pp$long_output[pp$long_output$Membership >= 0.70, ]
+  n_cluster <- tapply(strong$FeatureID, strong$Cluster,
+                      function(x) length(unique(x)))
+  centroid <- sapply(split(strong[, pp$conditions], strong$Cluster),
+                     function(d) apply(d, 2, median))
+  falls <- centroid["D", ] < (centroid["A", ] + centroid["B", ]) / 2
+} else {
+  n_cluster <- c("1" = NA, "2" = NA)
+  falls <- c("1" = TRUE, "2" = FALSE)
+}
+shape <- ifelse(
+  falls,
+  "remain relatively stable between `A` and `B` and then decrease in `D`",
+  "rise from `A` to `D`"
 )
+cluster_down <- names(falls)[falls][1]
+cluster_up <- names(falls)[!falls][1]
 ```
 
-</div>
+The first cluster is shown below.
 
-The thin red lines represent the 378 individual protein profiles retained at
-this threshold, and the thick dark-red line is their median centroid. Most
-proteins remain relatively stable between `A` and `B` and then decrease in `D`.
-Their concentration around the centroid indicates a coherent cluster pattern.
+::: {.interactive-chart-compact .pattern-profiler-chart}
+```{r cluster-profile-plot, echo = FALSE, eval = have_pp_charts}
+prepare_vignette_highchart(profile_plots[[1]])
+```
+:::
 
-The live object is best generated in the R session, because hundreds of
-interactive series would make the installed vignette unnecessarily large. See
-`vignette("visualization")` for additional guidance on interactive figures.
+The thin red lines represent the `r n_cluster[["1"]]` individual protein
+profiles retained at this threshold, and the thick dark-red line is their median
+centroid. Most proteins `r shape[["1"]]`. Their concentration around the
+centroid indicates a coherent cluster pattern.
 
 ## Comparing cluster centroids
 
@@ -557,7 +576,7 @@ edges of a cluster. The same membership threshold of 0.70 is applied so that
 this summary and the cluster-level figure above represent the same protein
 assignments.
 
-```{r centroid-highchart-code, eval=FALSE}
+```{r centroid-highchart-code, eval = if (have_pp_charts) 1 else FALSE}
 centroid_plot <- cluster_centroids_highchart(
   pp$long_output,
   conditions = pp$conditions,
@@ -569,22 +588,16 @@ centroid_plot <- cluster_centroids_highchart(
 centroid_plot
 ```
 
-The exported SVG retains the appearance of the interactive Highcharts object
-without embedding its JavaScript libraries in the vignette.
-
-<div class="centroid-lightbox-target lightbox-figure">
-
-```{r centroid-plot-svg, echo=FALSE, out.width='100%', fig.alt='Median standardised profiles for Pattern Profiler clusters 1 and 2 after applying a membership threshold of 0.70.'}
-knitr::include_graphics(
-  "figures/pattern-profiler_cluster_centroids.svg"
-)
+::: {.interactive-chart-compact .pattern-profiler-chart}
+```{r centroid-plot, echo = FALSE, eval = have_pp_charts}
+prepare_vignette_highchart(centroid_plot)
 ```
+:::
 
-</div>
-
-The centroids summarise 378 proteins in cluster 1 and 370 in cluster 2. Cluster
-1 remains high in `A` and `B` before decreasing in `D`, whereas cluster 2 rises
-from `A` to `D`. These opposing trajectories are expressed as within-protein
+The centroids summarise `r n_cluster[["1"]]` proteins in cluster 1 and
+`r n_cluster[["2"]]` in cluster 2. Cluster `r cluster_down` remains high in `A`
+and `B` before decreasing in `D`, whereas cluster `r cluster_up` rises from `A`
+to `D`. These opposing trajectories are expressed as within-protein
 z-scores and therefore describe relative patterns rather than absolute
 abundances.
 

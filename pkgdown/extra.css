@@ -269,21 +269,6 @@ body.nadia-lightbox-open {
   }
 }
 
-@media screen and (min-width: 768px) {
-  .volcano-ba-figure img {
-    display: block;
-    width: 110% !important;
-    height: auto !important;
-    max-width: none !important;
-    margin-left: -5%;
-  }
-}
-
-.volcano-ba-figure {
-  margin-top: 1.8em;
-  margin-bottom: 1.8em;
-}
-
 .default-call {
   margin: 1em 0 1.25em;
   border: 1px solid #c8d3dc;
@@ -642,7 +627,6 @@ img[src$="LFQ_Input_Structure.svg"] {
   .confusion-plot-110 img,
   .metrics-heatmap-110 img,
   .roc-plot-110 img,
-  .volcano-plot-110 img,
   .multiple-confusion-plot-110 img,
   .multiple-ranking-plot-110 img {
     width: 110% !important;
@@ -662,10 +646,6 @@ img[src$="LFQ_Input_Structure.svg"] {
 }
 
 .roc-plot-110 {
-  margin: 1.8em 0;
-}
-
-.volcano-plot-110 {
   margin: 1.8em 0;
 }
 
@@ -825,22 +805,6 @@ img[src$="LFQ_Input_Structure.svg"] {
 .cluster-summary-table .horizontal-scroll > table {
   margin-left: 0 !important;
   margin-right: 0 !important;
-}
-
-.profile-lightbox-target,
-.centroid-lightbox-target {
-  margin-top: 1.8em;
-}
-
-@media screen and (min-width: 768px) {
-  .profile-lightbox-target img,
-  .centroid-lightbox-target img {
-    display: block;
-    width: 110% !important;
-    height: auto !important;
-    max-width: none !important;
-    margin-left: -5%;
-  }
 }
 
 /* --------------------------------------------------------------------------

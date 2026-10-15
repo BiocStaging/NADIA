@@ -15,6 +15,8 @@ vignette: >
 
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>", crop = NULL)
+# have_highcharter and prepare_vignette_highchart()
+source("highcharts-setup.R")
 ```
 
 # Introduction
@@ -82,7 +84,8 @@ if (!requireNamespace("BiocManager", quietly = TRUE))
 BiocManager::install("NADIA")
 ```
 
-This vignette also uses `ComplexHeatmap` and `tidyHeatmap`, which are optional;
+This vignette also uses `ComplexHeatmap`, `tidyHeatmap` and `highcharter`,
+which are optional;
 `BiocManager::install("NADIA", dependencies = TRUE)` installs them together
 with NADIA.
 
@@ -662,7 +665,7 @@ NADIA produces interactive volcano plots, boxplots and PCA projections through
 Highcharts. Each function returns a named list whose elements correspond —
 depending on the module — to comparisons, assays or protein selection modes:
 
-```{r hc, eval = FALSE}
+```{r hc, eval = if (have_highcharter) 1:3 else FALSE}
 volcano <- volcano_highchart_list(res$DEPs_results)
 boxplot <- boxplot_highchart_list(res$BoxPlot_Input)
 pca     <- pca_highchart_list(res$PCA_Input)
@@ -671,24 +674,17 @@ volcano[["B-A"]]
 ```
 
 `volcano[["B-A"]]`, for example, selects the volcano plot for the `B-A`
-comparison.
+comparison. It shows the results obtained from the matrix normalised with
+`cycloess` and imputed with the default `Impseqrob_min` strategy:
 
-The following static image provides a preview of that interactive volcano plot
-for the `B-A` comparison. It shows the results obtained from the matrix
-normalised with `cycloess` and imputed with the default `Impseqrob_min` strategy:
-
-<div class="volcano-ba-figure lightbox-figure">
-
-```{r volcano-ba-static, echo = FALSE, fig.align = "center", out.width = "100%", fig.cap = "Static SVG preview of the interactive volcano plot for the B-A comparison using the cycloess-normalised and Impseqrob_min-imputed matrix.", fig.alt = "Volcano plot for the B-A comparison. The horizontal axis shows log2 fold change and the vertical axis shows minus log10 p-value; significant up-regulated proteins are blue, significant down-regulated proteins are red, and non-significant proteins are grey."}
-knitr::include_graphics("figures/Volcano_B-A_impseqrob-min.svg")
+::: {.interactive-chart-compact .volcano-chart}
+```{r volcano-ba, echo = FALSE, eval = have_highcharter}
+prepare_vignette_highchart(volcano[["B-A"]])
 ```
+:::
 
-</div>
-
-The interactive figures themselves are not rendered in this vignette, to keep
-the document small.
-`vignette("visualization")` shows interactive versions of the three modules and explains
-their main customisation options. `vignette("results-and-export")` describes how
+`vignette("visualization")` shows interactive versions of the three modules and
+explains their main customisation options. `vignette("results-and-export")` describes how
 to save each widget as an HTML file.
 
 All three take their input from `res`, so they can equally be built from a saved

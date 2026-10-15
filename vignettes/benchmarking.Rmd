@@ -15,6 +15,8 @@ vignette: >
 
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>", crop = NULL)
+# have_highcharter and prepare_vignette_highchart()
+source("highcharts-setup.R")
 ```
 
 # Introduction
@@ -771,30 +773,17 @@ comparison in `hc_volcano_list`. The interactive version allows individual
 proteins to be examined by hovering over the points and species to be shown or
 hidden from the legend.
 
-::: {.benchmark-warning}
-**Why is a static image shown?** To keep the installed vignette within
-Bioconductor size guidance, the interactive plot is exported as an SVG.
-See `vignette("visualization")` for guidance on working with live interactive
-figures.
-:::
-
 The following code retrieves the plot for `B-A`:
 
 ```{r bench-volcano, eval = FALSE}
 bench$hc_volcano_list[["B-A"]]
 ```
 
-The exported SVG version is shown below.
-
-<div class="volcano-plot-110">
-
-::: {.lightbox-figure}
-```{r bench-volcano-svg, echo = FALSE, out.width = "110%", fig.alt = "Benchmark volcano plot for B-A, with proteins coloured by species and expected fold changes marked", fig.cap = "Benchmark volcano plot for the B-A comparison."}
-knitr::include_graphics("figures/benchmark-volcano-b-a-im.svg")
+::: {.interactive-chart-compact .volcano-chart}
+```{r bench-volcano-plot, echo = FALSE, eval = have_highcharter}
+prepare_vignette_highchart(bench$hc_volcano_list[["B-A"]])
 ```
 :::
-
-</div>
 
 Colouring proteins by species turns the volcano plot into a diagnostic view of
 the spike-in experiment. Human background proteins are shown in grey and

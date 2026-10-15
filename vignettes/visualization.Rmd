@@ -38,30 +38,9 @@ have_pattern_profiler <- all(vapply(
   quietly = TRUE
 ))
 
-# highcharter 0.9.5 declares every Highcharts module for every widget. Some of
-# those modules contain literal HTML closing tags, which can be exposed as text
-# when Pandoc embeds the dependencies in a self-contained BiocStyle vignette.
-# The examples below need only the core and highcharts-more modules. Exporting
-# remains available in ordinary NADIA use and is documented later in the text.
-prepare_vignette_highchart <- function(widget) {
-  widget <- highcharter::hc_exporting(widget, enabled = FALSE)
-
-  highcharts_dir <- system.file(
-    "htmlwidgets/lib/highcharts",
-    package = "highcharter"
-  )
-
-  slim_dependency <- htmltools::htmlDependency(
-    name = "highcharts",
-    version = "9.3.1.9000",
-    src = c(file = highcharts_dir),
-    script = c("highcharts.js", "highcharts-more.js", "custom/reset.js"),
-    all_files = FALSE
-  )
-
-  widget$dependencies <- c(widget$dependencies, list(slim_dependency))
-  widget
-}
+# prepare_vignette_highchart(): see highcharts-setup.R, shared with the other
+# vignettes that render Highcharts widgets.
+source("highcharts-setup.R")
 ```
 
 # Introduction
