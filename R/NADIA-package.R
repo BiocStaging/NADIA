@@ -60,14 +60,13 @@
 #' @importFrom methods new
 #' @importFrom grDevices col2rgb colorRampPalette
 #'
-#' @importFrom highcharter highchart hc_add_series hc_chart hc_colors hc_exporting hc_legend hc_plotOptions hc_subtitle hc_title hc_tooltip hc_xAxis hc_yAxis hcaes
 #' @importFrom htmltools browsable div span tagList tags HTML
 #' @importFrom htmlwidgets JS
-#' @importFrom reactable colDef colGroup reactable reactableLang reactableTheme
 "_PACKAGE"
 
-# Note: `JS` is re-exported by both highcharter and htmlwidgets. It is imported
-# only from htmlwidgets so as not to cause a name clash in the NAMESPACE.
+# highcharter and reactable are in Suggests, so nothing is imported from them:
+# they are called as pkg::fun, and each function that needs them checks for
+# them on entry with .check_suggests().
 
 
 # =============================================================================

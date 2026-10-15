@@ -204,7 +204,8 @@ detect_condition_columns <- function(data) {
 #' @return highchart object
 #'
 #' @examples
-#' if (requireNamespace("Mfuzz", quietly = TRUE) &&
+#' if (requireNamespace("highcharter", quietly = TRUE) &&
+#'     requireNamespace("Mfuzz", quietly = TRUE) &&
 #'     requireNamespace("e1071", quietly = TRUE)) {
 #'   data(nadia_dia)
 #'   res <- process_proteomics(nadia_dia, verbose = FALSE)
@@ -231,6 +232,7 @@ cluster_profile_highchart <- function(data,
                                        centroid_width = 3,
                                        title = NULL,
                                        height = NULL) {
+  .check_suggests("highcharter", "cluster_profile_highchart()")
 
   centroid_summary <- match.arg(centroid_summary)
 
@@ -354,15 +356,15 @@ cluster_profile_highchart <- function(data,
   # ---------------------------------------------------------------------------
   # Build the highchart
   # ---------------------------------------------------------------------------
-  hc <- highchart() |>
-    hc_chart(
+  hc <- highcharter::highchart() |>
+    highcharter::hc_chart(
       type = "line",
       backgroundColor = "#FFFFFF",
       style = list(fontFamily = "Inter, -apple-system, sans-serif"),
       height = height,
       zoomType = "xy"
     ) |>
-    hc_title(
+    highcharter::hc_title(
       text = title,
       style = list(
         fontSize = "18px",
@@ -370,7 +372,7 @@ cluster_profile_highchart <- function(data,
         color = "#1D3557"
       )
     ) |>
-    hc_xAxis(
+    highcharter::hc_xAxis(
       categories = as.list(unname(conditions)),
       title = list(
         text = "Condition",
@@ -390,7 +392,7 @@ cluster_profile_highchart <- function(data,
       tickColor = "#DEE2E6",
       gridLineWidth = 0
     ) |>
-    hc_yAxis(
+    highcharter::hc_yAxis(
       title = list(
         text = "z-score",
         style = list(
@@ -419,7 +421,7 @@ cluster_profile_highchart <- function(data,
         )
       )
     ) |>
-    hc_tooltip(
+    highcharter::hc_tooltip(
       useHTML = TRUE,
       backgroundColor = "rgba(255, 255, 255, 0.95)",
       borderColor = "#DEE2E6",
@@ -435,7 +437,7 @@ cluster_profile_highchart <- function(data,
         "</div>"
       )
     ) |>
-    hc_legend(
+    highcharter::hc_legend(
       enabled = show_centroid,
       layout = "horizontal",
       align = "center",
@@ -446,7 +448,7 @@ cluster_profile_highchart <- function(data,
         color = "#495057"
       )
     ) |>
-    hc_exporting(
+    highcharter::hc_exporting(
       enabled = TRUE,
       buttons = list(
         contextButton = list(
@@ -457,7 +459,7 @@ cluster_profile_highchart <- function(data,
 
   # Add the profile series
   for (series in profile_series) {
-    hc <- hc |> hc_add_series(
+    hc <- hc |> highcharter::hc_add_series(
       name = series$name,
       type = series$type,
       data = series$data,
@@ -471,7 +473,7 @@ cluster_profile_highchart <- function(data,
 
   # Add the centroid
   if (!is.null(centroid_series)) {
-    hc <- hc |> hc_add_series(
+    hc <- hc |> highcharter::hc_add_series(
       name = centroid_series$name,
       type = centroid_series$type,
       data = centroid_series$data,
@@ -507,7 +509,8 @@ cluster_profile_highchart <- function(data,
 #' @return Named list of highchart objects
 #'
 #' @examples
-#' if (requireNamespace("Mfuzz", quietly = TRUE) &&
+#' if (requireNamespace("highcharter", quietly = TRUE) &&
+#'     requireNamespace("Mfuzz", quietly = TRUE) &&
 #'     requireNamespace("e1071", quietly = TRUE)) {
 #'   data(nadia_dia)
 #'   res <- process_proteomics(nadia_dia, verbose = FALSE)
@@ -533,6 +536,7 @@ cluster_profile_highchart_list <- function(data,
                                             line_opacity = 0.4,
                                             centroid_width = 3,
                                             height = NULL) {
+  .check_suggests("highcharter", "cluster_profile_highchart_list()")
 
   centroid_summary <- match.arg(centroid_summary)
 
@@ -598,7 +602,8 @@ cluster_profile_highchart_list <- function(data,
 #' @return highchart object
 #'
 #' @examples
-#' if (requireNamespace("Mfuzz", quietly = TRUE) &&
+#' if (requireNamespace("highcharter", quietly = TRUE) &&
+#'     requireNamespace("Mfuzz", quietly = TRUE) &&
 #'     requireNamespace("e1071", quietly = TRUE)) {
 #'   data(nadia_dia)
 #'   res <- process_proteomics(nadia_dia, verbose = FALSE)
@@ -625,6 +630,7 @@ cluster_centroids_highchart <- function(data,
                                          show_markers = TRUE,
                                          title = NULL,
                                          height = NULL) {
+  .check_suggests("highcharter", "cluster_centroids_highchart()")
 
   centroid_summary <- match.arg(centroid_summary)
 
@@ -680,15 +686,15 @@ cluster_centroids_highchart <- function(data,
   }
 
   # Build the highchart
-  hc <- highchart() |>
-    hc_chart(
+  hc <- highcharter::highchart() |>
+    highcharter::hc_chart(
       type = "line",
       backgroundColor = "#FFFFFF",
       style = list(fontFamily = "Inter, -apple-system, sans-serif"),
       height = height,
       zoomType = "xy"
     ) |>
-    hc_title(
+    highcharter::hc_title(
       text = title,
       style = list(
         fontSize = "18px",
@@ -696,7 +702,7 @@ cluster_centroids_highchart <- function(data,
         color = "#1D3557"
       )
     ) |>
-    hc_xAxis(
+    highcharter::hc_xAxis(
       categories = as.list(unname(conditions)),
       title = list(
         text = "Condition",
@@ -715,7 +721,7 @@ cluster_centroids_highchart <- function(data,
       lineColor = "#DEE2E6",
       tickColor = "#DEE2E6"
     ) |>
-    hc_yAxis(
+    highcharter::hc_yAxis(
       title = list(
         text = "z-score",
         style = list(
@@ -742,7 +748,7 @@ cluster_centroids_highchart <- function(data,
         )
       )
     ) |>
-    hc_tooltip(
+    highcharter::hc_tooltip(
       useHTML = TRUE,
       backgroundColor = "rgba(255, 255, 255, 0.95)",
       borderColor = "#DEE2E6",
@@ -756,7 +762,7 @@ cluster_centroids_highchart <- function(data,
         "</div>"
       )
     ) |>
-    hc_legend(
+    highcharter::hc_legend(
       enabled = TRUE,
       layout = "horizontal",
       align = "center",
@@ -766,7 +772,7 @@ cluster_centroids_highchart <- function(data,
         fontWeight = "normal"
       )
     ) |>
-    hc_exporting(
+    highcharter::hc_exporting(
       enabled = TRUE,
       buttons = list(
         contextButton = list(
@@ -790,7 +796,7 @@ cluster_centroids_highchart <- function(data,
     series_color <- unname(item$color)
     darker_color <- .darken_hex(series_color, 0.2)
 
-    hc <- hc |> hc_add_series(
+    hc <- hc |> highcharter::hc_add_series(
       name = sprintf("Cluster %d (n=%d)", item$cluster, item$n_proteins),
       type = "line",
       data = points,

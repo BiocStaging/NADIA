@@ -73,17 +73,19 @@ Automatically builds PCA plots for "all", "any" and/or specific comparisons.
 Similar to factoextra::fviz_pca_ind with ellipse options.
 }
 \examples{
-data(nadia_dia)
-res <- process_proteomics(nadia_dia, verbose = FALSE)
+if (requireNamespace("highcharter", quietly = TRUE)) {
+  data(nadia_dia)
+  res <- process_proteomics(nadia_dia, verbose = FALSE)
 
-# One PCA over all proteins and one over the significant ones
-hc_pcas <- pca_highchart_list(
-  res$PCA_Input,
-  modes         = c("all", "any"),
-  group_order   = c("A", "B", "D"),
-  ellipse_type  = "confidence",
-  ellipse_level = 0.95
-)
-names(hc_pcas)
+  # One PCA over all proteins and one over the significant ones
+  hc_pcas <- pca_highchart_list(
+    res$PCA_Input,
+    modes         = c("all", "any"),
+    group_order   = c("A", "B", "D"),
+    ellipse_type  = "confidence",
+    ellipse_level = 0.95
+  )
+  names(hc_pcas)
+}
 
 }

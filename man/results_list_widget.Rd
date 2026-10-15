@@ -60,7 +60,8 @@ embedded CSS. The result is browsable: printing it at the console opens it
 automatically in the RStudio Viewer or in the browser.
 }
 \examples{
-if (requireNamespace("crosstalk", quietly = TRUE)) {
+if (requireNamespace("reactable", quietly = TRUE) &&
+    requireNamespace("crosstalk", quietly = TRUE)) {
   data(nadia_dia)
   res <- process_proteomics(nadia_dia, verbose = FALSE)
 

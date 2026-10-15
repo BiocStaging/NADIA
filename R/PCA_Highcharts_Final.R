@@ -309,23 +309,25 @@ compute_confidence_ellipse <- function(scores_df,
 #' @return A highchart object
 #'
 #' @examples
-#' # The scores are normally built internally by pca_highchart_list();
-#' # this is the layout the function expects (one row per sample).
-#' scores <- data.frame(
-#'   SampleID  = paste(rep(c("A", "B", "D"), each = 4), 1:4, sep = "_"),
-#'   Condition = rep(c("A", "B", "D"), each = 4),
-#'   Replicate = rep(1:4, times = 3),
-#'   PC1 = c(-5.1, -4.6, -5.4, -4.9, 0.4, 0.9, 0.2, 0.7, 4.8, 5.2, 4.5, 5.0),
-#'   PC2 = c(1.2, 0.7, -0.9, -1.1, 2.4, 1.8, -1.6, -2.2, 0.9, 0.4, -0.8, -1.3),
-#'   PC1_Perc = 62.4,
-#'   PC2_Perc = 18.7,
-#'   Subset = "All proteins",
-#'   stringsAsFactors = FALSE
-#' )
+#' if (requireNamespace("highcharter", quietly = TRUE)) {
+#'   # The scores are normally built internally by pca_highchart_list();
+#'   # this is the layout the function expects (one row per sample).
+#'   scores <- data.frame(
+#'     SampleID  = paste(rep(c("A", "B", "D"), each = 4), 1:4, sep = "_"),
+#'     Condition = rep(c("A", "B", "D"), each = 4),
+#'     Replicate = rep(1:4, times = 3),
+#'     PC1 = c(-5.1, -4.6, -5.4, -4.9, 0.4, 0.9, 0.2, 0.7, 4.8, 5.2, 4.5, 5.0),
+#'     PC2 = c(1.2, 0.7, -0.9, -1.1, 2.4, 1.8, -1.6, -2.2, 0.9, 0.4, -0.8, -1.3),
+#'     PC1_Perc = 62.4,
+#'     PC2_Perc = 18.7,
+#'     Subset = "All proteins",
+#'     stringsAsFactors = FALSE
+#'   )
 #'
-#' hc <- pca_highchart(scores, group_order = c("A", "B", "D"),
-#'                     ellipse_type = "confidence", show_labels = TRUE)
-#' class(hc)
+#'   hc <- pca_highchart(scores, group_order = c("A", "B", "D"),
+#'                       ellipse_type = "confidence", show_labels = TRUE)
+#'   class(hc)
+#' }
 #'
 #' @export
 pca_highchart <- function(scores_df,
@@ -342,6 +344,7 @@ pca_highchart <- function(scores_df,
                           point_size = 5,
                           show_labels = FALSE,
                           label_size = 10) {
+  .check_suggests("highcharter", "pca_highchart()")
 
   ellipse_type <- match.arg(ellipse_type)
 
@@ -460,14 +463,14 @@ pca_highchart <- function(scores_df,
   # ---------------------------------------------------------------------------
   # 6) Build the base highchart
   # ---------------------------------------------------------------------------
-  hc <- highchart() |>
-    hc_chart(
+  hc <- highcharter::highchart() |>
+    highcharter::hc_chart(
       type = "scatter",
       zoomType = "xy",
       backgroundColor = "#FFFFFF",
       style = list(fontFamily = "Inter, -apple-system, sans-serif")
     ) |>
-    hc_title(
+    highcharter::hc_title(
       text = chart_title,
       style = list(
         fontSize = "18px",
@@ -475,7 +478,7 @@ pca_highchart <- function(scores_df,
         color = "#1D3557"
       )
     ) |>
-    hc_xAxis(
+    highcharter::hc_xAxis(
       title = list(
         text = x_lab,
         style = list(
@@ -493,7 +496,7 @@ pca_highchart <- function(scores_df,
         list(value = 0, color = "#ADB5BD", width = 1, dashStyle = "Dash", zIndex = 1)
       )
     ) |>
-    hc_yAxis(
+    highcharter::hc_yAxis(
       title = list(
         text = y_lab,
         style = list(
@@ -511,7 +514,7 @@ pca_highchart <- function(scores_df,
         list(value = 0, color = "#ADB5BD", width = 1, dashStyle = "Dash", zIndex = 1)
       )
     ) |>
-    hc_legend(
+    highcharter::hc_legend(
       enabled = TRUE,
       layout = "horizontal",
       align = "center",
@@ -523,7 +526,7 @@ pca_highchart <- function(scores_df,
       ),
       itemHoverStyle = list(color = "#1D3557")
     ) |>
-    hc_plotOptions(
+    highcharter::hc_plotOptions(
       scatter = list(
         marker = list(
           radius = point_size,
@@ -537,7 +540,7 @@ pca_highchart <- function(scores_df,
         )
       )
     ) |>
-    hc_exporting(
+    highcharter::hc_exporting(
       enabled = TRUE,
       buttons = list(
         contextButton = list(
@@ -593,7 +596,7 @@ pca_highchart <- function(scores_df,
     }
 
     hc <- hc |>
-      hc_add_series(
+      highcharter::hc_add_series(
         data = pts,
         type = "scatter",
         id = group_id,
@@ -649,7 +652,7 @@ pca_highchart <- function(scores_df,
       })
 
       hc <- hc |>
-        hc_add_series(
+        highcharter::hc_add_series(
           data = pts,
           type = "polygon",
           name = as.character(g),
@@ -705,18 +708,20 @@ pca_highchart <- function(scores_df,
 #' @return Named list of highchart objects
 #'
 #' @examples
-#' data(nadia_dia)
-#' res <- process_proteomics(nadia_dia, verbose = FALSE)
+#' if (requireNamespace("highcharter", quietly = TRUE)) {
+#'   data(nadia_dia)
+#'   res <- process_proteomics(nadia_dia, verbose = FALSE)
 #'
-#' # One PCA over all proteins and one over the significant ones
-#' hc_pcas <- pca_highchart_list(
-#'   res$PCA_Input,
-#'   modes         = c("all", "any"),
-#'   group_order   = c("A", "B", "D"),
-#'   ellipse_type  = "confidence",
-#'   ellipse_level = 0.95
-#' )
-#' names(hc_pcas)
+#'   # One PCA over all proteins and one over the significant ones
+#'   hc_pcas <- pca_highchart_list(
+#'     res$PCA_Input,
+#'     modes         = c("all", "any"),
+#'     group_order   = c("A", "B", "D"),
+#'     ellipse_type  = "confidence",
+#'     ellipse_level = 0.95
+#'   )
+#'   names(hc_pcas)
+#' }
 #'
 #' @export
 pca_highchart_list <- function(pca_input,
@@ -737,6 +742,7 @@ pca_highchart_list <- function(pca_input,
                                center = TRUE,
                                scale. = TRUE,
                                filter_samples_to_comparison = FALSE) {
+  .check_suggests("highcharter", "pca_highchart_list()")
 
   ellipse_type <- match.arg(ellipse_type)
 

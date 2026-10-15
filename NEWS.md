@@ -15,6 +15,10 @@ Changes made in response to the Bioconductor review.
   as before).
 * `limma`, `rrcovNA` and `pROC` move from `Suggests` to `Imports`: the default
   workflow and the benchmark metrics now run with a standard installation.
+* `highcharter` and `reactable` move to `Suggests`, so the interactive figures
+  and tables, and with them the Highcharts licence, are an explicit choice.
+  The functions that need them say so when they are missing, and
+  `benchmarking_proteomics()` skips its interactive volcano plots.
 * `proteomics_heatmap()` no longer changes ComplexHeatmap's `message` option
   for the rest of the session.
 

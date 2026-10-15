@@ -144,7 +144,7 @@
 #' @return A reactableTheme object
 #' @noRd
 .rl_theme <- function() {
-  reactableTheme(
+  reactable::reactableTheme(
     cellPadding = "8px 12px",
     highlightColor = "rgba(2,144,82,0.1)",
     stripedColor = "rgba(180, 220, 210, 0.2)",
@@ -161,7 +161,7 @@
 #' @return A reactableTheme object
 #' @noRd
 .pl_theme <- function() {
-  reactableTheme(
+  reactable::reactableTheme(
     cellPadding = "8px 12px",
     highlightColor = "rgba(31, 78, 120, 0.10)",
     stripedColor = "rgba(180, 200, 230, 0.20)",
@@ -178,7 +178,7 @@
 #' @return A reactableTheme object
 #' @noRd
 .ql_theme <- function() {
-  reactableTheme(
+  reactable::reactableTheme(
     cellPadding = "8px 12px",
     highlightColor = "rgba(102, 5, 5, 0.10)",
     stripedColor = "rgba(230, 180, 180, 0.12)",
@@ -244,7 +244,7 @@
 #' @return A reactableLang object
 #' @noRd
 .rl_lang <- function() {
-  reactableLang(
+  reactable::reactableLang(
     searchPlaceholder = "Search...",
     pagePrevious      = "Previous",
     pageNext          = "Next",
@@ -357,14 +357,14 @@
 
   cols <- list(
     # --- Comparison (1st) ---
-    Comparison = colDef(
+    Comparison = reactable::colDef(
       name = "Comparison",
       width = 120,
       align = "center"
     ),
 
     # --- Protein Groups (2nd) ---
-    Protein.IDs = colDef(
+    Protein.IDs = reactable::colDef(
       name = "Protein Groups",
       width = 160,
       html = TRUE,
@@ -382,14 +382,14 @@
 
   # --- Description (3rd, conditional) ---
   if (has_description) {
-    cols$Description <- colDef(
+    cols$Description <- reactable::colDef(
       name = "Description",
       minWidth = 250
     )
   }
 
   # --- Gene Names (4th) ---
-  cols$Gene.Names <- colDef(
+  cols$Gene.Names <- reactable::colDef(
     name = "Gene Names",
     minWidth = 140,
     html = TRUE,
@@ -407,7 +407,7 @@
 
   # --- Quant_Pepts (5th, conditional) ---
   if (has_quant_pepts) {
-    cols$Quant_Pepts <- colDef(
+    cols$Quant_Pepts <- reactable::colDef(
       name = "Quant Pepts",
       width = 110,
       align = "center",
@@ -418,7 +418,7 @@
   }
 
   # --- Change (badge) ---
-  cols$Change <- colDef(
+  cols$Change <- reactable::colDef(
     name = "Change",
     width = 130,
     align = "center",
@@ -433,7 +433,7 @@
   )
 
   # --- logFC (value + bar coloured by Change) ---
-  cols$logFC <- colDef(
+  cols$logFC <- reactable::colDef(
     name = "log\u2082 FC",
     width = 160,
     align = "center",
@@ -465,7 +465,7 @@
   )
 
   # --- P-value ---
-  cols$P.Value <- colDef(
+  cols$P.Value <- reactable::colDef(
     name = "P-value",
     width = 110,
     align = "right",
@@ -478,7 +478,7 @@
   )
 
   # --- FDR ---
-  cols$adj.P.Val <- colDef(
+  cols$adj.P.Val <- reactable::colDef(
     name = "FDR",
     width = 120,
     align = "right",
@@ -499,30 +499,30 @@
 
   # --- Assay ---
   if (has_assay) {
-    cols$Assay <- colDef(name = "Method", width = 130, show = !single_assay)
+    cols$Assay <- reactable::colDef(name = "Method", width = 130, show = !single_assay)
   }
 
   # --- Missing% in rating style with a coloured circle ---
   if (show_missing) {
-    cols$MissGlobal <- colDef(
+    cols$MissGlobal <- reactable::colDef(
       name = "% Global", width = 110, align = "center", class = "missing-cell",
       header = function(value) htmltools::tags$span(title = "Percentage of NAs across all samples in the experiment", value),
       filterable = TRUE, filterInput = .numeric_filter_hidden, filterMethod = .numeric_filter_method,
       cell = .missing_cell_js, style = .missing_style_js
     )
-    cols$MissComp <- colDef(
+    cols$MissComp <- reactable::colDef(
       name = "% Comp", width = 110, align = "center", class = "missing-cell",
       header = function(value) htmltools::tags$span(title = "Percentage of NAs across the replicates of the two conditions compared", value),
       filterable = TRUE, filterInput = .numeric_filter_hidden, filterMethod = .numeric_filter_method,
       cell = .missing_cell_js, style = .missing_style_js
     )
-    cols$MissCND1 <- colDef(
+    cols$MissCND1 <- reactable::colDef(
       name = "% Cond 1", width = 110, align = "center", class = "missing-cell",
       header = function(value) htmltools::tags$span(title = "Percentage of NAs in the numerator", value),
       filterable = TRUE, filterInput = .numeric_filter_hidden, filterMethod = .numeric_filter_method,
       cell = .missing_cell_js, style = .missing_style_js
     )
-    cols$MissCND2 <- colDef(
+    cols$MissCND2 <- reactable::colDef(
       name = "% Cond 2", width = 110, align = "center", class = "missing-cell",
       header = function(value) htmltools::tags$span(title = "Percentage of NAs in the denominator", value),
       filterable = TRUE, filterInput = .numeric_filter_hidden, filterMethod = .numeric_filter_method,
@@ -566,16 +566,18 @@
 #' @return A reactable object
 #'
 #' @examples
-#' data(nadia_dia)
-#' res <- process_proteomics(nadia_dia, verbose = FALSE)
+#' if (requireNamespace("reactable", quietly = TRUE)) {
+#'   data(nadia_dia)
+#'   res <- process_proteomics(nadia_dia, verbose = FALSE)
 #'
-#' # protein_quant adds the Description and Quant_Pepts columns
-#' tbl <- results_list_reactable(
-#'   res$DEPs_results,
-#'   protein_quant = nadia_dia$protein_quant,
-#'   comparisons   = "B-A"
-#' )
-#' class(tbl)
+#'   # protein_quant adds the Description and Quant_Pepts columns
+#'   tbl <- results_list_reactable(
+#'     res$DEPs_results,
+#'     protein_quant = nadia_dia$protein_quant,
+#'     comparisons   = "B-A"
+#'   )
+#'   class(tbl)
+#' }
 #'
 #' @export
 results_list_reactable <- function(
@@ -592,6 +594,7 @@ results_list_reactable <- function(
     selection = NULL,
     searchable = TRUE
 ) {
+  .check_suggests("reactable", "results_list_reactable()")
 
   # --- Load and validate ---
   df <- .rl_load_data(data)
@@ -636,7 +639,7 @@ results_list_reactable <- function(
   desired_order <- intersect(desired_order, names(df))
   df <- df[, c(desired_order, setdiff(names(df), desired_order)), drop = FALSE]
 
-  reactable(
+  reactable::reactable(
     df,
     elementId     = element_id,
     defaultSorted = "adj.P.Val",
@@ -646,7 +649,7 @@ results_list_reactable <- function(
     resizable   = TRUE,
     selection   = selection,
     onClick     = if (!is.null(selection)) "select" else NULL,
-    defaultColDef = colDef(
+    defaultColDef = reactable::colDef(
       align = "left",
       headerStyle = list(
         background  = "rgba(14, 102, 85, 0.9)",
@@ -696,7 +699,8 @@ results_list_reactable <- function(
 #' @return A browsable htmltools object
 #'
 #' @examples
-#' if (requireNamespace("crosstalk", quietly = TRUE)) {
+#' if (requireNamespace("reactable", quietly = TRUE) &&
+#'     requireNamespace("crosstalk", quietly = TRUE)) {
 #'   data(nadia_dia)
 #'   res <- process_proteomics(nadia_dia, verbose = FALSE)
 #'
@@ -721,11 +725,7 @@ results_list_widget <- function(
     selection = NULL,
     searchable = TRUE
 ) {
-
-  if (!requireNamespace("crosstalk", quietly = TRUE)) {
-    stop("The 'crosstalk' package is required for the interactive filters. ",
-         "Install it with install.packages('crosstalk')")
-  }
+  .check_suggests(c("reactable", "crosstalk"), "results_list_widget()")
 
   # --- Load, join and pre-filter ---
   df <- .rl_load_data(data)
@@ -1005,7 +1005,7 @@ results_list_widget <- function(
                              show_missing_cols, has_description, has_quant_pepts)
 
   # --- Reactable table with SharedData ---
-  tbl <- reactable(
+  tbl <- reactable::reactable(
     shared_data,
     elementId     = element_id,
     defaultSorted = "adj.P.Val",
@@ -1015,7 +1015,7 @@ results_list_widget <- function(
     resizable   = TRUE,
     selection   = selection,
     onClick     = if (!is.null(selection)) "select" else NULL,
-    defaultColDef = colDef(
+    defaultColDef = reactable::colDef(
       align = "left",
       headerStyle = list(
         background  = "rgba(14, 102, 85, 0.9)",
@@ -1188,7 +1188,7 @@ results_list_widget <- function(
 .pl_build_columns <- function(sample_map, max_per_col) {
   cols <- list()
 
-  cols$PG.ProteinGroups <- colDef(
+  cols$PG.ProteinGroups <- reactable::colDef(
     name = "Protein Groups",
     minWidth = 160,
     sticky = "left",
@@ -1204,13 +1204,13 @@ results_list_widget <- function(
     }")
   )
 
-  cols$PG.ProteinDescriptions <- colDef(
+  cols$PG.ProteinDescriptions <- reactable::colDef(
     name = "Descriptions",
     minWidth = 220,
     sticky = "left"
   )
 
-  cols$PG.Genes <- colDef(
+  cols$PG.Genes <- reactable::colDef(
     name = "Gene Names",
     minWidth = 120,
     sticky = "left",
@@ -1226,7 +1226,7 @@ results_list_widget <- function(
     }")
   )
 
-  cols$PG.MolecularWeight <- colDef(
+  cols$PG.MolecularWeight <- reactable::colDef(
     name = "MW [kDa]",
     width = 95,
     align = "right",
@@ -1273,7 +1273,7 @@ results_list_widget <- function(
       .numeric_filter_method
     }
 
-    cols[[col_id]] <- colDef(
+    cols[[col_id]] <- reactable::colDef(
       name = paste(cond, replicate, sep = "_"),
       width = 72,
       align = "center",
@@ -1300,7 +1300,7 @@ results_list_widget <- function(
   groups <- list()
 
   if (length(static_cols) > 0) {
-    groups[[length(groups) + 1]] <- colGroup(
+    groups[[length(groups) + 1]] <- reactable::colGroup(
       name = "PROTEIN ANNOTATION",
       columns = static_cols,
       sticky = "left"
@@ -1317,7 +1317,7 @@ results_list_widget <- function(
   for (m in names(metric_labels)) {
     cols <- sample_map$column[sample_map$metric == m]
     if (length(cols) == 0) next
-    groups[[length(groups) + 1]] <- colGroup(
+    groups[[length(groups) + 1]] <- reactable::colGroup(
       name = metric_labels[[m]],
       columns = cols
     )
@@ -1568,7 +1568,7 @@ results_list_widget <- function(
 .ql_build_columns <- function(sample_map, df) {
   cols <- list()
 
-  cols$PG.ProteinGroups <- colDef(
+  cols$PG.ProteinGroups <- reactable::colDef(
     name = "Protein Groups",
     minWidth = 160,
     sticky = "left",
@@ -1584,13 +1584,13 @@ results_list_widget <- function(
     }")
   )
 
-  cols$PG.ProteinDescriptions <- colDef(
+  cols$PG.ProteinDescriptions <- reactable::colDef(
     name = "Descriptions",
     minWidth = 220,
     sticky = "left"
   )
 
-  cols$PG.Genes <- colDef(
+  cols$PG.Genes <- reactable::colDef(
     name = "Gene Names",
     minWidth = 120,
     sticky = "left",
@@ -1606,7 +1606,7 @@ results_list_widget <- function(
     }")
   )
 
-  cols$PG.MolecularWeight <- colDef(
+  cols$PG.MolecularWeight <- reactable::colDef(
     name = "MW [kDa]",
     width = 95,
     align = "right",
@@ -1631,7 +1631,7 @@ results_list_widget <- function(
       if (val == null || isNaN(val)) return '<span class=\"pl-plain-value pl-bar-empty\">-</span>';
       return '<span class=\"pl-plain-value\">' + (%s) + '</span>';
     }", gs$fmt))
-    cols[[gs$id]] <- colDef(
+    cols[[gs$id]] <- reactable::colDef(
       name = gs$name,
       width = gs$width,
       align = "center",
@@ -1679,7 +1679,7 @@ results_list_widget <- function(
 
     col_width <- if (metric == "PG.Quantity") 88 else 72
 
-    cols[[col_id]] <- colDef(
+    cols[[col_id]] <- reactable::colDef(
       name = paste(cond, replicate, sep = "_"),
       width = col_width,
       align = "center",
@@ -1707,7 +1707,7 @@ results_list_widget <- function(
   groups <- list()
 
   if (length(static_cols) > 0) {
-    groups[[length(groups) + 1]] <- colGroup(
+    groups[[length(groups) + 1]] <- reactable::colGroup(
       name = "PROTEIN ANNOTATION",
       columns = static_cols,
       sticky = "left"
@@ -1715,7 +1715,7 @@ results_list_widget <- function(
   }
 
   if (length(global_cols) > 0) {
-    groups[[length(groups) + 1]] <- colGroup(
+    groups[[length(groups) + 1]] <- reactable::colGroup(
       name = "GLOBAL IDENTIFICATION DATA",
       columns = global_cols
     )
@@ -1730,7 +1730,7 @@ results_list_widget <- function(
   for (m in names(metric_labels)) {
     cc <- sample_map$column[sample_map$metric == m]
     if (length(cc) == 0) next
-    groups[[length(groups) + 1]] <- colGroup(
+    groups[[length(groups) + 1]] <- reactable::colGroup(
       name = metric_labels[[m]],
       columns = cc
     )
@@ -1830,7 +1830,7 @@ results_list_widget <- function(
 #' @return A reactableTheme object
 #' @noRd
 .sl_theme <- function() {
-  reactableTheme(
+  reactable::reactableTheme(
     cellPadding = "8px 12px",
     highlightColor = "rgba(0, 0, 0, 0.06)",
     stripedColor = "rgba(0, 0, 0, 0.0)",
@@ -1882,7 +1882,7 @@ results_list_widget <- function(
 
   cols <- list()
 
-  cols$FileName <- colDef(
+  cols$FileName <- reactable::colDef(
     name     = "FileName",
     sticky   = "left",
     minWidth = 360,
@@ -1903,7 +1903,7 @@ results_list_widget <- function(
     filterable = TRUE
   )
 
-  cols$Condition <- colDef(
+  cols$Condition <- reactable::colDef(
     name     = "Condition",
     minWidth = 105,
     align    = "center",
@@ -1912,7 +1912,7 @@ results_list_widget <- function(
     filterable = FALSE
   )
 
-  cols$Replicate <- colDef(
+  cols$Replicate <- reactable::colDef(
     name     = "Replicate",
     minWidth = 90,
     align    = "center",
@@ -1920,7 +1920,7 @@ results_list_widget <- function(
     filterable = FALSE
   )
 
-  cols$Coding <- colDef(
+  cols$Coding <- reactable::colDef(
     name     = "Coding",
     minWidth = 105,
     align    = "center",
@@ -1932,7 +1932,7 @@ results_list_widget <- function(
   # Only the count columns that are present (absent from LFQ/TMT metadata)
   for (nm in intersect(c("# Unique PSMs", "# Unique Peptides", "# Protein Groups"),
                        names(df))) {
-    cols[[nm]] <- colDef(
+    cols[[nm]] <- reactable::colDef(
       name        = nm,
       minWidth    = 145,
       align       = "center",
@@ -1987,12 +1987,14 @@ results_list_widget <- function(
 #' @return A reactable object.
 #'
 #' @examples
-#' data(nadia_dia)
+#' if (requireNamespace("reactable", quietly = TRUE)) {
+#'   data(nadia_dia)
 #'
-#' # metadata$Coding fixes the order of the sample columns
-#' tbl <- protein_list_reactable(nadia_dia$protein_id,
-#'                               metadata = nadia_dia$metadata)
-#' class(tbl)
+#'   # metadata$Coding fixes the order of the sample columns
+#'   tbl <- protein_list_reactable(nadia_dia$protein_id,
+#'                                 metadata = nadia_dia$metadata)
+#'   class(tbl)
+#' }
 #'
 #' @export
 protein_list_reactable <- function(
@@ -2004,6 +2006,7 @@ protein_list_reactable <- function(
     selection = NULL,
     searchable = TRUE
 ) {
+  .check_suggests("reactable", "protein_list_reactable()")
   df <- .pl_load_data(data)
   sample_map <- .pl_parse_samples(names(df))
 
@@ -2041,7 +2044,7 @@ protein_list_reactable <- function(
   cols <- .pl_build_columns(sample_map, max_per_col)
   groups <- .pl_build_column_groups(sample_map, static_cols)
 
-  reactable(
+  reactable::reactable(
     df,
     elementId     = element_id,
     defaultSorted = list(PG.ProteinGroups = "asc"),
@@ -2051,7 +2054,7 @@ protein_list_reactable <- function(
     resizable   = TRUE,
     selection   = selection,
     onClick     = if (!is.null(selection)) "select" else NULL,
-    defaultColDef = colDef(
+    defaultColDef = reactable::colDef(
       align = "left",
       headerStyle = list(
         background  = "rgba(31, 78, 120, 0.9)",
@@ -2098,7 +2101,7 @@ protein_list_reactable <- function(
 #' @return A browsable htmltools object.
 #'
 #' @examples
-#' if (requireNamespace("jsonlite", quietly = TRUE)) {
+#' if (requireNamespace("reactable", quietly = TRUE)) {
 #'   data(nadia_dia)
 #'
 #'   w <- protein_list_widget(nadia_dia$protein_id,
@@ -2116,6 +2119,7 @@ protein_list_widget <- function(
     selection = NULL,
     searchable = TRUE
 ) {
+  .check_suggests("reactable", "protein_list_widget()")
 
   df <- .pl_load_data(data)
   sample_map <- .pl_parse_samples(names(df))
@@ -2462,7 +2466,7 @@ protein_list_widget <- function(
   )
 
   # --- Table ---
-  tbl <- reactable(
+  tbl <- reactable::reactable(
     df,
     elementId     = element_id,
     defaultSorted = list(PG.ProteinGroups = "asc"),
@@ -2472,7 +2476,7 @@ protein_list_widget <- function(
     resizable   = TRUE,
     selection   = selection,
     onClick     = if (!is.null(selection)) "select" else NULL,
-    defaultColDef = colDef(
+    defaultColDef = reactable::colDef(
       align = "left",
       headerStyle = list(
         background  = "rgba(31, 78, 120, 0.9)",
@@ -2535,7 +2539,7 @@ protein_list_widget <- function(
 #' @return A browsable object.
 #'
 #' @examples
-#' if (requireNamespace("jsonlite", quietly = TRUE)) {
+#' if (requireNamespace("reactable", quietly = TRUE)) {
 #'   data(nadia_dia)
 #'   res <- process_proteomics(nadia_dia, verbose = FALSE)
 #'
@@ -2560,6 +2564,7 @@ quant_list_widget <- function(
     selection   = NULL,
     searchable  = TRUE
 ) {
+  .check_suggests("reactable", "quant_list_widget()")
 
   if (is.null(data) || is.null(matrix_data))
     stop("'data' and 'matrix_data' are required: supply a data frame, or the ",
@@ -2923,7 +2928,7 @@ quant_list_widget <- function(
     )
   )
 
-  tbl <- reactable(
+  tbl <- reactable::reactable(
     df,
     elementId     = element_id,
     defaultSorted = list(PG.ProteinGroups = "asc"),
@@ -2933,7 +2938,7 @@ quant_list_widget <- function(
     resizable   = TRUE,
     selection   = selection,
     onClick     = if (!is.null(selection)) "select" else NULL,
-    defaultColDef = colDef(
+    defaultColDef = reactable::colDef(
       align = "left",
       headerStyle = list(
         background  = "rgba(102, 5, 5, 0.9)",
@@ -2995,7 +3000,7 @@ quant_list_widget <- function(
 #' @return An htmltools object (browsable tagList) ready to be rendered.
 #'
 #' @examples
-#' if (requireNamespace("jsonlite", quietly = TRUE)) {
+#' if (requireNamespace("reactable", quietly = TRUE)) {
 #'   data(nadia_dia)
 #'
 #'   # LFQ/TMT metadata lack the identification counts; the widget then shows
@@ -3013,6 +3018,7 @@ summary_list_widget <- function(
     selection  = NULL,
     searchable = FALSE
 ) {
+  .check_suggests("reactable", "summary_list_widget()")
 
   if (is.null(data))
     stop("'data' is required: supply the sample metadata as a data frame, or ",
@@ -3311,7 +3317,7 @@ summary_list_widget <- function(
   ")
 
   # --- Table ---
-  tbl <- reactable(
+  tbl <- reactable::reactable(
     df,
     elementId           = element_id,
     defaultPageSize     = page_size,
@@ -3320,7 +3326,7 @@ summary_list_widget <- function(
     resizable           = TRUE,
     selection           = selection,
     onClick             = if (!is.null(selection)) "select" else NULL,
-    defaultColDef = colDef(
+    defaultColDef = reactable::colDef(
       align = "left",
       headerStyle = list(
         background     = "#1a1a1a",

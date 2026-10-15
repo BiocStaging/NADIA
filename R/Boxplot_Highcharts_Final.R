@@ -62,17 +62,19 @@ calc_boxplot_stats <- function(x, coef = 1.5) {
 #' @return List of highchart objects (one per assay)
 #'
 #' @examples
-#' data(nadia_dia)
-#' res <- process_proteomics(nadia_dia, verbose = FALSE)
+#' if (requireNamespace("highcharter", quietly = TRUE)) {
+#'   data(nadia_dia)
+#'   res <- process_proteomics(nadia_dia, verbose = FALSE)
 #'
-#' # One boxplot per assay; keep only the imputed one
-#' hc_list <- boxplot_highchart_list(
-#'   res$BoxPlot_Input,
-#'   assays      = "Impseqrob_min",
-#'   group_order = c("A", "B", "D"),
-#'   title       = "Boxplot: {assay}"
-#' )
-#' names(hc_list)
+#'   # One boxplot per assay; keep only the imputed one
+#'   hc_list <- boxplot_highchart_list(
+#'     res$BoxPlot_Input,
+#'     assays      = "Impseqrob_min",
+#'     group_order = c("A", "B", "D"),
+#'     title       = "Boxplot: {assay}"
+#'   )
+#'   names(hc_list)
+#' }
 #'
 #' @export
 boxplot_highchart_list <- function(
@@ -90,6 +92,7 @@ boxplot_highchart_list <- function(
     horizontal = TRUE,
     height = NULL
 ) {
+  .check_suggests("highcharter", "boxplot_highchart_list()")
 
   # ---------------------------------------------------------------------------
   # 1) Input validation
@@ -312,15 +315,15 @@ boxplot_highchart_list <- function(
     }
 
     # Build the highchart
-    hc <- highchart() %>%
-      hc_chart(
+    hc <- highcharter::highchart() %>%
+      highcharter::hc_chart(
         type = "boxplot",
         inverted = horizontal,
         backgroundColor = "#FFFFFF",
         style = list(fontFamily = "Inter, -apple-system, sans-serif"),
         height = height
       ) %>%
-      hc_title(
+      highcharter::hc_title(
         text = chart_title,
         style = list(
           fontSize = "18px",
@@ -328,7 +331,7 @@ boxplot_highchart_list <- function(
           color = "#1D3557"
         )
       ) %>%
-      hc_xAxis(
+      highcharter::hc_xAxis(
         categories = samples,
         title = list(
           text = "Samples",
@@ -348,7 +351,7 @@ boxplot_highchart_list <- function(
         tickColor = "#DEE2E6",
         gridLineWidth = 0
       ) %>%
-      hc_yAxis(
+      highcharter::hc_yAxis(
         title = list(
           text = "log<sub>2</sub> Intensity",
           useHTML = TRUE,
@@ -369,7 +372,7 @@ boxplot_highchart_list <- function(
         gridLineColor = "#F1F3F4",
         gridLineDashStyle = "Dot"
       ) %>%
-      hc_legend(
+      highcharter::hc_legend(
         enabled = TRUE,
         layout = "horizontal",
         align = "center",
@@ -381,7 +384,7 @@ boxplot_highchart_list <- function(
         ),
         itemHoverStyle = list(color = "#1D3557")
       ) %>%
-      hc_plotOptions(
+      highcharter::hc_plotOptions(
         boxplot = list(
           grouping = FALSE,  # IMPORTANT: keeps the series from being placed side by side
           groupPadding = 0.1,
@@ -393,7 +396,7 @@ boxplot_highchart_list <- function(
           jitter = list(x = 0, y = 0)  # The jitter is already applied manually
         )
       ) %>%
-      hc_exporting(
+      highcharter::hc_exporting(
         enabled = TRUE,
         buttons = list(
           contextButton = list(
@@ -406,7 +409,7 @@ boxplot_highchart_list <- function(
     # Add the boxplot series (one per group so the legend stays interactive)
     # -------------------------------------------------------------------------
     for (box_series in boxplot_series_list) {
-      hc <- hc %>% hc_add_series(
+      hc <- hc %>% highcharter::hc_add_series(
         id = box_series$id,
         name = box_series$name,
         type = "boxplot",
@@ -440,7 +443,7 @@ boxplot_highchart_list <- function(
     # Add the outlier series (linked to the boxplots)
     # -------------------------------------------------------------------------
     for (outlier_series in outlier_series_list) {
-      hc <- hc %>% hc_add_series(
+      hc <- hc %>% highcharter::hc_add_series(
         name = outlier_series$name,
         type = "scatter",
         data = outlier_series$data,
@@ -455,7 +458,7 @@ boxplot_highchart_list <- function(
     # Subtitle
     if (!is.null(subtitle)) {
       sub_text <- gsub("{assay}", current_assay, as.character(subtitle), fixed = TRUE)
-      hc <- hc %>% hc_subtitle(
+      hc <- hc %>% highcharter::hc_subtitle(
         text = sub_text,
         style = list(
           fontSize = "13px",

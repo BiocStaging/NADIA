@@ -220,6 +220,7 @@ test_that("the DIA-NN pipeline runs to completion", {
 })
 
 test_that("the reactable tables open on a DIA-NN object", {
+    skip_if_not_installed("reactable")
     # This is what the fabricated precursor families are for. The two loaders
     # abort without them, and no other format in the package exercises a metric
     # family that is entirely NA.

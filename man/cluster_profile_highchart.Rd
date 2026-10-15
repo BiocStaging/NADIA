@@ -52,7 +52,8 @@ Builds an interactive plot showing the expression profiles of the proteins in
 a given cluster.
 }
 \examples{
-if (requireNamespace("Mfuzz", quietly = TRUE) &&
+if (requireNamespace("highcharter", quietly = TRUE) &&
+    requireNamespace("Mfuzz", quietly = TRUE) &&
     requireNamespace("e1071", quietly = TRUE)) {
   data(nadia_dia)
   res <- process_proteomics(nadia_dia, verbose = FALSE)

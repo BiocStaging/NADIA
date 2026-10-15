@@ -163,12 +163,14 @@ test_that("benchmarking validates the species table", {
 })
 
 test_that("the reactable modules name the column they are missing", {
+    skip_if_not_installed("reactable")
     expect_error(protein_list_reactable(data.frame(nonsense = 1)),
                  "PG.ProteinGroups", fixed = TRUE)
     expect_error(results_list_reactable(data.frame(nonsense = 1)))
 })
 
 test_that("quant_list_widget requires ProteinGroups in the processed matrix", {
+    skip_if_not_installed("reactable")
     data(nadia_dia, package = "NADIA")
     expect_error(
         quant_list_widget(nadia_dia$protein_quant,
@@ -194,4 +196,14 @@ test_that("the heatmap requires a comparison in the targeted mode", {
 
     expect_error(proteomics_heatmap(res$PCA_Input, mode = "target"),
                  "comparison", ignore.case = TRUE)
+})
+
+test_that("a missing suggested package is named, with how to install it", {
+    expect_error(.check_suggests("notAPackage0", "f()"),
+                 "f() requires 'notAPackage0'. Install it with BiocManager::install(\"notAPackage0\").",
+                 fixed = TRUE)
+    expect_error(.check_suggests(c("stats", "notAPackage0", "notAPackage1"), "f()"),
+                 "Install them with BiocManager::install(c(\"notAPackage0\", \"notAPackage1\")).",
+                 fixed = TRUE)
+    expect_true(.check_suggests("stats", "f()"))
 })

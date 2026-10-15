@@ -97,6 +97,7 @@ test_that("no exported default argument points at data-raw/ or results/", {
 })
 
 test_that("the widgets that lost their defaults now say so", {
+    skip_if_not_installed("reactable")
     expect_error(quant_list_widget(), "'data' and 'matrix_data' are required")
     expect_error(summary_list_widget(), "'data' is required")
 })

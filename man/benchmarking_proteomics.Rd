@@ -59,7 +59,8 @@ List with:
 \item gg_auc_bars: ggplot2 AUC bar chart
 \item gg_metrics_bars: ggplot2 grouped metrics bar chart
 \item gg_signif_bars: ggplot2 significant proteins stacked bars (absolute)
-\item hc_volcano_list: Named list of Highcharter volcano plots
+\item hc_volcano_list: Named list of Highcharter volcano plots (empty
+if the suggested package highcharter is not installed)
 \item parameters: List of parameters used
 }
 }

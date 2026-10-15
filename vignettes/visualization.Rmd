@@ -582,6 +582,8 @@ and educational use under its non-commercial terms, while organisational,
 production, and commercial uses could require a commercial licence. Users
 should check the current [Highcharts licence](https://shop.highcharts.com/license-eula)
 for their intended use. The static heatmap workflow does not use Highcharts.
+highcharter is a suggested package, not a required one: it is not installed
+with NADIA unless requested, so these figures are always an explicit choice.
 :::
 
 # Volcano plots

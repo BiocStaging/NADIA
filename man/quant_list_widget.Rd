@@ -45,7 +45,7 @@ filters and Excel export. It appends to Protein_QUANT the 16 columns of the
 normalized/imputed log2 matrix, matching by Protein Groups.
 }
 \examples{
-if (requireNamespace("jsonlite", quietly = TRUE)) {
+if (requireNamespace("reactable", quietly = TRUE)) {
   data(nadia_dia)
   res <- process_proteomics(nadia_dia, verbose = FALSE)
 

@@ -40,7 +40,7 @@ shades and Condition/Coding cells with a strong colour chip (the same scheme
 used by protein_list_widget() / quant_list_widget()).
 }
 \examples{
-if (requireNamespace("jsonlite", quietly = TRUE)) {
+if (requireNamespace("reactable", quietly = TRUE)) {
   data(nadia_dia)
 
   # LFQ/TMT metadata lack the identification counts; the widget then shows

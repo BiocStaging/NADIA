@@ -45,7 +45,7 @@ per-condition tint, reproducing the manual layout.
 }
 }
 \examples{
-if (requireNamespace("jsonlite", quietly = TRUE)) {
+if (requireNamespace("reactable", quietly = TRUE)) {
   data(nadia_dia)
 
   w <- protein_list_widget(nadia_dia$protein_id,

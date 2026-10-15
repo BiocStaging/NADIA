@@ -146,21 +146,6 @@ importFrom(grDevices,
   col2rgb,
   colorRampPalette
 )
-importFrom(highcharter,
-  hc_add_series,
-  hc_chart,
-  hc_colors,
-  hc_exporting,
-  hc_legend,
-  hc_plotOptions,
-  hc_subtitle,
-  hc_title,
-  hc_tooltip,
-  hc_xAxis,
-  hc_yAxis,
-  hcaes,
-  highchart
-)
 importFrom(htmltools,
   HTML,
   browsable,
@@ -172,13 +157,6 @@ importFrom(htmltools,
 importFrom(htmlwidgets,JS)
 importFrom(magrittr,"%>%")
 importFrom(methods,new)
-importFrom(reactable,
-  colDef,
-  colGroup,
-  reactable,
-  reactableLang,
-  reactableTheme
-)
 importFrom(rlang,
   ":=",
   .data

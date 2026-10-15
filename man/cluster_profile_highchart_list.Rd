@@ -48,7 +48,8 @@ Named list of highchart objects
 Builds a list of interactive plots for all the clusters.
 }
 \examples{
-if (requireNamespace("Mfuzz", quietly = TRUE) &&
+if (requireNamespace("highcharter", quietly = TRUE) &&
+    requireNamespace("Mfuzz", quietly = TRUE) &&
     requireNamespace("e1071", quietly = TRUE)) {
   data(nadia_dia)
   res <- process_proteomics(nadia_dia, verbose = FALSE)

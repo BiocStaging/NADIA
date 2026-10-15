@@ -147,8 +147,8 @@ BiocManager::install("NADIA")
 
 This installs the packages in the `Imports:` field of `DESCRIPTION`. Those in
 `Suggests:` are needed only by particular methods or functions: `mice` when that
-imputation method is selected, for instance, or `Mfuzz` for the Pattern
-Profiler. When one is missing, NADIA names it and explains how to install it.
+imputation method is selected, for instance, `Mfuzz` for the Pattern Profiler,
+or `highcharter` and `reactable` for the interactive figures and tables. When one is missing, NADIA names it and explains how to install it.
 To install them all at once:
 
 ```r
@@ -170,9 +170,11 @@ licence may be required. Users should consult the current
 complies with the applicable licence.
 
 NADIA's statistical analysis does not depend on producing interactive figures.
-The static visualisations produced with ggplot2 and ComplexHeatmap can be used
-instead, and the complete workflow can be run without generating a single
-Highcharts figure.
+`highcharter` is in `Suggests:`, so it is installed only with
+`dependencies = TRUE` or on its own, and using Highcharts is always an explicit
+choice. The static visualisations produced with ggplot2 and ComplexHeatmap can
+be used instead, and the complete workflow can be run without generating a
+single Highcharts figure.
 
 ## A first analysis
 

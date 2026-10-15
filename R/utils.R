@@ -174,6 +174,39 @@
 
 
 # =============================================================================
+# Packages in Suggests
+# =============================================================================
+
+#' Stop with an informative error if a suggested package is not installed
+#'
+#' Every package in `Suggests` is checked with this helper at the entry of the
+#' function that needs it, so that a missing package says what to install
+#' instead of failing deep inside the code with "there is no package called".
+#'
+#' @param pkgs Names of the packages required.
+#' @param what Short description of what needs them, used as the subject of
+#'   the error message (e.g. `"volcano_highchart_list()"`).
+#' @return `TRUE`, invisibly, if every package is installed.
+#' @keywords internal
+#' @noRd
+.check_suggests <- function(pkgs, what) {
+  missing_pkgs <- pkgs[!vapply(pkgs, requireNamespace, logical(1),
+                               quietly = TRUE)]
+  if (length(missing_pkgs) > 0) {
+    stop(what, " requires ",
+         paste(sprintf("'%s'", missing_pkgs), collapse = ", "),
+         ". Install ", if (length(missing_pkgs) > 1) "them" else "it",
+         " with BiocManager::install(",
+         if (length(missing_pkgs) > 1) "c(" else "",
+         paste(sprintf('"%s"', missing_pkgs), collapse = ", "),
+         if (length(missing_pkgs) > 1) ")" else "", ").",
+         call. = FALSE)
+  }
+  invisible(TRUE)
+}
+
+
+# =============================================================================
 # Mfuzz dependencies that must be attached
 # =============================================================================
 #

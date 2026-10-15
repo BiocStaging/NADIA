@@ -123,6 +123,8 @@ test_that("imputed_values doubles as the MAR/MNAR mask", {
 
 test_that("the plotting functions work straight off the file", {
     skip_if_no_duckdb()
+    skip_if_not_installed("highcharter")
+    skip_if_not_installed("reactable")
     x    <- local_nadia()
     db   <- read_nadia(x$file)
     back <- nadia_result(db)
@@ -252,6 +254,7 @@ test_that("a Pattern Profiler run is added to an existing file", {
     skip_if_not_installed("Mfuzz")
     skip_if_not_installed("Biobase")
     skip_if_not_installed("e1071")
+    skip_if_not_installed("highcharter")
 
     x  <- local_nadia()
     pp <- suppressMessages(pattern_profiler_analysis(

@@ -1791,18 +1791,21 @@ benchmark_roc_gg <- function(
 #' @return Highchart object
 #'
 #' @examples
-#' data(nadia_dia)
-#' de <- process_proteomics(nadia_dia, verbose = FALSE)$DEPs_results
-#' sp <- utils::read.delim(system.file("extdata", "nadia_dia_spikein.tsv.gz",
-#'                                     package = "NADIA"))
-#' de$Species <- sp$PG.OrganismId[match(de$Protein.IDs, sp$PG.ProteinGroups)]
-#' ev <- data.frame(Comparison = rep(c("B-A", "D-A"), each = 2),
-#'                  Species = c("ECOLI", "YEAST"),
-#'                  expected_logFC = c(1, -0.58, 2, -3.3))
-#' disp <- compute_dispersion_metrics(de, ev)
-#' benchmark_volcano_hc(de[de$Comparison == "B-A", ],
-#'                      ev[ev$Comparison == "B-A", ],
-#'                      disp_comp = disp[disp$Comparison == "B-A", ])
+#' if (requireNamespace("highcharter", quietly = TRUE)) {
+#'   data(nadia_dia)
+#'   de <- process_proteomics(nadia_dia, verbose = FALSE)$DEPs_results
+#'   sp <- utils::read.delim(system.file("extdata", "nadia_dia_spikein.tsv.gz",
+#'                                       package = "NADIA"))
+#'   de$Species <- sp$PG.OrganismId[match(de$Protein.IDs, sp$PG.ProteinGroups)]
+#'   ev <- data.frame(Comparison = rep(c("B-A", "D-A"), each = 2),
+#'                    Species = c("ECOLI", "YEAST"),
+#'                    expected_logFC = c(1, -0.58, 2, -3.3))
+#'   disp <- compute_dispersion_metrics(de, ev)
+#'   benchmark_volcano_hc(de[de$Comparison == "B-A", ],
+#'                        ev[ev$Comparison == "B-A", ],
+#'                        disp_comp = disp[disp$Comparison == "B-A", ])
+#' }
+#'
 #' @export
 benchmark_volcano_hc <- function(
     de_res_comp,
@@ -1816,9 +1819,7 @@ benchmark_volcano_hc <- function(
     title = NULL,
     height = NULL
 ) {
-  if (!requireNamespace("highcharter", quietly = TRUE)) {
-    stop("The 'highcharter' package is required")
-  }
+  .check_suggests("highcharter", "benchmark_volcano_hc()")
 
   p_col <- .detect_p_col(de_res_comp, p_col)
 
@@ -2140,17 +2141,20 @@ benchmark_volcano_hc <- function(
 #' @return Named list of highchart objects
 #'
 #' @examples
-#' data(nadia_dia)
-#' de <- process_proteomics(nadia_dia, verbose = FALSE)$DEPs_results
-#' sp <- utils::read.delim(system.file("extdata", "nadia_dia_spikein.tsv.gz",
-#'                                     package = "NADIA"))
-#' de$Species <- sp$PG.OrganismId[match(de$Protein.IDs, sp$PG.ProteinGroups)]
-#' ev <- data.frame(Comparison = rep(c("B-A", "D-A"), each = 2),
-#'                  Species = c("ECOLI", "YEAST"),
-#'                  expected_logFC = c(1, -0.58, 2, -3.3))
-#' volcanoes <- benchmark_volcano_hc_list(de, ev)
-#' names(volcanoes)
-#' volcanoes[["B-A"]]
+#' if (requireNamespace("highcharter", quietly = TRUE)) {
+#'   data(nadia_dia)
+#'   de <- process_proteomics(nadia_dia, verbose = FALSE)$DEPs_results
+#'   sp <- utils::read.delim(system.file("extdata", "nadia_dia_spikein.tsv.gz",
+#'                                       package = "NADIA"))
+#'   de$Species <- sp$PG.OrganismId[match(de$Protein.IDs, sp$PG.ProteinGroups)]
+#'   ev <- data.frame(Comparison = rep(c("B-A", "D-A"), each = 2),
+#'                    Species = c("ECOLI", "YEAST"),
+#'                    expected_logFC = c(1, -0.58, 2, -3.3))
+#'   volcanoes <- benchmark_volcano_hc_list(de, ev)
+#'   names(volcanoes)
+#'   volcanoes[["B-A"]]
+#' }
+#'
 #' @export
 benchmark_volcano_hc_list <- function(
     de_res,
@@ -2166,6 +2170,7 @@ benchmark_volcano_hc_list <- function(
     height = NULL,
     species_df = NULL
 ) {
+  .check_suggests("highcharter", "benchmark_volcano_hc_list()")
   # Prepare data
   prep <- .prepare_benchmark_data(de_res, ev, alpha, lfc_thr, p_col,
                                   comparisons, assay, species_df)
@@ -2370,7 +2375,8 @@ benchmark_volcano_hc_list <- function(
 #'     \item gg_auc_bars: ggplot2 AUC bar chart
 #'     \item gg_metrics_bars: ggplot2 grouped metrics bar chart
 #'     \item gg_signif_bars: ggplot2 significant proteins stacked bars (absolute)
-#'     \item hc_volcano_list: Named list of Highcharter volcano plots
+#'     \item hc_volcano_list: Named list of Highcharter volcano plots (empty
+#'       if the suggested package highcharter is not installed)
 #'     \item parameters: List of parameters used
 #'   }
 #'
@@ -2572,8 +2578,13 @@ benchmarking_proteomics <- function(
     NULL
   })
 
-  # Highcharter volcano
-  hc_volcano_list <- tryCatch({
+  # Highcharter volcano. highcharter is in Suggests: without it the rest of the
+  # benchmark is still complete, so the interactive volcanoes are skipped.
+  hc_volcano_list <- if (!requireNamespace("highcharter", quietly = TRUE)) {
+    message("highcharter is not installed: the interactive volcano plots ",
+            "are skipped. Install it with BiocManager::install(\"highcharter\").")
+    list()
+  } else tryCatch({
     if (verbose) message("  - Benchmark volcano plots (Highcharter)")
     benchmark_volcano_hc_list(
       de_res, ev, disp = dispersion_df,

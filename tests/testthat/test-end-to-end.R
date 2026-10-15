@@ -114,6 +114,7 @@ test_that("every pairwise contrast is built beyond three conditions", {
 
 
 test_that("the visualisation modules accept the pipeline output unchanged", {
+    skip_if_not_installed("highcharter")
     data(nadia_dia, package = "NADIA")
     res <- process_proteomics(nadia_dia, verbose = FALSE)
 
@@ -129,6 +130,7 @@ test_that("the visualisation modules accept the pipeline output unchanged", {
 })
 
 test_that("pca_highchart_list takes comparison names as modes", {
+    skip_if_not_installed("highcharter")
     # `modes` accepts "all", "any" and any comparison name. Before Phase 3 an
     # unrecognised mode aborted; now it warns and is skipped, which is what lets
     # a mixed vector be passed without checking each entry first.
@@ -146,6 +148,7 @@ test_that("pca_highchart_list takes comparison names as modes", {
 
 
 test_that("the reactable modules accept the pipeline output unchanged", {
+    skip_if_not_installed("reactable")
     data(nadia_dia, package = "NADIA")
     res <- process_proteomics(nadia_dia, verbose = FALSE)
 
@@ -157,6 +160,7 @@ test_that("the reactable modules accept the pipeline output unchanged", {
 })
 
 test_that("summary_list_widget degrades gracefully for TMT metadata", {
+    skip_if_not_installed("reactable")
     # Proteome Discoverer does not export the Spectronaut identification counts.
     # The widget must show the columns it has instead of aborting.
     tmt <- preprocess_tmt(
@@ -169,6 +173,7 @@ test_that("summary_list_widget degrades gracefully for TMT metadata", {
 
 
 test_that("the widgets ship their JavaScript, with no CDN reference", {
+    skip_if_not_installed("reactable")
     # The Excel export must work offline, which means the libraries have to be
     # inside the package and served as htmlDependency objects.
     js <- list.files(system.file("js", package = "NADIA"), recursive = TRUE)
