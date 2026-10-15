@@ -58,6 +58,10 @@ wrap_heatmap_with_title <- function(hm, title, title_size = 14, title_face = "bo
 print.proteomics_heatmap <- function(x, ...) {
   hm <- x$heatmap
 
+  old_ht_message <- ComplexHeatmap::ht_opt("message")
+  ComplexHeatmap::ht_opt(message = FALSE)
+  on.exit(ComplexHeatmap::ht_opt(message = old_ht_message), add = TRUE)
+
   # Convert the InputHeatmap into a ComplexHeatmap using tidyHeatmap's method
   if (inherits(hm, "InputHeatmap")) {
     # Either use as.list to pull out the components and rebuild the object,
@@ -650,9 +654,12 @@ proteomics_heatmap <- function(data,
   scale_data <- match.arg(scale_data)
   heatmap_title_face <- match.arg(heatmap_title_face)
 
-  # Silence ComplexHeatmap's messages (use_raster, magick)
-  # Set for the whole session, since the messages appear when drawing, not when creating
+  # Silence ComplexHeatmap's messages (use_raster, magick) while this call draws,
+  # and give the user back the value they had. The messages appear when drawing,
+  # so print.proteomics_heatmap() silences them the same way.
+  old_ht_message <- ComplexHeatmap::ht_opt("message")
   ComplexHeatmap::ht_opt(message = FALSE)
+  on.exit(ComplexHeatmap::ht_opt(message = old_ht_message), add = TRUE)
 
   # Resolve border_color
   rect_gp <- NULL

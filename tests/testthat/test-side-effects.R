@@ -187,3 +187,32 @@ test_that("pattern_profiler_analysis restores the search path, even on failure",
                                            verbose = FALSE))
     expect_identical(search(), before)
 })
+
+
+# --- Other packages' options -------------------------------------------------
+
+test_that("proteomics_heatmap and its print method leave ht_opt as they found it", {
+    # ComplexHeatmap emits its messages when the heatmap is drawn, not when it
+    # is built, so both calls silence them. Neither may leave them silenced.
+    skip_if_not_installed("ComplexHeatmap")
+    skip_if_not_installed("tidyHeatmap")
+
+    data(nadia_dia, package = "NADIA")
+    res <- process_proteomics(nadia_dia, verbose = FALSE)
+
+    old <- ComplexHeatmap::ht_opt("message")
+    on.exit(ComplexHeatmap::ht_opt(message = old), add = TRUE)
+
+    for (user_value in c(TRUE, FALSE)) {
+        ComplexHeatmap::ht_opt(message = user_value)
+        hm <- suppressWarnings(proteomics_heatmap(res$PCA_Input, mode = "any"))
+        expect_identical(ComplexHeatmap::ht_opt("message"), user_value)
+
+        f <- tempfile(fileext = ".png")
+        grDevices::png(f)
+        suppressWarnings(print(hm))
+        grDevices::dev.off()
+        unlink(f)
+        expect_identical(ComplexHeatmap::ht_opt("message"), user_value)
+    }
+})
