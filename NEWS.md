@@ -21,7 +21,9 @@ Changes made in response to the Bioconductor review.
   `benchmarking_proteomics()` skips its interactive volcano plots.
 * `paletteer` moves to `Suggests`: it is needed only for palettes given as
   `"package::palette"`, and its absence is now always an error that says what
-  to install, where two functions used to fall back silently to the default.
+  to install. The p-value annotation of `proteomics_heatmap()` used to ignore
+  the requested palette silently, and the Pattern Profiler charts with a
+  warning; both now stop instead of drawing a palette nobody asked for.
 * `readr` is no longer a dependency: files are read and written with base R.
   Exported tables now quote a field that contains a tab, a newline or a quote,
   which `write_tsv()` wrote unquoted, breaking the table.
