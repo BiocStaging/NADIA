@@ -74,6 +74,10 @@ workflow:
 
 :::
 
+The section *NADIA and related Bioconductor packages* at the end of this
+vignette compares NADIA with other Bioconductor packages for proteomics and
+shows how they can be used together.
+
 # Installation
 
 Once NADIA is available on Bioconductor, it can be installed with `BiocManager`:
@@ -731,6 +735,106 @@ protein abundances.
 
 Further options for selection, clustering, ordering and customisation are
 described in `vignette("visualization")`.
+
+# NADIA and related Bioconductor packages
+
+Several Bioconductor packages cover parts of the same ground. The table below
+summarises those closest to NADIA, as described in their own documentation, and
+how each one relates to it.
+
+::: {.wide-reference-table}
+
+| Package | What it does | Relation to NADIA |
+|---|---|---|
+| [`QFeatures`](https://bioconductor.org/packages/QFeatures) | Infrastructure that keeps PSMs, peptides and proteins of an experiment as linked assays | Complementary: NADIA's assays are `SummarizedExperiment` objects and can be stored in a `QFeatures` object |
+| [`msqrob2`](https://bioconductor.org/packages/msqrob2) | Robust linear (mixed) models for differential abundance from peptides or proteins, with a hurdle workflow that handles missing values without imputation | Can model NADIA's normalised protein assay, missing values included |
+| [`DEP`](https://bioconductor.org/packages/DEP) | Workflow for label-free and TMT tables from MaxQuant or IsobarQuant: filtering, `vsn` normalisation, imputation with one of the `MSnbase` methods, `limma`, plots and Shiny apps | The closest in scope; NADIA adds the points listed below |
+| [`limpa`](https://bioconductor.org/packages/limpa) | Models the probability of detecting each precursor to quantify proteins and test them with `limma` without imputation | Built into NADIA: `imp_method = "limpa"` and `de_method = "limpa"` |
+| [`proDA`](https://bioconductor.org/packages/proDA) | Probabilistic dropout model for differential abundance without imputation | Can take NADIA's normalised assay, missing values included |
+| [`MSstats`](https://bioconductor.org/packages/MSstats) | Feature-level statistical modelling for DDA, SRM and DIA, with converters for Spectronaut, DIA-NN, Proteome Discoverer and other tools | Its group comparisons can be scored with NADIA's spike-in benchmark |
+| [`PRONE`](https://bioconductor.org/packages/PRONE) | Evaluation of normalisation methods, including batch correction (IRS, `limma`), by intragroup variation, downstream differential abundance and spike-in data | NADIA uses its intragroup metrics and also evaluates imputation, for which `PRONE` currently offers a single mixed method |
+| [`NormalyzerDE`](https://bioconductor.org/packages/NormalyzerDE) | Screening of normalisation methods, including a retention-time-segmented approach, with an evaluation report and `limma` or ANOVA testing | Complementary for normalisation, notably for retention-time effects, which NADIA does not address |
+
+:::
+
+## What NADIA adds
+
+- **Import of protein-level reports** from Spectronaut, DIA-NN and Proteome
+  Discoverer (TMT and label-free) into one common structure
+  (`vignette("input-formats")`).
+- **Missing values at the centre of the analysis.** Twenty imputation
+  strategies, from single methods to the two-stage `combo`, which classifies the
+  missing values of each protein as missing at random or not and imputes each
+  kind with a different method. Two strategies avoid that binary decision:
+  `softHybrid` blends the two estimates with a continuous weight, and `limpa`
+  does not impute at all, modelling the probability of detection instead. The
+  missingness of each protein is reported next to its fold change
+  (`vignette("missing-values")`).
+- **Batch correction** with BERT (ComBat or `limma`), which works on incomplete
+  matrices without imputing first, together with a PVCA diagnosis and the
+  protection of biological covariates (`vignette("batch-correction")`).
+- **Differential abundance with `limma` or `limpa`**, the latter carrying the
+  uncertainty of its quantification into the test.
+- **Choosing methods on the data themselves**, without a reference: normalisation
+  methods are compared with `PRONE`'s intragroup metrics, and imputation
+  methods by hiding known values and measuring how well they are recovered
+  (`vignette("choosing-methods")`).
+- **Benchmarking complete pipelines against a spike-in**: pipelines that combine
+  different normalisation, imputation and differential-abundance methods are
+  scored and ranked with the OpDEA metrics. Results produced with other packages, such as
+  `MSstats`, can be adapted and ranked alongside NADIA's own pipelines
+  (`vignette("benchmarking")`).
+- **Exploring and sharing the results**: Pattern Profiler for proteins with
+  similar profiles, interactive Highcharts figures, interactive `reactable`
+  tables that link the differential results with identification,
+  quantification and sample data, with filters and Excel export, all of which
+  can be saved as standalone HTML files, and a single `.nadia` file that
+  stores the whole analysis (`vignette("visualization")`,
+  `vignette("results-and-export")`).
+
+NADIA works with protein-level quantities: it does not model peptides or
+precursors, as `MSstats`, `msqrob2` and `limpa` can. Except with `limpa`, its
+differential analysis uses imputed values, whereas `proDA`, `limpa` and the
+hurdle workflow of `msqrob2` keep the missing values in the model.
+
+## Using NADIA together with other packages
+
+`limpa` runs inside NADIA:
+
+```{r with-limpa, eval = FALSE}
+res_limpa <- process_proteomics(nadia_dia, imp_method = "limpa",
+                                de_method = "limpa")
+```
+
+The normalised assay in `res$se_proc` still contains its missing values, so it
+can be analysed by the packages that model them. NADIA stores the condition as
+an ordered factor; an unordered one gives the usual treatment contrasts:
+
+```{r with-proda-msqrob2, eval = FALSE}
+library(QFeatures)   # also attaches SummarizedExperiment
+library(msqrob2)
+
+x <- assay(res$se_proc, "cycloess")
+condition <- factor(res$se_proc$Condition, ordered = FALSE)
+
+# proDA
+fit <- proDA::proDA(x, design = condition)
+proDA::test_diff(fit, B - A)
+
+# msqrob2, through a QFeatures object
+coldata <- colData(res$se_proc)
+coldata$Condition <- condition
+qf <- QFeatures(list(proteins = SummarizedExperiment(list(cycloess = x))),
+                colData = coldata)
+qf <- msqrob(qf, i = "proteins", formula = ~ Condition)
+qf <- hypothesisTest(qf, i = "proteins",
+                     contrast = makeContrast("ConditionB = 0", "ConditionB"))
+rowData(qf[["proteins"]])$ConditionB
+```
+
+In the other direction, a differential-abundance table produced with `MSstats`
+or any other tool can be adapted to NADIA's format and benchmarked together
+with NADIA's pipelines, as shown in `vignette("benchmarking")`.
 
 # Next steps
 
