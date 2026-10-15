@@ -247,11 +247,7 @@
 
   if (format %in% c("tsv", "both")) {
     tsv_file <- paste0(filepath_base, ".tsv")
-    if (requireNamespace("readr", quietly = TRUE)) {
-      readr::write_tsv(data, tsv_file)
-    } else {
-      write.table(data, tsv_file, sep = "\t", quote = FALSE, row.names = FALSE)
-    }
+    .write_tsv(data, tsv_file)
   }
 
   if (format %in% c("parquet", "both")) {
@@ -576,17 +572,10 @@ process_proteomics <- function(
   if (export_normalized && norm_method != "log2") {
     x_norm <- SummarizedExperiment::assay(se, norm_method)
     norm_file <- file.path(export_dir, paste0("matrix_log2_", norm_method, ".tsv"))
-    if (requireNamespace("readr", quietly = TRUE)) {
-      readr::write_tsv(
-        data.frame(ProteinGroups = rownames(x_norm), x_norm, check.names = FALSE),
-        norm_file
-      )
-    } else {
-      write.table(
-        data.frame(ProteinGroups = rownames(x_norm), x_norm, check.names = FALSE),
-        norm_file, sep = "\t", quote = FALSE, row.names = FALSE
-      )
-    }
+    .write_tsv(
+      data.frame(ProteinGroups = rownames(x_norm), x_norm, check.names = FALSE),
+      norm_file
+    )
     if (verbose) message("- Exported: ", basename(norm_file))
   }
 
@@ -622,17 +611,10 @@ process_proteomics <- function(
       x_bc <- SummarizedExperiment::assay(se, "BERT")
       bc_file <- file.path(export_dir,
                            paste0("matrix_log2_", norm_method, "_BERT.tsv"))
-      if (requireNamespace("readr", quietly = TRUE)) {
-        readr::write_tsv(
-          data.frame(ProteinGroups = rownames(x_bc), x_bc, check.names = FALSE),
-          bc_file
-        )
-      } else {
-        write.table(
-          data.frame(ProteinGroups = rownames(x_bc), x_bc, check.names = FALSE),
-          bc_file, sep = "\t", quote = FALSE, row.names = FALSE
-        )
-      }
+      .write_tsv(
+        data.frame(ProteinGroups = rownames(x_bc), x_bc, check.names = FALSE),
+        bc_file
+      )
       if (verbose) message("- Exported: ", basename(bc_file))
     }
   }
@@ -689,19 +671,11 @@ process_proteomics <- function(
   if (export_imputed) {
     x_imputed_export <- imp_result$x_imputed
     imp_file <- file.path(export_dir, paste0("matrix_log2_", norm_method, "_", assay_label, ".tsv"))
-    if (requireNamespace("readr", quietly = TRUE)) {
-      readr::write_tsv(
-        data.frame(ProteinGroups = rownames(x_imputed_export),
-                   x_imputed_export, check.names = FALSE),
-        imp_file
-      )
-    } else {
-      write.table(
-        data.frame(ProteinGroups = rownames(x_imputed_export),
-                   x_imputed_export, check.names = FALSE),
-        imp_file, sep = "\t", quote = FALSE, row.names = FALSE
-      )
-    }
+    .write_tsv(
+      data.frame(ProteinGroups = rownames(x_imputed_export),
+                 x_imputed_export, check.names = FALSE),
+      imp_file
+    )
     if (verbose) message("- Exported: ", basename(imp_file))
   }
 

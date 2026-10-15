@@ -22,6 +22,9 @@ Changes made in response to the Bioconductor review.
 * `paletteer` moves to `Suggests`: it is needed only for palettes given as
   `"package::palette"`, and its absence is now always an error that says what
   to install, where two functions used to fall back silently to the default.
+* `readr` is no longer a dependency: files are read and written with base R.
+  Exported tables now quote a field that contains a tab, a newline or a quote,
+  which `write_tsv()` wrote unquoted, breaking the table.
 * `proteomics_heatmap()` no longer changes ComplexHeatmap's `message` option
   for the rest of the session.
 

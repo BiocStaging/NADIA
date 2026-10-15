@@ -42,17 +42,12 @@
                           "Performance", "nMCC", "G_mean")
 
 
-#' Read a TSV file with readr fallback
+#' Read a TSV file
 #' @param path File path
 #' @return data.frame
 #' @keywords internal
 .bm_read_tsv <- function(path) {
-  if (requireNamespace("readr", quietly = TRUE)) {
-    as.data.frame(readr::read_tsv(path, show_col_types = FALSE),
-                  stringsAsFactors = FALSE)
-  } else {
-    read.delim(path, sep = "\t", stringsAsFactors = FALSE, check.names = FALSE)
-  }
+  .read_delim_file(path)
 }
 
 #' Row-bind data.frames with heterogeneous columns
@@ -224,11 +219,7 @@
 #' @param filepath Output path
 #' @keywords internal
 .bm_export_data <- function(data, filepath) {
-  if (requireNamespace("readr", quietly = TRUE)) {
-    readr::write_tsv(data, filepath)
-  } else {
-    write.table(data, filepath, sep = "\t", quote = FALSE, row.names = FALSE)
-  }
+  .write_tsv(data, filepath)
   invisible(filepath)
 }
 

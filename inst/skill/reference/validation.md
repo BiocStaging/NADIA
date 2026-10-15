@@ -124,8 +124,8 @@ benchmark, background included, one species per protein.
 
 ```r
 # The spike-in map shipped with NADIA uses its own column names, so rename.
-sp <- readr::read_tsv(system.file("extdata", "nadia_dia_spikein.tsv.gz",
-                                  package = "NADIA"), show_col_types = FALSE)
+sp <- read.delim(system.file("extdata", "nadia_dia_spikein.tsv.gz",
+                             package = "NADIA"))
 species_df <- data.frame(Protein.IDs = sp$PG.ProteinGroups,
                          Species     = sp$PG.OrganismId)
 #  ECOLI  HUMAN  YEAST

@@ -21,7 +21,6 @@
 #
 # Dependencies (optional):
 #   - vegan    : PSS (Procrustes, fallback: NA)
-#   - readr    : fast TSV reading (fallback: read.delim)
 #   - Imputation.R deps: per-method optional packages
 #
 # Author: Sergio Ciordia
@@ -482,18 +481,8 @@ import_imp_matrices <- function(tsv_dir,
 
   # --- Read metadata ---
   meta_ext <- tolower(tools::file_ext(metadata_path))
-  if (requireNamespace("readr", quietly = TRUE)) {
-    meta <- if (meta_ext == "csv") {
-      readr::read_csv(metadata_path, show_col_types = FALSE)
-    } else {
-      readr::read_tsv(metadata_path, show_col_types = FALSE)
-    }
-    meta <- as.data.frame(meta)
-  } else {
-    sep  <- if (meta_ext == "csv") "," else "\t"
-    meta <- read.delim(metadata_path, sep = sep, stringsAsFactors = FALSE,
-                       check.names = FALSE)
-  }
+  meta <- .read_delim_file(metadata_path,
+                           sep = if (meta_ext == "csv") "," else "\t")
 
   if (!sample_col %in% colnames(meta))
     stop("Column '", sample_col, "' not found in metadata.")
@@ -503,14 +492,7 @@ import_imp_matrices <- function(tsv_dir,
   rownames(meta) <- meta[[sample_col]]
 
   # --- Helper: read TSV ---
-  .read_tsv_file <- function(path) {
-    if (requireNamespace("readr", quietly = TRUE)) {
-      as.data.frame(readr::read_tsv(path, show_col_types = FALSE),
-                    stringsAsFactors = FALSE)
-    } else {
-      read.delim(path, sep = "\t", stringsAsFactors = FALSE, check.names = FALSE)
-    }
-  }
+  .read_tsv_file <- function(path) .read_delim_file(path)
 
   # --- Read all files to get proteins and sample columns ---
   all_dfs <- vector("list", length(files))

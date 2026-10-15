@@ -2,7 +2,7 @@
 % Please edit documentation in R/Benchmarking_Multiple.R
 \name{.bm_read_tsv}
 \alias{.bm_read_tsv}
-\title{Read a TSV file with readr fallback}
+\title{Read a TSV file}
 \usage{
 .bm_read_tsv(path)
 }
@@ -13,6 +13,6 @@
 data.frame
 }
 \description{
-Read a TSV file with readr fallback
+Read a TSV file
 }
 \keyword{internal}

@@ -722,7 +722,7 @@ proteomics_heatmap <- function(data,
     }
 
     # Write the TSV
-    readr::write_tsv(export_wide, export_path)
+    .write_tsv(export_wide, export_path)
     message("Data exported to: ", export_path)
   }
 
@@ -737,7 +737,7 @@ proteomics_heatmap <- function(data,
   if (!is.null(row_annotation)) {
     # Load the annotations when a file path is given
     if (is.character(row_annotation) && length(row_annotation) == 1 && file.exists(row_annotation)) {
-      row_annot_data <- readr::read_tsv(row_annotation, show_col_types = FALSE)
+      row_annot_data <- .read_delim_file(row_annotation)
     } else if (is.data.frame(row_annotation)) {
       row_annot_data <- as.data.frame(row_annotation)
     } else {
@@ -1540,7 +1540,7 @@ proteomics_heatmap_list <- function(data,
 
 # --- Load the data ---
 # hm_input <- arrow::read_parquet("PCA_Input.parquet")
-# hm_input <- readr::read_tsv("PCA_Input.tsv")
+# hm_input <- read.delim("PCA_Input.tsv", check.names = FALSE)
 
 # --- Basic example: heatmap of every protein ---
 # hm_all <- proteomics_heatmap(

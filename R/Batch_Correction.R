@@ -683,12 +683,7 @@ pvca_analysis <- function(se,
 
     if (export_tables) {
       tsv_path <- file.path(output_dir, "pvca_variance_components.tsv")
-      if (requireNamespace("readr", quietly = TRUE)) {
-        readr::write_tsv(pvca_df, tsv_path)
-      } else {
-        write.table(pvca_df, tsv_path, sep = "\t", row.names = FALSE,
-                    quote = FALSE)
-      }
+      .write_tsv(pvca_df, tsv_path)
       if (verbose) message("  Exported: ", tsv_path)
     }
 

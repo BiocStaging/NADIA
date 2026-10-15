@@ -20,7 +20,6 @@
 #   - SummarizedExperiment, S4Vectors
 #
 # Dependencies (optional):
-#   - readr    : fast TSV reading (fallback: read.delim)
 #   - ggdendro : dendrogram via ggplot2 (fallback: base R dendrogram)
 #   - RColorBrewer / viridis : palettes (fallback: ggplot2 defaults)
 #   - vegan    : PERMANOVA R^2 (fallback: NA)
@@ -700,18 +699,8 @@ import_norm_matrices <- function(tsv_dir,
 
   # --- Read metadata ---
   meta_ext <- tolower(tools::file_ext(metadata_path))
-  if (requireNamespace("readr", quietly = TRUE)) {
-    meta <- if (meta_ext == "csv") {
-      readr::read_csv(metadata_path, show_col_types = FALSE)
-    } else {
-      readr::read_tsv(metadata_path, show_col_types = FALSE)
-    }
-    meta <- as.data.frame(meta)
-  } else {
-    sep  <- if (meta_ext == "csv") "," else "\t"
-    meta <- read.delim(metadata_path, sep = sep, stringsAsFactors = FALSE,
-                       check.names = FALSE)
-  }
+  meta <- .read_delim_file(metadata_path,
+                           sep = if (meta_ext == "csv") "," else "\t")
 
   if (!sample_col %in% colnames(meta))
     stop("Column '", sample_col, "' not found in metadata.")
@@ -721,14 +710,7 @@ import_norm_matrices <- function(tsv_dir,
   rownames(meta) <- meta[[sample_col]]
 
   # --- Read first file to get sample names and protein IDs ---
-  .read_tsv_file <- function(path) {
-    if (requireNamespace("readr", quietly = TRUE)) {
-      as.data.frame(readr::read_tsv(path, show_col_types = FALSE),
-                    stringsAsFactors = FALSE)
-    } else {
-      read.delim(path, sep = "\t", stringsAsFactors = FALSE, check.names = FALSE)
-    }
-  }
+  .read_tsv_file <- function(path) .read_delim_file(path)
 
   first_df  <- .read_tsv_file(files[1])
   protein_col <- colnames(first_df)[1]  # should be "ProteinGroups"

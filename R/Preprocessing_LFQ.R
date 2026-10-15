@@ -360,11 +360,11 @@ preprocess_lfq <- function(
     if (verbose) message("Exporting files to: ", export_dir)
     if (!dir.exists(export_dir)) dir.create(export_dir, recursive = TRUE)
     suffix <- if (timestamp_suffix) paste0("_", format(Sys.time(), "%Y%m%d_%H%M%S")) else ""
-    readr::write_tsv(run_summary,
+    .write_tsv(run_summary,
                      file.path(export_dir, paste0("Metadata", suffix, ".tsv")), na = "")
-    readr::write_tsv(protein_ID,
+    .write_tsv(protein_ID,
                      file.path(export_dir, paste0("Protein_ID", suffix, ".tsv")), na = "")
-    readr::write_tsv(protein_QUANT,
+    .write_tsv(protein_QUANT,
                      file.path(export_dir, paste0("Protein_QUANT", suffix, ".tsv")), na = "")
     if (verbose) message("Files exported successfully.")
   }

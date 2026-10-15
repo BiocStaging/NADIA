@@ -43,7 +43,6 @@ Imports:
     methods,
     pROC,
     RColorBrewer,
-    readr,
     rlang,
     rrcovNA,
     S4Vectors,

@@ -49,22 +49,14 @@
     }
     ext <- tolower(tools::file_ext(input))
     if (ext == "tsv" || ext == "txt") {
-      if (requireNamespace("readr", quietly = TRUE)) {
-        input <- readr::read_tsv(input, show_col_types = FALSE)
-      } else {
-        input <- read.delim(input, sep = "\t", stringsAsFactors = FALSE)
-      }
+      input <- .read_delim_file(input)
     } else if (ext == "parquet") {
       if (!requireNamespace("arrow", quietly = TRUE)) {
         stop("The 'arrow' package is required to read Parquet files")
       }
       input <- arrow::read_parquet(input)
     } else if (ext == "csv") {
-      if (requireNamespace("readr", quietly = TRUE)) {
-        input <- readr::read_csv(input, show_col_types = FALSE)
-      } else {
-        input <- read.csv(input, stringsAsFactors = FALSE)
-      }
+      input <- .read_delim_file(input, sep = ",")
     } else {
       stop("Unsupported format: ", ext, ". Use TSV, CSV or Parquet.")
     }
@@ -1072,17 +1064,9 @@ results_list_widget <- function(
     if (!file.exists(input)) stop("File not found: ", input)
     ext <- tolower(tools::file_ext(input))
     if (ext %in% c("tsv", "txt")) {
-      if (requireNamespace("readr", quietly = TRUE)) {
-        input <- readr::read_tsv(input, show_col_types = FALSE)
-      } else {
-        input <- utils::read.delim(input, sep = "\t", stringsAsFactors = FALSE)
-      }
+      input <- .read_delim_file(input)
     } else if (ext == "csv") {
-      if (requireNamespace("readr", quietly = TRUE)) {
-        input <- readr::read_csv(input, show_col_types = FALSE)
-      } else {
-        input <- utils::read.csv(input, stringsAsFactors = FALSE)
-      }
+      input <- .read_delim_file(input, sep = ",")
     } else if (ext == "parquet") {
       if (!requireNamespace("arrow", quietly = TRUE)) {
         stop("The 'arrow' package is required to read Parquet files")
@@ -1414,17 +1398,9 @@ results_list_widget <- function(
     if (!file.exists(input)) stop("Protein_QUANT file not found: ", input)
     ext <- tolower(tools::file_ext(input))
     if (ext %in% c("tsv", "txt")) {
-      if (requireNamespace("readr", quietly = TRUE)) {
-        input <- readr::read_tsv(input, show_col_types = FALSE)
-      } else {
-        input <- utils::read.delim(input, sep = "\t", stringsAsFactors = FALSE)
-      }
+      input <- .read_delim_file(input)
     } else if (ext == "csv") {
-      if (requireNamespace("readr", quietly = TRUE)) {
-        input <- readr::read_csv(input, show_col_types = FALSE)
-      } else {
-        input <- utils::read.csv(input, stringsAsFactors = FALSE)
-      }
+      input <- .read_delim_file(input, sep = ",")
     } else if (ext == "parquet") {
       if (!requireNamespace("arrow", quietly = TRUE)) {
         stop("The 'arrow' package is required to read Parquet files")
@@ -1458,17 +1434,9 @@ results_list_widget <- function(
     if (!file.exists(input)) stop("Matrix file not found: ", input)
     ext <- tolower(tools::file_ext(input))
     if (ext %in% c("tsv", "txt")) {
-      if (requireNamespace("readr", quietly = TRUE)) {
-        input <- readr::read_tsv(input, show_col_types = FALSE)
-      } else {
-        input <- utils::read.delim(input, sep = "\t", stringsAsFactors = FALSE)
-      }
+      input <- .read_delim_file(input)
     } else if (ext == "csv") {
-      if (requireNamespace("readr", quietly = TRUE)) {
-        input <- readr::read_csv(input, show_col_types = FALSE)
-      } else {
-        input <- utils::read.csv(input, stringsAsFactors = FALSE)
-      }
+      input <- .read_delim_file(input, sep = ",")
     } else if (ext == "parquet") {
       if (!requireNamespace("arrow", quietly = TRUE)) {
         stop("The 'arrow' package is required to read Parquet files")
@@ -1753,17 +1721,9 @@ results_list_widget <- function(
     if (!file.exists(input)) stop("File not found: ", input)
     ext <- tolower(tools::file_ext(input))
     if (ext %in% c("tsv", "txt")) {
-      if (requireNamespace("readr", quietly = TRUE)) {
-        df <- as.data.frame(readr::read_tsv(input, show_col_types = FALSE))
-      } else {
-        df <- read.delim(input, stringsAsFactors = FALSE, check.names = FALSE)
-      }
+      df <- .read_delim_file(input)
     } else if (ext == "csv") {
-      if (requireNamespace("readr", quietly = TRUE)) {
-        df <- as.data.frame(readr::read_csv(input, show_col_types = FALSE))
-      } else {
-        df <- read.csv(input, stringsAsFactors = FALSE, check.names = FALSE)
-      }
+      df <- .read_delim_file(input, sep = ",")
     } else {
       stop("Unsupported extension: ", ext)
     }

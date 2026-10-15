@@ -174,6 +174,90 @@
 
 
 # =============================================================================
+# Reading and writing delimited files
+# =============================================================================
+#
+# NADIA used readr for these until 0.99.2, with base R fallbacks that never ran
+# because readr was in Imports. These two helpers replace both, keeping what
+# readr did that the old fallbacks did not: column names are left as they are
+# (`B-A`, `Abundance: A_1`), empty fields are read as NA, and every number is
+# read as a double. One thing is deliberately different: a field containing a
+# tab, a newline or a quote is now quoted, whereas write_tsv() wrote it as it
+# was and broke the table.
+
+#' Read a delimited text file into a data.frame
+#'
+#' @param path File path. Gzip-compressed files are read transparently.
+#' @param sep Field separator: `"\t"` (default) or `","`.
+#' @return data.frame with the column names exactly as in the file and every
+#'   numeric column as double, as readr returned them.
+#' @keywords internal
+#' @noRd
+.read_delim_file <- function(path, sep = "\t") {
+  df <- utils::read.table(path, header = TRUE, sep = sep, quote = "\"",
+                          na.strings = c("", "NA"), check.names = FALSE,
+                          stringsAsFactors = FALSE, comment.char = "",
+                          fill = TRUE, encoding = "UTF-8")
+  is_int <- vapply(df, is.integer, logical(1))
+  df[is_int] <- lapply(df[is_int], as.double)
+  df
+}
+
+#' Format doubles with the fewest significant digits that read back as the
+#' same number
+#'
+#' `write.table()` rounds to 15 significant digits, which loses the last digit
+#' of most measured values. 17 always suffice but turn 0.1 into
+#' 0.10000000000000001, so each value gets 15, 16 or 17, whichever is the
+#' shortest that parses back to it. `NaN` is written as missing, as readr did.
+#'
+#' @param x Double vector.
+#' @return Character vector, `NA` where `x` is `NA` or `NaN`.
+#' @keywords internal
+#' @noRd
+.format_double <- function(x) {
+  out <- sprintf("%.15g", x)
+  fin <- which(is.finite(x))
+  for (d in 16:17) {
+    bad <- fin[as.numeric(out[fin]) != x[fin]]
+    if (length(bad) == 0) break
+    out[bad] <- sprintf(paste0("%.", d, "g"), x[bad])
+    fin <- bad
+  }
+  out[is.na(x)] <- NA_character_
+  out
+}
+
+#' Write a data.frame as a tab-separated file
+#'
+#' @param x data.frame (or tibble) to write.
+#' @param path Output path.
+#' @param na String written for missing values.
+#' @return `path`, invisibly.
+#' @keywords internal
+#' @noRd
+.write_tsv <- function(x, path, na = "NA") {
+  quote_if_needed <- function(v) {
+    need <- !is.na(v) & grepl("[\t\n\r\"]", v)
+    v[need] <- paste0("\"", gsub("\"", "\"\"", v[need], fixed = TRUE), "\"")
+    v
+  }
+  x <- as.data.frame(x, stringsAsFactors = FALSE, optional = TRUE)
+  is_chr <- vapply(x, function(col) is.character(col) || is.factor(col),
+                   logical(1))
+  x[is_chr] <- lapply(x[is_chr], function(col) quote_if_needed(as.character(col)))
+  # Plain doubles only: dates and times are doubles too, with a class.
+  is_dbl <- vapply(x, function(col) is.double(col) && !is.object(col),
+                   logical(1))
+  x[is_dbl] <- lapply(x[is_dbl], .format_double)
+  utils::write.table(x, path, sep = "\t", quote = FALSE, row.names = FALSE,
+                     col.names = quote_if_needed(names(x)), na = na,
+                     fileEncoding = "UTF-8")
+  invisible(path)
+}
+
+
+# =============================================================================
 # Packages in Suggests
 # =============================================================================
 

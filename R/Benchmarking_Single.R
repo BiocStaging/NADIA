@@ -14,8 +14,8 @@
 #   - expected_values: Data frame with columns Comparison, Species,
 #                      expected_logFC
 #
-# Dependencies: dplyr, tidyr, highcharter, ggplot2, scales
-# Optional: pROC (for AUC), arrow (parquet), readr (TSV)
+# Dependencies: dplyr, tidyr, ggplot2, pROC
+# Optional: highcharter (volcano plots), scales, arrow (parquet)
 #
 # Author: Sergio Ciordia
 # License: GPL-3
@@ -2295,16 +2295,12 @@ benchmark_volcano_hc_list <- function(
 #' @keywords internal
 .export_benchmark_data <- function(data, filepath, format = "tsv") {
   if (format == "tsv") {
-    if (requireNamespace("readr", quietly = TRUE)) {
-      readr::write_tsv(data, filepath)
-    } else {
-      write.table(data, filepath, sep = "\t", quote = FALSE, row.names = FALSE)
-    }
+    .write_tsv(data, filepath)
   } else if (format == "parquet") {
     if (!requireNamespace("arrow", quietly = TRUE)) {
       warning("Package 'arrow' is not installed. Exporting as TSV instead.")
       filepath <- sub("\\.parquet$", ".tsv", filepath)
-      write.table(data, filepath, sep = "\t", quote = FALSE, row.names = FALSE)
+      .write_tsv(data, filepath)
     } else {
       arrow::write_parquet(data, filepath)
     }

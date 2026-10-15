@@ -844,7 +844,7 @@ pca_highchart_list <- function(pca_input,
 
 # --- Load the data ---
 # pca_input <- arrow::read_parquet("PCA_Input.parquet")
-# pca_input <- readr::read_tsv("PCA_Input.tsv")
+# pca_input <- read.delim("PCA_Input.tsv", check.names = FALSE)
 
 # --- Basic example: PCA with convex hull (default) ---
 # sc_all <- build_pca_scores(pca_input, mode = "all")

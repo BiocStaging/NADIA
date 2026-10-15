@@ -216,3 +216,21 @@ test_that("the cluster palette honours a paletteer palette", {
                          as.character(paletteer::paletteer_d("ggsci::default_jco", 3)),
                          as.character(1:3)))
 })
+
+test_that("delimited files round trip, awkward fields included", {
+    df <- data.frame(`B-A` = c(0.1 + 0.2, 1 / 3, 30.585426, -1.2e-17, NA),
+                     Count = c(1L, 2L, NA, 4L, 5L),
+                     Label = c("a\"quoted\"", "with\ttab", "two\nlines", "", NA),
+                     check.names = FALSE, stringsAsFactors = FALSE)
+    f <- withr::local_tempfile(fileext = ".tsv")
+    .write_tsv(df, f)
+    back <- .read_delim_file(f)
+
+    expect_identical(names(back), names(df))
+    expect_identical(back$Label, c("a\"quoted\"", "with\ttab", "two\nlines", NA, NA))
+    expect_identical(back$Count, as.double(df$Count))
+    expect_equal(back$`B-A`, df$`B-A`, tolerance = 1e-15)
+    # The shortest form that reads back, not the 15 digits of write.table().
+    expect_true(any(grepl("^30.585426\t", readLines(f))))
+    expect_true(any(grepl("^0.30000000000000004\t", readLines(f))))
+})

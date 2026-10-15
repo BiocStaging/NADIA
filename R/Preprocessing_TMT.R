@@ -347,17 +347,17 @@ preprocess_tmt <- function(
       ""
     }
 
-    readr::write_tsv(
+    .write_tsv(
       run_summary,
       file.path(export_dir, paste0("Metadata", suffix, ".tsv")),
       na = ""
     )
-    readr::write_tsv(
+    .write_tsv(
       protein_ID,
       file.path(export_dir, paste0("Protein_ID", suffix, ".tsv")),
       na = ""
     )
-    readr::write_tsv(
+    .write_tsv(
       protein_QUANT,
       file.path(export_dir, paste0("Protein_QUANT", suffix, ".tsv")),
       na = ""
