@@ -47,8 +47,8 @@ With `methods` supplied it compares them on:
 - **Intragroup correlation** — higher is better.
 - **Rank_Sep** — group separation along PC1, as an F-ratio.
 
-`nm_rank_final` is the mean of the PCV/PMAD/PEV/correlation ranks plus the
-separation rank. Report the ranking, not just the winner: methods often tie
+`final_rank`, in the result of `normalization_metrics()`, is the mean of the
+PCV/PMAD/PEV/correlation ranks plus the separation rank. Report the ranking, not just the winner: methods often tie
 within noise, and then the choice can be made on other grounds.
 
 ### Imputation

@@ -734,15 +734,8 @@ import_norm_matrices <- function(tsv_dir,
 #' @param condition_col Column in colData with condition labels.
 #' @param ... Additional arguments (unused).
 #' @return ggplot object.
-#' @examples
-#' data(nadia_dia)
-#' se <- nm_prepare_se(nadia_dia, verbose = FALSE)
-#' se <- nm_run_normalizations(se, methods = c("cycloess", "quantile", "MAD"),
-#'                             verbose = FALSE)
-#'
-#' nm_plot_boxplot(se)
-#'
-#' @export
+#' @keywords internal
+#' @noRd
 nm_plot_boxplot <- function(se, assay_names = NULL,
                              condition_col = "Condition", ...) {
   assay_names <- .nm_assay_names(se, assay_names)
@@ -772,15 +765,8 @@ nm_plot_boxplot <- function(se, assay_names = NULL,
 #'
 #' @inheritParams nm_plot_boxplot
 #' @return ggplot object.
-#' @examples
-#' data(nadia_dia)
-#' se <- nm_prepare_se(nadia_dia, verbose = FALSE)
-#' se <- nm_run_normalizations(se, methods = c("cycloess", "quantile", "MAD"),
-#'                             verbose = FALSE)
-#'
-#' nm_plot_density(se)
-#'
-#' @export
+#' @keywords internal
+#' @noRd
 nm_plot_density <- function(se, assay_names = NULL,
                              condition_col = "Condition", ...) {
   assay_names <- .nm_assay_names(se, assay_names)
@@ -831,18 +817,8 @@ nm_plot_density <- function(se, assay_names = NULL,
 #' @param baseline Character. Assay name used as reference for diff mode.
 #'   Default `"log2"`.
 #' @return ggplot object.
-#' @examples
-#' data(nadia_dia)
-#' se <- nm_prepare_se(nadia_dia, verbose = FALSE)
-#' se <- nm_run_normalizations(se, methods = c("cycloess", "quantile", "MAD"),
-#'                             verbose = FALSE)
-#'
-#' nm_plot_pcv(se)
-#'
-#' # Percent CV reduction relative to the unnormalized log2 baseline
-#' nm_plot_pcv(se, diff = TRUE, baseline = "log2")
-#'
-#' @export
+#' @keywords internal
+#' @noRd
 nm_plot_pcv <- function(se, assay_names = NULL,
                         condition_col = "Condition",
                         diff = FALSE, baseline = "log2", ...) {
@@ -912,15 +888,8 @@ nm_plot_pcv <- function(se, assay_names = NULL,
 #'
 #' @inheritParams nm_plot_pcv
 #' @return ggplot object.
-#' @examples
-#' data(nadia_dia)
-#' se <- nm_prepare_se(nadia_dia, verbose = FALSE)
-#' se <- nm_run_normalizations(se, methods = c("cycloess", "quantile", "MAD"),
-#'                             verbose = FALSE)
-#'
-#' nm_plot_pmad(se)
-#'
-#' @export
+#' @keywords internal
+#' @noRd
 nm_plot_pmad <- function(se, assay_names = NULL,
                          condition_col = "Condition",
                          diff = FALSE, baseline = "log2", ...) {
@@ -990,15 +959,8 @@ nm_plot_pmad <- function(se, assay_names = NULL,
 #'
 #' @inheritParams nm_plot_pcv
 #' @return ggplot object.
-#' @examples
-#' data(nadia_dia)
-#' se <- nm_prepare_se(nadia_dia, verbose = FALSE)
-#' se <- nm_run_normalizations(se, methods = c("cycloess", "quantile", "MAD"),
-#'                             verbose = FALSE)
-#'
-#' nm_plot_pev(se)
-#'
-#' @export
+#' @keywords internal
+#' @noRd
 nm_plot_pev <- function(se, assay_names = NULL,
                         condition_col = "Condition",
                         diff = FALSE, baseline = "log2", ...) {
@@ -1068,15 +1030,8 @@ nm_plot_pev <- function(se, assay_names = NULL,
 #' @param pca_scales Facet scaling: `"free"` (default) allows independent axes
 #'   per method; `"fixed"` uses shared axes to compare separation magnitude.
 #' @return ggplot object.
-#' @examples
-#' data(nadia_dia)
-#' se <- nm_prepare_se(nadia_dia, verbose = FALSE)
-#' se <- nm_run_normalizations(se, methods = c("cycloess", "quantile", "MAD"),
-#'                             verbose = FALSE)
-#'
-#' nm_plot_pca(se, pca_scales = "fixed")
-#'
-#' @export
+#' @keywords internal
+#' @noRd
 nm_plot_pca <- function(se, assay_names = NULL,
                         condition_col = "Condition",
                         pca_scales = c("free", "fixed"), ...) {
@@ -1144,15 +1099,8 @@ nm_plot_pca <- function(se, assay_names = NULL,
 #' @param cor_method Correlation method passed to `cor()`:
 #'   `"pearson"`, `"spearman"`, or `"kendall"`. Default `"pearson"`.
 #' @return ggplot object.
-#' @examples
-#' data(nadia_dia)
-#' se <- nm_prepare_se(nadia_dia, verbose = FALSE)
-#' se <- nm_run_normalizations(se, methods = c("cycloess", "quantile", "MAD"),
-#'                             verbose = FALSE)
-#'
-#' nm_plot_correlation(se, cor_method = "pearson")
-#'
-#' @export
+#' @keywords internal
+#' @noRd
 nm_plot_correlation <- function(se, assay_names = NULL,
                                 condition_col = "Condition",
                                 cor_method = "pearson", ...) {
@@ -1200,15 +1148,8 @@ nm_plot_correlation <- function(se, assay_names = NULL,
 #' @param mds_scales Facet scaling: `"free"` (default) allows independent axes
 #'   per panel; `"fixed"` forces shared axes for easier cross-method comparison.
 #' @return ggplot object.
-#' @examples
-#' data(nadia_dia)
-#' se <- nm_prepare_se(nadia_dia, verbose = FALSE)
-#' se <- nm_run_normalizations(se, methods = c("cycloess", "quantile", "MAD"),
-#'                             verbose = FALSE)
-#'
-#' nm_plot_mds(se)
-#'
-#' @export
+#' @keywords internal
+#' @noRd
 nm_plot_mds <- function(se, assay_names = NULL,
                         condition_col = "Condition",
                         mds_scales = c("free", "fixed"), ...) {
@@ -1263,15 +1204,8 @@ nm_plot_mds <- function(se, assay_names = NULL,
 #' @param sample2 Character. Name of the second sample (y-axis).
 #'   Default = second column of `se`.
 #' @return ggplot object.
-#' @examples
-#' data(nadia_dia)
-#' se <- nm_prepare_se(nadia_dia, verbose = FALSE)
-#' se <- nm_run_normalizations(se, methods = c("cycloess", "quantile", "MAD"),
-#'                             verbose = FALSE)
-#'
-#' nm_plot_scatter(se, sample1 = "A_1", sample2 = "A_2")
-#'
-#' @export
+#' @keywords internal
+#' @noRd
 nm_plot_scatter <- function(se, assay_names = NULL,
                             condition_col = "Condition",
                             sample1 = NULL, sample2 = NULL, ...) {
@@ -1352,15 +1286,8 @@ nm_plot_scatter <- function(se, assay_names = NULL,
 #' @param which_sample Character. Name of the sample to inspect.
 #'   Default = first column of `se`.
 #' @return ggplot object.
-#' @examples
-#' data(nadia_dia)
-#' se <- nm_prepare_se(nadia_dia, verbose = FALSE)
-#' se <- nm_run_normalizations(se, methods = c("cycloess", "quantile", "MAD"),
-#'                             verbose = FALSE)
-#'
-#' nm_plot_qq(se, which_sample = "A_1")
-#'
-#' @export
+#' @keywords internal
+#' @noRd
 nm_plot_qq <- function(se, assay_names = NULL,
                        condition_col = "Condition",
                        which_sample = NULL, ...) {
@@ -1434,22 +1361,13 @@ nm_plot_qq <- function(se, assay_names = NULL,
 #' - **Condition_Number**: Ratio of largest to smallest PCA eigenvalue (>= 1).
 #'   High values indicate multicollinearity or numerical instability.
 #'
-#' @examples
-#' data(nadia_dia)
-#' se <- nm_prepare_se(nadia_dia, verbose = FALSE)
-#' se <- nm_run_normalizations(se, methods = c("cycloess", "quantile", "MAD"),
-#'                             verbose = FALSE)
-#'
-#' metrics_df <- nm_compute_metrics(se)
-#' metrics_df[, c("Method", "PC1_VarPct", "PC1_F_ratio", "Silhouette_mean")]
-#'
 #' @section Reproducibility:
 #' Two columns use random numbers: `Hopkins`, which samples random reference
 #' points, and `PERMANOVA_pval`, which permutes the group labels. Both draw
 #' from the caller's RNG, so call `set.seed()` beforehand to reproduce them.
 #' Every other column is deterministic.
-#'
-#' @export
+#' @keywords internal
+#' @noRd
 nm_compute_metrics <- function(se, assay_names = NULL,
                                condition_col = "Condition", ...) {
   assay_names <- .nm_assay_names(se, assay_names)
@@ -1496,16 +1414,8 @@ nm_compute_metrics <- function(se, assay_names = NULL,
 #' @inheritParams nm_plot_boxplot
 #' @inheritParams nm_compute_metrics
 #' @return ggplot object.
-#'
-#' @examples
-#' data(nadia_dia)
-#' se <- nm_prepare_se(nadia_dia, verbose = FALSE)
-#' se <- nm_run_normalizations(se, methods = c("cycloess", "quantile", "MAD"),
-#'                             verbose = FALSE)
-#'
-#' nm_plot_metrics(se)
-#'
-#' @export
+#' @keywords internal
+#' @noRd
 nm_plot_metrics <- function(se, assay_names = NULL,
                             condition_col = "Condition", ...) {
   assay_names <- .nm_assay_names(se, assay_names)
@@ -1560,16 +1470,8 @@ nm_plot_metrics <- function(se, assay_names = NULL,
 #' @param verbose Logical. Print progress messages. Default `TRUE`.
 #' @return A `data.frame` with columns `Method`, `PC1_VarPct`, `Rank`,
 #'   ordered by `PC1_VarPct` descending.
-#'
-#' @examples
-#' data(nadia_dia)
-#' se <- nm_prepare_se(nadia_dia, verbose = FALSE)
-#' se <- nm_run_normalizations(se, methods = c("cycloess", "quantile", "MAD"),
-#'                             verbose = FALSE)
-#'
-#' nm_rank_pc1(se, verbose = FALSE)
-#'
-#' @export
+#' @keywords internal
+#' @noRd
 nm_rank_pc1 <- function(se, assay_names = NULL, condition_col = "Condition",
                         verbose = TRUE) {
   assay_names <- .nm_assay_names(se, assay_names)
@@ -1600,16 +1502,8 @@ nm_rank_pc1 <- function(se, assay_names = NULL, condition_col = "Condition",
 #'
 #' @inheritParams nm_plot_boxplot
 #' @return ggplot object.
-#'
-#' @examples
-#' data(nadia_dia)
-#' se <- nm_prepare_se(nadia_dia, verbose = FALSE)
-#' se <- nm_run_normalizations(se, methods = c("cycloess", "quantile", "MAD"),
-#'                             verbose = FALSE)
-#'
-#' nm_plot_pc1_ranking(se)
-#'
-#' @export
+#' @keywords internal
+#' @noRd
 nm_plot_pc1_ranking <- function(se, assay_names = NULL,
                                 condition_col = "Condition", ...) {
   rank_df    <- nm_rank_pc1(se, assay_names, condition_col, verbose = FALSE)
@@ -1646,16 +1540,8 @@ nm_plot_pc1_ranking <- function(se, assay_names = NULL,
 #' @param verbose Logical. Print progress messages. Default `TRUE`.
 #' @return A `data.frame` with columns `Method`, `MDS1_VarPct`, `Rank`,
 #'   ordered by `MDS1_VarPct` ascending (lower = better; rank 1 = best).
-#'
-#' @examples
-#' data(nadia_dia)
-#' se <- nm_prepare_se(nadia_dia, verbose = FALSE)
-#' se <- nm_run_normalizations(se, methods = c("cycloess", "quantile", "MAD"),
-#'                             verbose = FALSE)
-#'
-#' nm_rank_mds1(se, verbose = FALSE)
-#'
-#' @export
+#' @keywords internal
+#' @noRd
 nm_rank_mds1 <- function(se, assay_names = NULL, condition_col = "Condition",
                          verbose = TRUE) {
   assay_names <- .nm_assay_names(se, assay_names)
@@ -1686,16 +1572,8 @@ nm_rank_mds1 <- function(se, assay_names = NULL, condition_col = "Condition",
 #'
 #' @inheritParams nm_plot_boxplot
 #' @return ggplot object.
-#'
-#' @examples
-#' data(nadia_dia)
-#' se <- nm_prepare_se(nadia_dia, verbose = FALSE)
-#' se <- nm_run_normalizations(se, methods = c("cycloess", "quantile", "MAD"),
-#'                             verbose = FALSE)
-#'
-#' nm_plot_mds1_ranking(se)
-#'
-#' @export
+#' @keywords internal
+#' @noRd
 nm_plot_mds1_ranking <- function(se, assay_names = NULL,
                                  condition_col = "Condition", ...) {
   rank_df    <- nm_rank_mds1(se, assay_names, condition_col, verbose = FALSE)
@@ -1731,15 +1609,8 @@ nm_plot_mds1_ranking <- function(se, assay_names = NULL,
 #' @inheritParams nm_plot_boxplot
 #' @param verbose Logical. Print progress messages. Default `TRUE`.
 #' @return A `data.frame` with columns `Method`, `Median_PCV`, `Rank`.
-#' @examples
-#' data(nadia_dia)
-#' se <- nm_prepare_se(nadia_dia, verbose = FALSE)
-#' se <- nm_run_normalizations(se, methods = c("cycloess", "quantile", "MAD"),
-#'                             verbose = FALSE)
-#'
-#' nm_rank_pcv(se, verbose = FALSE)
-#'
-#' @export
+#' @keywords internal
+#' @noRd
 nm_rank_pcv <- function(se, assay_names = NULL, condition_col = "Condition",
                         verbose = TRUE) {
   assay_names <- .nm_assay_names(se, assay_names)
@@ -1763,15 +1634,8 @@ nm_rank_pcv <- function(se, assay_names = NULL, condition_col = "Condition",
 #' @inheritParams nm_plot_boxplot
 #' @param verbose Logical. Print progress messages. Default `TRUE`.
 #' @return A `data.frame` with columns `Method`, `Median_PMAD`, `Rank`.
-#' @examples
-#' data(nadia_dia)
-#' se <- nm_prepare_se(nadia_dia, verbose = FALSE)
-#' se <- nm_run_normalizations(se, methods = c("cycloess", "quantile", "MAD"),
-#'                             verbose = FALSE)
-#'
-#' nm_rank_pmad(se, verbose = FALSE)
-#'
-#' @export
+#' @keywords internal
+#' @noRd
 nm_rank_pmad <- function(se, assay_names = NULL, condition_col = "Condition",
                          verbose = TRUE) {
   assay_names <- .nm_assay_names(se, assay_names)
@@ -1795,15 +1659,8 @@ nm_rank_pmad <- function(se, assay_names = NULL, condition_col = "Condition",
 #' @inheritParams nm_plot_boxplot
 #' @param verbose Logical. Print progress messages. Default `TRUE`.
 #' @return A `data.frame` with columns `Method`, `Median_PEV`, `Rank`.
-#' @examples
-#' data(nadia_dia)
-#' se <- nm_prepare_se(nadia_dia, verbose = FALSE)
-#' se <- nm_run_normalizations(se, methods = c("cycloess", "quantile", "MAD"),
-#'                             verbose = FALSE)
-#'
-#' nm_rank_pev(se, verbose = FALSE)
-#'
-#' @export
+#' @keywords internal
+#' @noRd
 nm_rank_pev <- function(se, assay_names = NULL, condition_col = "Condition",
                         verbose = TRUE) {
   assay_names <- .nm_assay_names(se, assay_names)
@@ -1829,15 +1686,8 @@ nm_rank_pev <- function(se, assay_names = NULL, condition_col = "Condition",
 #' @param cor_method Correlation method: "pearson", "spearman", or "kendall".
 #' @param verbose Logical. Print progress messages. Default `TRUE`.
 #' @return A `data.frame` with columns `Method`, `Median_Cor`, `Rank`.
-#' @examples
-#' data(nadia_dia)
-#' se <- nm_prepare_se(nadia_dia, verbose = FALSE)
-#' se <- nm_run_normalizations(se, methods = c("cycloess", "quantile", "MAD"),
-#'                             verbose = FALSE)
-#'
-#' nm_rank_cor(se, cor_method = "pearson", verbose = FALSE)
-#'
-#' @export
+#' @keywords internal
+#' @noRd
 nm_rank_cor <- function(se, assay_names = NULL, condition_col = "Condition",
                         cor_method = "pearson", verbose = TRUE) {
   assay_names <- .nm_assay_names(se, assay_names)
@@ -1885,15 +1735,8 @@ nm_rank_cor <- function(se, assay_names = NULL, condition_col = "Condition",
 #' @return A `data.frame` with columns: `Method`, `Rank_PCV`, `Rank_PMAD`,
 #'   `Rank_PEV`, `Rank_Cor`, `Rank_Sep`, `Rank_Final`, ordered by `Rank_Final`
 #'   ascending (best first).
-#' @examples
-#' data(nadia_dia)
-#' se <- nm_prepare_se(nadia_dia, verbose = FALSE)
-#' se <- nm_run_normalizations(se, methods = c("cycloess", "quantile", "MAD"),
-#'                             verbose = FALSE)
-#'
-#' nm_rank_final(se, verbose = FALSE)
-#'
-#' @export
+#' @keywords internal
+#' @noRd
 nm_rank_final <- function(se, assay_names = NULL, condition_col = "Condition",
                           cor_method = "pearson", verbose = TRUE) {
   assay_names <- .nm_assay_names(se, assay_names)
@@ -1941,15 +1784,8 @@ nm_rank_final <- function(se, assay_names = NULL, condition_col = "Condition",
 #' @inheritParams nm_plot_boxplot
 #' @param cor_method Correlation method forwarded to `nm_rank_final()`.
 #' @return ggplot object.
-#' @examples
-#' data(nadia_dia)
-#' se <- nm_prepare_se(nadia_dia, verbose = FALSE)
-#' se <- nm_run_normalizations(se, methods = c("cycloess", "quantile", "MAD"),
-#'                             verbose = FALSE)
-#'
-#' nm_plot_final_ranking(se)
-#'
-#' @export
+#' @keywords internal
+#' @noRd
 nm_plot_final_ranking <- function(se, assay_names = NULL,
                                   condition_col = "Condition",
                                   cor_method = "pearson", ...) {
@@ -2064,7 +1900,7 @@ nm_plot_final_ranking <- function(se, assay_names = NULL,
 #'   `"pc1_ranking"`, `"mds1_ranking"`, `"final_ranking"`.
 #'   When `pca_scales = "both"`, `"pca"` expands to `"pca_free"` + `"pca_fixed"`.
 #'   When `mds_scales = "both"`, `"mds"` expands to `"mds_free"` + `"mds_fixed"`.
-#' @param cor_method Correlation method for `nm_plot_correlation()`.
+#' @param cor_method Correlation method for the `"correlation"` plot.
 #'   Default `"pearson"`.
 #' @param pca_scales Facet scaling for PCA plot: `"free"` (default),
 #'   `"fixed"`, or `"both"` to generate and export both variants
@@ -2095,13 +1931,17 @@ nm_plot_final_ranking <- function(se, assay_names = NULL,
 #' @param plot_dpi Numeric. Resolution for exported plots. Default `150`.
 #' @return Named list of ggplot objects (or NULL for failed plots), plus
 #'   data.frames always computed regardless of `plots` selection:
-#'   `metrics_table` (from `nm_compute_metrics()`), `pc1_rank`, `mds1_rank`,
+#'   `metrics_table` (one row per method and metric), `pc1_rank`, `mds1_rank`,
 #'   `pcv_rank`, `pmad_rank`, `pev_rank`, `cor_rank`, and `final_rank`
 #'   (combined ranking as the mean of the five ranks `Rank_PCV`, `Rank_PMAD`,
 #'   `Rank_PEV`, `Rank_Cor` and `Rank_Sep`; `pc1_rank` and `mds1_rank` are
 #'   standalone diagnostics and do not enter it).
 #'
-#' @inheritSection nm_compute_metrics Reproducibility
+#' @section Reproducibility:
+#' Two columns use random numbers: `Hopkins`, which samples random reference
+#' points, and `PERMANOVA_pval`, which permutes the group labels. Both draw
+#' from the caller's RNG, so call `set.seed()` beforehand to reproduce them.
+#' Every other column is deterministic.
 #'
 #' @examples
 #' data(nadia_dia)

@@ -634,19 +634,8 @@
 #'   If NULL, de_res must already contain a Species column.
 #'
 #' @return Data frame with metrics per comparison
-#'
-#' @examples
-#' data(nadia_dia)
-#' de <- process_proteomics(nadia_dia, verbose = FALSE)$DEPs_results
-#' sp <- utils::read.delim(system.file("extdata", "nadia_dia_spikein.tsv.gz",
-#'                                     package = "NADIA"))
-#' de$Species <- sp$PG.OrganismId[match(de$Protein.IDs, sp$PG.ProteinGroups)]
-#' ev <- data.frame(Comparison = rep(c("B-A", "D-A"), each = 2),
-#'                  Species = c("ECOLI", "YEAST"),
-#'                  expected_logFC = c(1, -0.58, 2, -3.3))
-#' metrics <- compute_benchmark_metrics(de, ev)
-#' metrics[, c("Comparison", "TP", "FP", "Sensitivity", "Specificity", "F1")]
-#' @export
+#' @keywords internal
+#' @noRd
 compute_benchmark_metrics <- function(de_res, ev,
                                       alpha = 0.05,
                                       lfc_thr = 0,
@@ -719,18 +708,8 @@ compute_benchmark_metrics <- function(de_res, ev,
 #'
 #' @return Data frame with columns: Comparison, nMCC, G_mean,
 #'   pAUC_001, pAUC_005, pAUC_010
-#'
-#' @examples
-#' data(nadia_dia)
-#' de <- process_proteomics(nadia_dia, verbose = FALSE)$DEPs_results
-#' sp <- utils::read.delim(system.file("extdata", "nadia_dia_spikein.tsv.gz",
-#'                                     package = "NADIA"))
-#' de$Species <- sp$PG.OrganismId[match(de$Protein.IDs, sp$PG.ProteinGroups)]
-#' ev <- data.frame(Comparison = rep(c("B-A", "D-A"), each = 2),
-#'                  Species = c("ECOLI", "YEAST"),
-#'                  expected_logFC = c(1, -0.58, 2, -3.3))
-#' compute_opdea_metrics(de, ev)
-#' @export
+#' @keywords internal
+#' @noRd
 compute_opdea_metrics <- function(de_res, ev,
                                   alpha = 0.05,
                                   lfc_thr = 0,
@@ -896,19 +875,8 @@ compute_opdea_metrics <- function(de_res, ev,
 #'   If NULL, de_res must already contain a Species column.
 #'
 #' @return Data frame with dispersion metrics
-#'
-#' @examples
-#' data(nadia_dia)
-#' de <- process_proteomics(nadia_dia, verbose = FALSE)$DEPs_results
-#' sp <- utils::read.delim(system.file("extdata", "nadia_dia_spikein.tsv.gz",
-#'                                     package = "NADIA"))
-#' de$Species <- sp$PG.OrganismId[match(de$Protein.IDs, sp$PG.ProteinGroups)]
-#' ev <- data.frame(Comparison = rep(c("B-A", "D-A"), each = 2),
-#'                  Species = c("ECOLI", "YEAST"),
-#'                  expected_logFC = c(1, -0.58, 2, -3.3))
-#' disp <- compute_dispersion_metrics(de, ev)
-#' disp[, c("Comparison", "Species", "expected_logFC", "MED", "MAD", "RCV")]
-#' @export
+#' @keywords internal
+#' @noRd
 compute_dispersion_metrics <- function(de_res, ev,
                                        alpha = 0.05,
                                        lfc_thr = 0,
@@ -1018,19 +986,8 @@ compute_dispersion_metrics <- function(de_res, ev,
 #' @param axis_text_size Size of axis text
 #'
 #' @return ggplot2 object
-#'
-#' @examples
-#' data(nadia_dia)
-#' de <- process_proteomics(nadia_dia, verbose = FALSE)$DEPs_results
-#' sp <- utils::read.delim(system.file("extdata", "nadia_dia_spikein.tsv.gz",
-#'                                     package = "NADIA"))
-#' de$Species <- sp$PG.OrganismId[match(de$Protein.IDs, sp$PG.ProteinGroups)]
-#' ev <- data.frame(Comparison = rep(c("B-A", "D-A"), each = 2),
-#'                  Species = c("ECOLI", "YEAST"),
-#'                  expected_logFC = c(1, -0.58, 2, -3.3))
-#' metrics <- compute_benchmark_metrics(de, ev)
-#' benchmark_heatmap_gg(metrics, metrics_to_show = c("AUC", "F1", "MCC"))
-#' @export
+#' @keywords internal
+#' @noRd
 benchmark_heatmap_gg <- function(
     metrics_table,
     metrics_to_show = c("AUC", "Sensitivity", "Specificity",
@@ -1107,19 +1064,8 @@ benchmark_heatmap_gg <- function(
 #' @param axis_text_size Size of axis text
 #'
 #' @return ggplot2 object
-#'
-#' @examples
-#' data(nadia_dia)
-#' de <- process_proteomics(nadia_dia, verbose = FALSE)$DEPs_results
-#' sp <- utils::read.delim(system.file("extdata", "nadia_dia_spikein.tsv.gz",
-#'                                     package = "NADIA"))
-#' de$Species <- sp$PG.OrganismId[match(de$Protein.IDs, sp$PG.ProteinGroups)]
-#' ev <- data.frame(Comparison = rep(c("B-A", "D-A"), each = 2),
-#'                  Species = c("ECOLI", "YEAST"),
-#'                  expected_logFC = c(1, -0.58, 2, -3.3))
-#' bench <- benchmarking_proteomics(de, ev, verbose = FALSE)
-#' benchmark_confusion_gg(bench$confusion_by_species)
-#' @export
+#' @keywords internal
+#' @noRd
 benchmark_confusion_gg <- function(
     confusion_df,
     title = "Confusion Matrix by Comparison x Species",
@@ -1223,19 +1169,8 @@ benchmark_confusion_gg <- function(
 #' @param axis_text_size Size of axis text
 #'
 #' @return ggplot2 object
-#'
-#' @examples
-#' data(nadia_dia)
-#' de <- process_proteomics(nadia_dia, verbose = FALSE)$DEPs_results
-#' sp <- utils::read.delim(system.file("extdata", "nadia_dia_spikein.tsv.gz",
-#'                                     package = "NADIA"))
-#' de$Species <- sp$PG.OrganismId[match(de$Protein.IDs, sp$PG.ProteinGroups)]
-#' ev <- data.frame(Comparison = rep(c("B-A", "D-A"), each = 2),
-#'                  Species = c("ECOLI", "YEAST"),
-#'                  expected_logFC = c(1, -0.58, 2, -3.3))
-#' bench <- benchmarking_proteomics(de, ev, verbose = FALSE)
-#' benchmark_confusion_overall_gg(bench$confusion_overall)
-#' @export
+#' @keywords internal
+#' @noRd
 benchmark_confusion_overall_gg <- function(
     confusion_overall_df,
     title = "Confusion Matrix by Comparison (Overall)",
@@ -1326,19 +1261,8 @@ benchmark_confusion_overall_gg <- function(
 #' @param bar_width Bar width (default: 0.7)
 #'
 #' @return ggplot2 object
-#'
-#' @examples
-#' data(nadia_dia)
-#' de <- process_proteomics(nadia_dia, verbose = FALSE)$DEPs_results
-#' sp <- utils::read.delim(system.file("extdata", "nadia_dia_spikein.tsv.gz",
-#'                                     package = "NADIA"))
-#' de$Species <- sp$PG.OrganismId[match(de$Protein.IDs, sp$PG.ProteinGroups)]
-#' ev <- data.frame(Comparison = rep(c("B-A", "D-A"), each = 2),
-#'                  Species = c("ECOLI", "YEAST"),
-#'                  expected_logFC = c(1, -0.58, 2, -3.3))
-#' metrics <- compute_benchmark_metrics(de, ev)
-#' benchmark_auc_bars_gg(metrics)
-#' @export
+#' @keywords internal
+#' @noRd
 benchmark_auc_bars_gg <- function(
     metrics_table,
     title = "AUC by Comparison",
@@ -1407,19 +1331,8 @@ benchmark_auc_bars_gg <- function(
 #' @param bar_width Bar width (default: 0.7)
 #'
 #' @return ggplot2 object
-#'
-#' @examples
-#' data(nadia_dia)
-#' de <- process_proteomics(nadia_dia, verbose = FALSE)$DEPs_results
-#' sp <- utils::read.delim(system.file("extdata", "nadia_dia_spikein.tsv.gz",
-#'                                     package = "NADIA"))
-#' de$Species <- sp$PG.OrganismId[match(de$Protein.IDs, sp$PG.ProteinGroups)]
-#' ev <- data.frame(Comparison = rep(c("B-A", "D-A"), each = 2),
-#'                  Species = c("ECOLI", "YEAST"),
-#'                  expected_logFC = c(1, -0.58, 2, -3.3))
-#' metrics <- compute_benchmark_metrics(de, ev)
-#' benchmark_metrics_bars_gg(metrics, metrics_to_show = c("Sensitivity", "F1"))
-#' @export
+#' @keywords internal
+#' @noRd
 benchmark_metrics_bars_gg <- function(
     metrics_table,
     metrics_to_show = c("Sensitivity", "Specificity", "Precision", "F1", "Accuracy"),
@@ -1510,19 +1423,8 @@ benchmark_metrics_bars_gg <- function(
 #' @param title Plot title
 #'
 #' @return ggplot2 object
-#'
-#' @examples
-#' data(nadia_dia)
-#' de <- process_proteomics(nadia_dia, verbose = FALSE)$DEPs_results
-#' sp <- utils::read.delim(system.file("extdata", "nadia_dia_spikein.tsv.gz",
-#'                                     package = "NADIA"))
-#' de$Species <- sp$PG.OrganismId[match(de$Protein.IDs, sp$PG.ProteinGroups)]
-#' ev <- data.frame(Comparison = rep(c("B-A", "D-A"), each = 2),
-#'                  Species = c("ECOLI", "YEAST"),
-#'                  expected_logFC = c(1, -0.58, 2, -3.3))
-#' bench <- benchmarking_proteomics(de, ev, verbose = FALSE)
-#' benchmark_signif_bars_gg(bench$classified_df, ev)
-#' @export
+#' @keywords internal
+#' @noRd
 benchmark_signif_bars_gg <- function(
     classified_df,
     ev = NULL,
@@ -1620,19 +1522,8 @@ benchmark_signif_bars_gg <- function(
 #'   fewer colours than curves is interpolated. Default `"Set1"`.
 #'
 #' @return ggplot2 object
-#'
-#' @examples
-#' data(nadia_dia)
-#' de <- process_proteomics(nadia_dia, verbose = FALSE)$DEPs_results
-#' sp <- utils::read.delim(system.file("extdata", "nadia_dia_spikein.tsv.gz",
-#'                                     package = "NADIA"))
-#' de$Species <- sp$PG.OrganismId[match(de$Protein.IDs, sp$PG.ProteinGroups)]
-#' ev <- data.frame(Comparison = rep(c("B-A", "D-A"), each = 2),
-#'                  Species = c("ECOLI", "YEAST"),
-#'                  expected_logFC = c(1, -0.58, 2, -3.3))
-#' bench <- benchmarking_proteomics(de, ev, verbose = FALSE)
-#' benchmark_roc_gg(bench$classified_df, comparisons = "B-A")
-#' @export
+#' @keywords internal
+#' @noRd
 benchmark_roc_gg <- function(
     classified_df,
     p_col = "adj.P.Val",
@@ -1772,24 +1663,8 @@ benchmark_roc_gg <- function(
 #' @param height Chart height in pixels (optional)
 #'
 #' @return Highchart object
-#'
-#' @examples
-#' if (requireNamespace("highcharter", quietly = TRUE)) {
-#'   data(nadia_dia)
-#'   de <- process_proteomics(nadia_dia, verbose = FALSE)$DEPs_results
-#'   sp <- utils::read.delim(system.file("extdata", "nadia_dia_spikein.tsv.gz",
-#'                                       package = "NADIA"))
-#'   de$Species <- sp$PG.OrganismId[match(de$Protein.IDs, sp$PG.ProteinGroups)]
-#'   ev <- data.frame(Comparison = rep(c("B-A", "D-A"), each = 2),
-#'                    Species = c("ECOLI", "YEAST"),
-#'                    expected_logFC = c(1, -0.58, 2, -3.3))
-#'   disp <- compute_dispersion_metrics(de, ev)
-#'   benchmark_volcano_hc(de[de$Comparison == "B-A", ],
-#'                        ev[ev$Comparison == "B-A", ],
-#'                        disp_comp = disp[disp$Comparison == "B-A", ])
-#' }
-#'
-#' @export
+#' @keywords internal
+#' @noRd
 benchmark_volcano_hc <- function(
     de_res_comp,
     ev_comp,
@@ -2122,23 +1997,8 @@ benchmark_volcano_hc <- function(
 #'   If NULL, de_res must already contain a Species column.
 #'
 #' @return Named list of highchart objects
-#'
-#' @examples
-#' if (requireNamespace("highcharter", quietly = TRUE)) {
-#'   data(nadia_dia)
-#'   de <- process_proteomics(nadia_dia, verbose = FALSE)$DEPs_results
-#'   sp <- utils::read.delim(system.file("extdata", "nadia_dia_spikein.tsv.gz",
-#'                                       package = "NADIA"))
-#'   de$Species <- sp$PG.OrganismId[match(de$Protein.IDs, sp$PG.ProteinGroups)]
-#'   ev <- data.frame(Comparison = rep(c("B-A", "D-A"), each = 2),
-#'                    Species = c("ECOLI", "YEAST"),
-#'                    expected_logFC = c(1, -0.58, 2, -3.3))
-#'   volcanoes <- benchmark_volcano_hc_list(de, ev)
-#'   names(volcanoes)
-#'   volcanoes[["B-A"]]
-#' }
-#'
-#' @export
+#' @keywords internal
+#' @noRd
 benchmark_volcano_hc_list <- function(
     de_res,
     ev,

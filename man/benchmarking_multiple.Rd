@@ -41,8 +41,9 @@ Assay, Comparison, truth, and a p-value column. If NULL and
 \code{results_dir} is provided, imported from
 \code{benchmark_classified.tsv} files. Used for multi-method ROC curves.}
 
-\item{bench_metrics_combined}{Optional pre-built data.frame from
-\code{import_benchmark_metrics()} with columns: Assay, Comparison,
+\item{bench_metrics_combined}{Optional pre-built data.frame, the
+\code{metrics_table} of several \code{benchmarking_proteomics()} runs
+stacked with an Assay column. Columns: Assay, Comparison,
 Sensitivity, Specificity, Precision, NPV, F1, Accuracy, MCC, Performance.
 If NULL and \code{results_dir} is provided, imported from
 \code{benchmark_metrics.tsv} files. Used for extended 11-metric ranking.}

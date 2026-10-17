@@ -40,7 +40,7 @@ Valid names: \code{"boxplot"}, \code{"density"}, \code{"pcv"}, \code{"pmad"}, \c
 When \code{pca_scales = "both"}, \code{"pca"} expands to \code{"pca_free"} + \code{"pca_fixed"}.
 When \code{mds_scales = "both"}, \code{"mds"} expands to \code{"mds_free"} + \code{"mds_fixed"}.}
 
-\item{cor_method}{Correlation method for \code{nm_plot_correlation()}.
+\item{cor_method}{Correlation method for the \code{"correlation"} plot.
 Default \code{"pearson"}.}
 
 \item{pca_scales}{Facet scaling for PCA plot: \code{"free"} (default),
@@ -85,7 +85,7 @@ Default \code{TRUE}.}
 \value{
 Named list of ggplot objects (or NULL for failed plots), plus
 data.frames always computed regardless of \code{plots} selection:
-\code{metrics_table} (from \code{nm_compute_metrics()}), \code{pc1_rank}, \code{mds1_rank},
+\code{metrics_table} (one row per method and metric), \code{pc1_rank}, \code{mds1_rank},
 \code{pcv_rank}, \code{pmad_rank}, \code{pev_rank}, \code{cor_rank}, and \code{final_rank}
 (combined ranking as the mean of the five ranks \code{Rank_PCV}, \code{Rank_PMAD},
 \code{Rank_PEV}, \code{Rank_Cor} and \code{Rank_Sep}; \code{pc1_rank} and \code{mds1_rank} are

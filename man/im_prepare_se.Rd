@@ -23,8 +23,8 @@ im_prepare_se(
 \item{norm_method}{Character scalar. Normalization method name (e.g.
 \code{"cycloess"}). If provided, used directly. Default \code{NULL}.}
 
-\item{pc1_rank}{data.frame from \code{nm_rank_pc1()} or
-\code{normalization_metrics()$pc1_rank}. The first row's \code{Method} column is
+\item{pc1_rank}{The \code{pc1_rank} data.frame returned by
+\code{normalization_metrics()}. The first row's \code{Method} column is
 used as winner. Ignored if \code{norm_method} is provided. Default \code{NULL}.}
 
 \item{min_reps}{Minimum replicates with non-NA values per group for protein

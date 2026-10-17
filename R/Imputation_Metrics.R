@@ -552,8 +552,8 @@ import_imp_matrices <- function(tsv_dir,
 #'   `preprocess_*()` functions.
 #' @param norm_method Character scalar. Normalization method name (e.g.
 #'   `"cycloess"`). If provided, used directly. Default `NULL`.
-#' @param pc1_rank data.frame from `nm_rank_pc1()` or
-#'   `normalization_metrics()$pc1_rank`. The first row's `Method` column is
+#' @param pc1_rank The `pc1_rank` data.frame returned by
+#'   `normalization_metrics()`. The first row's `Method` column is
 #'   used as winner. Ignored if `norm_method` is provided. Default `NULL`.
 #' @param min_reps Minimum replicates with non-NA values per group for protein
 #'   filtering. If NULL, auto-computed as half the smallest group. Default `NULL`.
@@ -696,19 +696,8 @@ im_prepare_se <- function(preprocessing,
 #' and so are the imputations of the stochastic methods (`MinProb`, `QRILC`,
 #' `PI`, `mice`, `missForest`, `MLE`). Call `set.seed()` beforehand to
 #' reproduce a run.
-#'
-#' @examples
-#' data(nadia_dia)
-#' se <- im_prepare_se(nadia_dia, norm_method = "cycloess", verbose = FALSE)
-#'
-#' # Ground-truth simulation: complete rows are masked and re-imputed, so the
-#' # error of each method can be measured against the values it did not see.
-#' # The masked cells are drawn at random: set.seed() makes them reproducible.
-#' set.seed(42)
-#' metrics <- im_compute_metrics(se, methods = c("min", "zero", "knn"),
-#'                               verbose = FALSE)
-#' metrics[, c("Method", "NRMSE", "SOR", "Rank_Mean")]
-#' @export
+#' @keywords internal
+#' @noRd
 im_compute_metrics <- function(se,
                                assay_name    = NULL,
                                methods       = .IM_BENCH_METHODS,
@@ -896,13 +885,8 @@ im_compute_metrics <- function(se,
 #' @param metrics_df data.frame from `im_compute_metrics()`.
 #' @param ... Additional arguments (unused).
 #' @return ggplot object.
-#' @examples
-#' data(nadia_dia)
-#' se <- im_prepare_se(nadia_dia, norm_method = "cycloess", verbose = FALSE)
-#' metrics <- im_compute_metrics(se, methods = c("min", "zero", "knn"),
-#'                               verbose = FALSE)
-#' im_plot_nrmse(metrics)
-#' @export
+#' @keywords internal
+#' @noRd
 im_plot_nrmse <- function(metrics_df, ...) {
   df <- metrics_df[order(metrics_df$NRMSE), ]
   df$Method <- factor(df$Method, levels = df$Method)
@@ -935,13 +919,8 @@ im_plot_nrmse <- function(metrics_df, ...) {
 #'
 #' @inheritParams im_plot_nrmse
 #' @return ggplot object.
-#' @examples
-#' data(nadia_dia)
-#' se <- im_prepare_se(nadia_dia, norm_method = "cycloess", verbose = FALSE)
-#' metrics <- im_compute_metrics(se, methods = c("min", "zero", "knn"),
-#'                               verbose = FALSE)
-#' im_plot_sor(metrics)
-#' @export
+#' @keywords internal
+#' @noRd
 im_plot_sor <- function(metrics_df, ...) {
   df <- metrics_df[order(metrics_df$SOR), ]
   df$Method <- factor(df$Method, levels = df$Method)
@@ -975,13 +954,8 @@ im_plot_sor <- function(metrics_df, ...) {
 #'
 #' @inheritParams im_plot_nrmse
 #' @return ggplot object.
-#' @examples
-#' data(nadia_dia)
-#' se <- im_prepare_se(nadia_dia, norm_method = "cycloess", verbose = FALSE)
-#' metrics <- im_compute_metrics(se, methods = c("min", "zero", "knn"),
-#'                               verbose = FALSE)
-#' im_plot_pss(metrics)
-#' @export
+#' @keywords internal
+#' @noRd
 im_plot_pss <- function(metrics_df, ...) {
   df <- metrics_df[order(metrics_df$PSS), ]
   df$Method <- factor(df$Method, levels = df$Method)
@@ -1016,13 +990,8 @@ im_plot_pss <- function(metrics_df, ...) {
 #'
 #' @inheritParams im_plot_nrmse
 #' @return ggplot object.
-#' @examples
-#' data(nadia_dia)
-#' se <- im_prepare_se(nadia_dia, norm_method = "cycloess", verbose = FALSE)
-#' metrics <- im_compute_metrics(se, methods = c("min", "zero", "knn"),
-#'                               verbose = FALSE)
-#' im_plot_acc_oi(metrics)
-#' @export
+#' @keywords internal
+#' @noRd
 im_plot_acc_oi <- function(metrics_df, ...) {
   df <- metrics_df[order(-metrics_df$ACC_OI), ]
   df$Method <- factor(df$Method, levels = df$Method)
@@ -1057,13 +1026,8 @@ im_plot_acc_oi <- function(metrics_df, ...) {
 #'
 #' @inheritParams im_plot_nrmse
 #' @return ggplot object.
-#' @examples
-#' data(nadia_dia)
-#' se <- im_prepare_se(nadia_dia, norm_method = "cycloess", verbose = FALSE)
-#' metrics <- im_compute_metrics(se, methods = c("min", "zero", "knn"),
-#'                               verbose = FALSE)
-#' im_plot_ranking(metrics)
-#' @export
+#' @keywords internal
+#' @noRd
 im_plot_ranking <- function(metrics_df, ...) {
   # Order by Rank_Mean
   df <- metrics_df[order(metrics_df$Rank_Mean), ]
@@ -1119,13 +1083,8 @@ im_plot_ranking <- function(metrics_df, ...) {
 #'
 #' @inheritParams im_plot_nrmse
 #' @return ggplot object.
-#' @examples
-#' data(nadia_dia)
-#' se <- im_prepare_se(nadia_dia, norm_method = "cycloess", verbose = FALSE)
-#' metrics <- im_compute_metrics(se, methods = c("min", "zero", "knn"),
-#'                               verbose = FALSE)
-#' im_plot_metrics(metrics)
-#' @export
+#' @keywords internal
+#' @noRd
 im_plot_metrics <- function(metrics_df, ...) {
   value_cols <- c("NRMSE", "SOR", "PSS", "ACC_OI")
   present_cols <- intersect(value_cols, colnames(metrics_df))
@@ -1211,8 +1170,9 @@ im_plot_metrics <- function(metrics_df, ...) {
 #'   Default: `.IM_BENCH_METHODS` (16 methods). Use `NULL` or `character(0)`
 #'   to skip individual methods when only using combo_methods.
 #' @param combo_methods Named list of combo/softHybrid configurations.
-#'   Each element: `list(mar_method, mnar_method, mode)`.
-#'   See `im_compute_metrics()` for details.
+#'   Each element is a list with: `mode` ("combo" or "softHybrid", default
+#'   "combo"), `mar_method`, `mnar_method`. The list name is used as the method
+#'   label in results. Default: empty list (no combo methods).
 #' @param condition_col Character. Column in colData for combo methods.
 #'   Default `"Condition"`.
 #' @param na_prop Numeric (0-1). Proportion of artificial NAs. Default 0.20.
@@ -1235,9 +1195,14 @@ im_plot_metrics <- function(metrics_df, ...) {
 #' @param plot_height Numeric. Height in inches for exported plots. Default `8`.
 #' @param plot_dpi Numeric. Resolution for exported plots. Default `150`.
 #' @return Named list of ggplot objects (or NULL for failed plots), plus
-#'   `metrics_table`: a data.frame from `im_compute_metrics()`.
+#'   `metrics_table`: a data.frame with one row per method and the columns
+#'   `NRMSE`, `SOR`, `PSS`, `ACC_OI` and `Rank_Mean`.
 #'
-#' @inheritSection im_compute_metrics Reproducibility
+#' @section Reproducibility:
+#' The cells masked to build the ground truth are drawn from the caller's RNG,
+#' and so are the imputations of the stochastic methods (`MinProb`, `QRILC`,
+#' `PI`, `mice`, `missForest`, `MLE`). Call `set.seed()` beforehand to
+#' reproduce a run.
 #'
 #' @examples
 #' data(nadia_dia)

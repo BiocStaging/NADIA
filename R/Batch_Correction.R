@@ -336,23 +336,8 @@
 #'     \item{label}{Factor name, interaction term, "Below X%", or "resid"}
 #'     \item{weights}{Weighted average proportion of variance (0-1)}
 #'   }
-#'
-#' @examples
-#' data(nadia_dia)
-#'
-#' # nadia_dia has no batch information, so the example builds a plausible one:
-#' # two digestion batches crossed with the three conditions.
-#' cov <- data.frame(Column = nadia_dia$metadata$Coding,
-#'                   Batch = rep(c("b1", "b2"),
-#'                               length.out = nrow(nadia_dia$metadata)),
-#'                   stringsAsFactors = FALSE)
-#' res <- process_proteomics(nadia_dia, covariate_df = cov, verbose = FALSE)
-#'
-#' # Weight of each factor, and of their interaction, on the total variance
-#' vc <- pvca_compute(res$se_proc, assay_name = "Impseqrob_min",
-#'                    factors = c("Condition", "Batch"), verbose = FALSE)
-#' vc
-#' @export
+#' @keywords internal
+#' @noRd
 pvca_compute <- function(se,
                          assay_name          = NULL,
                          factors,
@@ -434,23 +419,8 @@ pvca_compute <- function(se,
 #' @param base_size Numeric. Base font size for theme_classic (default 15).
 #'
 #' @return ggplot2 object
-#'
-#' @examples
-#' data(nadia_dia)
-#'
-#' # nadia_dia has no batch information, so the example builds a plausible one:
-#' # two digestion batches crossed with the three conditions.
-#' cov <- data.frame(Column = nadia_dia$metadata$Coding,
-#'                   Batch = rep(c("b1", "b2"),
-#'                               length.out = nrow(nadia_dia$metadata)),
-#'                   stringsAsFactors = FALSE)
-#' res <- process_proteomics(nadia_dia, covariate_df = cov, verbose = FALSE)
-#'
-#' vc <- pvca_compute(res$se_proc, assay_name = "Impseqrob_min",
-#'                    factors = c("Condition", "Batch"), verbose = FALSE)
-#' pvca_plot(vc, technical_factors = "Batch",
-#'           biological_factors = "Condition")
-#' @export
+#' @keywords internal
+#' @noRd
 pvca_plot <- function(pvca_res,
                       technical_factors   = NULL,
                       biological_factors  = NULL,

@@ -64,6 +64,20 @@ Changes made in response to the Bioconductor review.
   the colours to the condition levels by position, and the level of the
   condition left out of the comparison was kept, so in a comparison such as
   `D-A` the D samples were drawn without colour.
+* The building blocks of the metric and benchmark orchestrators are no
+  longer exported: 61 functions, which takes the exported interface from 111
+  to 50. These are the `nm_plot_*()`, `nm_rank_*()`, `nm_compute_metrics()`,
+  `im_plot_*()`, `im_compute_metrics()`, `bm_*()` and `import_*_results()`
+  functions, the `benchmark_*_gg()`, `benchmark_volcano_hc*()` and
+  `compute_*_metrics()` functions of the single benchmark, `pvca_compute()`,
+  `pvca_plot()` and `pca_highchart()`. Everything they produce is still
+  returned by `normalization_metrics()`, `imputation_metrics()`,
+  `benchmarking_proteomics()`, `benchmarking_multiple()`, `pvca_analysis()` and
+  `pca_highchart_list()` (the first two and `benchmarking_multiple()` choose
+  which plots to draw with `plots`), and the functions themselves remain
+  reachable as `NADIA:::name()`.
+  `import_norm_matrices()` and `import_imp_matrices()` stay exported: they are
+  how matrices from other pipelines enter the metrics.
 
 # NADIA 0.99.0
 

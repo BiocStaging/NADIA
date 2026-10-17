@@ -94,8 +94,6 @@ reference:
     decomposition and PCA against the covariates.
   contents:
   - pvca_analysis
-  - pvca_compute
-  - pvca_plot
   - pca_covariates_plot
 
 - title: Choosing a normalisation method
@@ -105,31 +103,9 @@ reference:
     assays already in the object are ranked instead.
   contents:
   - normalization_metrics
-  - nm_compute_metrics
   - nm_prepare_se
   - nm_run_normalizations
   - import_norm_matrices
-  - nm_rank_final
-  - nm_rank_pcv
-  - nm_rank_pmad
-  - nm_rank_pev
-  - nm_rank_cor
-  - nm_rank_pc1
-  - nm_rank_mds1
-  - nm_plot_final_ranking
-  - nm_plot_metrics
-  - nm_plot_boxplot
-  - nm_plot_density
-  - nm_plot_correlation
-  - nm_plot_pcv
-  - nm_plot_pmad
-  - nm_plot_pev
-  - nm_plot_pca
-  - nm_plot_mds
-  - nm_plot_pc1_ranking
-  - nm_plot_mds1_ranking
-  - nm_plot_qq
-  - nm_plot_scatter
 
 - title: Choosing an imputation method
   desc: >
@@ -138,15 +114,8 @@ reference:
     choose an MNAR one.
   contents:
   - imputation_metrics
-  - im_compute_metrics
   - im_prepare_se
   - import_imp_matrices
-  - im_plot_ranking
-  - im_plot_metrics
-  - im_plot_nrmse
-  - im_plot_sor
-  - im_plot_pss
-  - im_plot_acc_oi
 
 - title: Benchmarking one pipeline against a spike-in
   desc: >
@@ -155,18 +124,6 @@ reference:
     direction.
   contents:
   - benchmarking_proteomics
-  - compute_benchmark_metrics
-  - compute_opdea_metrics
-  - compute_dispersion_metrics
-  - benchmark_heatmap_gg
-  - benchmark_confusion_gg
-  - benchmark_confusion_overall_gg
-  - benchmark_metrics_bars_gg
-  - benchmark_auc_bars_gg
-  - benchmark_roc_gg
-  - benchmark_signif_bars_gg
-  - benchmark_volcano_hc
-  - benchmark_volcano_hc_list
 
 - title: Ranking several pipelines
   desc: >
@@ -174,23 +131,6 @@ reference:
     with the OpDEA ranking and an extended eleven-metric one.
   contents:
   - benchmarking_multiple
-  - bm_compute_ranking
-  - bm_compute_extended_ranking
-  - bm_compute_ranking_by_comparison
-  - import_opdea_results
-  - import_benchmark_metrics
-  - import_classified_results
-  - import_confusion_results
-  - bm_plot_ranking_bars
-  - bm_plot_ranking_heatmap
-  - bm_plot_ranking_bars_by_comp
-  - bm_plot_ranking_heatmap_by_comp
-  - bm_plot_extended_ranking_bars
-  - bm_plot_extended_ranking_heatmap
-  - bm_plot_metrics_comparison
-  - bm_plot_metrics_heatmap
-  - bm_plot_confusion_stacked
-  - bm_plot_roc
 
 - title: Interactive figures
   desc: >
@@ -199,7 +139,6 @@ reference:
   contents:
   - volcano_highchart_list
   - boxplot_highchart_list
-  - pca_highchart
   - pca_highchart_list
   - build_pca_scores
 

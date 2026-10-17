@@ -314,25 +314,8 @@
 #'
 #' @return data.frame in long format with columns:
 #'   Assay, Comparison, nMCC, G_mean, pAUC_001, pAUC_005, pAUC_010
-#'
-#' @examples
-#' data(nadia_dia)
-#' sp <- utils::read.delim(system.file("extdata", "nadia_dia_spikein.tsv.gz",
-#'                                     package = "NADIA"))
-#' ev <- data.frame(Comparison = rep(c("B-A", "D-A"), each = 2),
-#'                  Species = c("ECOLI", "YEAST"),
-#'                  expected_logFC = c(1, -0.58, 2, -3.3))
-#' root <- file.path(tempdir(), "nadia_bench")
-#' for (nm in c("cycloess", "quantile")) {
-#'   de <- process_proteomics(nadia_dia, norm_method = nm,
-#'                            verbose = FALSE)$DEPs_results
-#'   de$Species <- sp$PG.OrganismId[match(de$Protein.IDs, sp$PG.ProteinGroups)]
-#'   benchmarking_proteomics(de, ev, output_dir = file.path(root, nm),
-#'                           verbose = FALSE)
-#' }
-#' opdea_all <- import_opdea_results(root)
-#' head(opdea_all)
-#' @export
+#' @keywords internal
+#' @noRd
 import_opdea_results <- function(results_dir,
                                  pattern      = "benchmark_opdea_metrics\\.tsv$",
                                  method_names = NULL,
@@ -355,25 +338,8 @@ import_opdea_results <- function(results_dir,
 #'
 #' @return data.frame with columns:
 #'   Assay, Comparison, N, TP, FP, TN, FN, plus percentage columns
-#'
-#' @examples
-#' data(nadia_dia)
-#' sp <- utils::read.delim(system.file("extdata", "nadia_dia_spikein.tsv.gz",
-#'                                     package = "NADIA"))
-#' ev <- data.frame(Comparison = rep(c("B-A", "D-A"), each = 2),
-#'                  Species = c("ECOLI", "YEAST"),
-#'                  expected_logFC = c(1, -0.58, 2, -3.3))
-#' root <- file.path(tempdir(), "nadia_bench")
-#' for (nm in c("cycloess", "quantile")) {
-#'   de <- process_proteomics(nadia_dia, norm_method = nm,
-#'                            verbose = FALSE)$DEPs_results
-#'   de$Species <- sp$PG.OrganismId[match(de$Protein.IDs, sp$PG.ProteinGroups)]
-#'   benchmarking_proteomics(de, ev, output_dir = file.path(root, nm),
-#'                           verbose = FALSE)
-#' }
-#' confusion_all <- import_confusion_results(root)
-#' confusion_all[, c("Assay", "Comparison", "TP", "FP", "TN", "FN")]
-#' @export
+#' @keywords internal
+#' @noRd
 import_confusion_results <- function(results_dir,
                                      pattern      = "benchmark_confusion_overall\\.tsv$",
                                      method_names = NULL,
@@ -394,25 +360,8 @@ import_confusion_results <- function(results_dir,
 #' @param recursive Search subdirectories recursively? (default: TRUE)
 #'
 #' @return data.frame with columns from classified_df plus Assay
-#'
-#' @examples
-#' data(nadia_dia)
-#' sp <- utils::read.delim(system.file("extdata", "nadia_dia_spikein.tsv.gz",
-#'                                     package = "NADIA"))
-#' ev <- data.frame(Comparison = rep(c("B-A", "D-A"), each = 2),
-#'                  Species = c("ECOLI", "YEAST"),
-#'                  expected_logFC = c(1, -0.58, 2, -3.3))
-#' root <- file.path(tempdir(), "nadia_bench")
-#' for (nm in c("cycloess", "quantile")) {
-#'   de <- process_proteomics(nadia_dia, norm_method = nm,
-#'                            verbose = FALSE)$DEPs_results
-#'   de$Species <- sp$PG.OrganismId[match(de$Protein.IDs, sp$PG.ProteinGroups)]
-#'   benchmarking_proteomics(de, ev, output_dir = file.path(root, nm),
-#'                           verbose = FALSE)
-#' }
-#' classified_all <- import_classified_results(root)
-#' table(classified_all$Assay, classified_all$classification)
-#' @export
+#' @keywords internal
+#' @noRd
 import_classified_results <- function(results_dir,
                                       pattern      = "benchmark_classified\\.tsv$",
                                       method_names = NULL,
@@ -435,25 +384,8 @@ import_classified_results <- function(results_dir,
 #' @return data.frame with columns:
 #'   Assay, Comparison, TP, FP, TN, FN, Sensitivity, Specificity,
 #'   Precision, NPV, Accuracy, F1, MCC, AUC, Performance
-#'
-#' @examples
-#' data(nadia_dia)
-#' sp <- utils::read.delim(system.file("extdata", "nadia_dia_spikein.tsv.gz",
-#'                                     package = "NADIA"))
-#' ev <- data.frame(Comparison = rep(c("B-A", "D-A"), each = 2),
-#'                  Species = c("ECOLI", "YEAST"),
-#'                  expected_logFC = c(1, -0.58, 2, -3.3))
-#' root <- file.path(tempdir(), "nadia_bench")
-#' for (nm in c("cycloess", "quantile")) {
-#'   de <- process_proteomics(nadia_dia, norm_method = nm,
-#'                            verbose = FALSE)$DEPs_results
-#'   de$Species <- sp$PG.OrganismId[match(de$Protein.IDs, sp$PG.ProteinGroups)]
-#'   benchmarking_proteomics(de, ev, output_dir = file.path(root, nm),
-#'                           verbose = FALSE)
-#' }
-#' bench_all <- import_benchmark_metrics(root)
-#' bench_all[, c("Assay", "Comparison", "Sensitivity", "Specificity", "F1")]
-#' @export
+#' @keywords internal
+#' @noRd
 import_benchmark_metrics <- function(results_dir,
                                      pattern      = "benchmark_metrics\\.tsv$",
                                      method_names = NULL,
@@ -489,23 +421,8 @@ import_benchmark_metrics <- function(results_dir,
 #'     \item{n_comparisons}{Number of comparisons}
 #'     \item{metrics_used}{Metrics included in ranking}
 #'   }
-#'
-#' @examples
-#' data(nadia_dia)
-#' sp <- utils::read.delim(system.file("extdata", "nadia_dia_spikein.tsv.gz",
-#'                                     package = "NADIA"))
-#' ev <- data.frame(Comparison = rep(c("B-A", "D-A"), each = 2),
-#'                  Species = c("ECOLI", "YEAST"),
-#'                  expected_logFC = c(1, -0.58, 2, -3.3))
-#' opdea_all <- do.call(rbind, lapply(c("cycloess", "quantile"), function(nm) {
-#'   de <- process_proteomics(nadia_dia, norm_method = nm,
-#'                            verbose = FALSE)$DEPs_results
-#'   de$Species <- sp$PG.OrganismId[match(de$Protein.IDs, sp$PG.ProteinGroups)]
-#'   cbind(compute_opdea_metrics(de, ev), Assay = nm)
-#' }))
-#' ranking <- bm_compute_ranking(opdea_all)
-#' ranking$mean_ranking
-#' @export
+#' @keywords internal
+#' @noRd
 bm_compute_ranking <- function(opdea_combined,
                                metrics = .BM_METRICS) {
   .bm_validate_opdea(opdea_combined)
@@ -557,23 +474,8 @@ bm_compute_ranking <- function(opdea_combined,
 #'     \item{ranking_combined}{data.frame with all comparisons in long format
 #'       (includes Comparison column)}
 #'   }
-#'
-#' @examples
-#' data(nadia_dia)
-#' sp <- utils::read.delim(system.file("extdata", "nadia_dia_spikein.tsv.gz",
-#'                                     package = "NADIA"))
-#' ev <- data.frame(Comparison = rep(c("B-A", "D-A"), each = 2),
-#'                  Species = c("ECOLI", "YEAST"),
-#'                  expected_logFC = c(1, -0.58, 2, -3.3))
-#' opdea_all <- do.call(rbind, lapply(c("cycloess", "quantile"), function(nm) {
-#'   de <- process_proteomics(nadia_dia, norm_method = nm,
-#'                            verbose = FALSE)$DEPs_results
-#'   de$Species <- sp$PG.OrganismId[match(de$Protein.IDs, sp$PG.ProteinGroups)]
-#'   cbind(compute_opdea_metrics(de, ev), Assay = nm)
-#' }))
-#' by_comp <- bm_compute_ranking_by_comparison(opdea_all)
-#' by_comp$by_comparison[["B-A"]]
-#' @export
+#' @keywords internal
+#' @noRd
 bm_compute_ranking_by_comparison <- function(opdea_combined,
                                              metrics = .BM_METRICS) {
   .bm_validate_opdea(opdea_combined)
@@ -698,26 +600,8 @@ bm_compute_ranking_by_comparison <- function(opdea_combined,
 #'     \item{n_comparisons}{Number of unique comparisons}
 #'     \item{metrics_used}{Metrics actually used}
 #'   }
-#'
-#' @examples
-#' data(nadia_dia)
-#' sp <- utils::read.delim(system.file("extdata", "nadia_dia_spikein.tsv.gz",
-#'                                     package = "NADIA"))
-#' ev <- data.frame(Comparison = rep(c("B-A", "D-A"), each = 2),
-#'                  Species = c("ECOLI", "YEAST"),
-#'                  expected_logFC = c(1, -0.58, 2, -3.3))
-#' opdea_all <- NULL
-#' bench_all <- NULL
-#' for (nm in c("cycloess", "quantile")) {
-#'   de <- process_proteomics(nadia_dia, norm_method = nm,
-#'                            verbose = FALSE)$DEPs_results
-#'   de$Species <- sp$PG.OrganismId[match(de$Protein.IDs, sp$PG.ProteinGroups)]
-#'   opdea_all <- rbind(opdea_all, cbind(compute_opdea_metrics(de, ev), Assay = nm))
-#'   bench_all <- rbind(bench_all, cbind(compute_benchmark_metrics(de, ev), Assay = nm))
-#' }
-#' ext <- bm_compute_extended_ranking(opdea_all, bench_all)
-#' ext$mean_ranking[, c("Assay", "rank_final")]
-#' @export
+#' @keywords internal
+#' @noRd
 bm_compute_extended_ranking <- function(opdea_combined,
                                         bench_metrics_combined,
                                         metrics = .BM_EXTENDED_METRICS) {
@@ -755,26 +639,8 @@ bm_compute_extended_ranking <- function(opdea_combined,
 #' @param extended_ranking List from bm_compute_extended_ranking()
 #' @param title Optional plot title
 #' @return ggplot object
-#'
-#' @examples
-#' data(nadia_dia)
-#' sp <- utils::read.delim(system.file("extdata", "nadia_dia_spikein.tsv.gz",
-#'                                     package = "NADIA"))
-#' ev <- data.frame(Comparison = rep(c("B-A", "D-A"), each = 2),
-#'                  Species = c("ECOLI", "YEAST"),
-#'                  expected_logFC = c(1, -0.58, 2, -3.3))
-#' opdea_all <- NULL
-#' bench_all <- NULL
-#' for (nm in c("cycloess", "quantile")) {
-#'   de <- process_proteomics(nadia_dia, norm_method = nm,
-#'                            verbose = FALSE)$DEPs_results
-#'   de$Species <- sp$PG.OrganismId[match(de$Protein.IDs, sp$PG.ProteinGroups)]
-#'   opdea_all <- rbind(opdea_all, cbind(compute_opdea_metrics(de, ev), Assay = nm))
-#'   bench_all <- rbind(bench_all, cbind(compute_benchmark_metrics(de, ev), Assay = nm))
-#' }
-#' ext <- bm_compute_extended_ranking(opdea_all, bench_all)
-#' bm_plot_extended_ranking_bars(ext)
-#' @export
+#' @keywords internal
+#' @noRd
 bm_plot_extended_ranking_bars <- function(extended_ranking, title = NULL) {
   rank_df   <- extended_ranking$mean_ranking
   n_methods <- extended_ranking$n_methods
@@ -810,26 +676,8 @@ bm_plot_extended_ranking_bars <- function(extended_ranking, title = NULL) {
 #' @param extended_ranking List from bm_compute_extended_ranking()
 #' @param title Optional plot title
 #' @return ggplot object
-#'
-#' @examples
-#' data(nadia_dia)
-#' sp <- utils::read.delim(system.file("extdata", "nadia_dia_spikein.tsv.gz",
-#'                                     package = "NADIA"))
-#' ev <- data.frame(Comparison = rep(c("B-A", "D-A"), each = 2),
-#'                  Species = c("ECOLI", "YEAST"),
-#'                  expected_logFC = c(1, -0.58, 2, -3.3))
-#' opdea_all <- NULL
-#' bench_all <- NULL
-#' for (nm in c("cycloess", "quantile")) {
-#'   de <- process_proteomics(nadia_dia, norm_method = nm,
-#'                            verbose = FALSE)$DEPs_results
-#'   de$Species <- sp$PG.OrganismId[match(de$Protein.IDs, sp$PG.ProteinGroups)]
-#'   opdea_all <- rbind(opdea_all, cbind(compute_opdea_metrics(de, ev), Assay = nm))
-#'   bench_all <- rbind(bench_all, cbind(compute_benchmark_metrics(de, ev), Assay = nm))
-#' }
-#' ext <- bm_compute_extended_ranking(opdea_all, bench_all)
-#' bm_plot_extended_ranking_heatmap(ext)
-#' @export
+#' @keywords internal
+#' @noRd
 bm_plot_extended_ranking_heatmap <- function(extended_ranking, title = NULL) {
   rank_df <- extended_ranking$mean_ranking
   metrics <- extended_ranking$metrics_used
@@ -890,23 +738,8 @@ bm_plot_extended_ranking_heatmap <- function(extended_ranking, title = NULL) {
 #' @param title Optional plot title
 #'
 #' @return ggplot2 object
-#'
-#' @examples
-#' data(nadia_dia)
-#' sp <- utils::read.delim(system.file("extdata", "nadia_dia_spikein.tsv.gz",
-#'                                     package = "NADIA"))
-#' ev <- data.frame(Comparison = rep(c("B-A", "D-A"), each = 2),
-#'                  Species = c("ECOLI", "YEAST"),
-#'                  expected_logFC = c(1, -0.58, 2, -3.3))
-#' opdea_all <- do.call(rbind, lapply(c("cycloess", "quantile"), function(nm) {
-#'   de <- process_proteomics(nadia_dia, norm_method = nm,
-#'                            verbose = FALSE)$DEPs_results
-#'   de$Species <- sp$PG.OrganismId[match(de$Protein.IDs, sp$PG.ProteinGroups)]
-#'   cbind(compute_opdea_metrics(de, ev), Assay = nm)
-#' }))
-#' ranking <- bm_compute_ranking(opdea_all)
-#' bm_plot_ranking_heatmap(ranking)
-#' @export
+#' @keywords internal
+#' @noRd
 bm_plot_ranking_heatmap <- function(ranking_result,
                                     type  = "mean",
                                     title = NULL) {
@@ -971,23 +804,8 @@ bm_plot_ranking_heatmap <- function(ranking_result,
 #' @param title Optional plot title
 #'
 #' @return ggplot2 object
-#'
-#' @examples
-#' data(nadia_dia)
-#' sp <- utils::read.delim(system.file("extdata", "nadia_dia_spikein.tsv.gz",
-#'                                     package = "NADIA"))
-#' ev <- data.frame(Comparison = rep(c("B-A", "D-A"), each = 2),
-#'                  Species = c("ECOLI", "YEAST"),
-#'                  expected_logFC = c(1, -0.58, 2, -3.3))
-#' opdea_all <- do.call(rbind, lapply(c("cycloess", "quantile"), function(nm) {
-#'   de <- process_proteomics(nadia_dia, norm_method = nm,
-#'                            verbose = FALSE)$DEPs_results
-#'   de$Species <- sp$PG.OrganismId[match(de$Protein.IDs, sp$PG.ProteinGroups)]
-#'   cbind(compute_opdea_metrics(de, ev), Assay = nm)
-#' }))
-#' ranking <- bm_compute_ranking(opdea_all)
-#' bm_plot_ranking_bars(ranking)
-#' @export
+#' @keywords internal
+#' @noRd
 bm_plot_ranking_bars <- function(ranking_result,
                                  type  = "mean",
                                  title = NULL) {
@@ -1037,23 +855,8 @@ bm_plot_ranking_bars <- function(ranking_result,
 #' @param title Optional plot title
 #'
 #' @return ggplot2 object
-#'
-#' @examples
-#' data(nadia_dia)
-#' sp <- utils::read.delim(system.file("extdata", "nadia_dia_spikein.tsv.gz",
-#'                                     package = "NADIA"))
-#' ev <- data.frame(Comparison = rep(c("B-A", "D-A"), each = 2),
-#'                  Species = c("ECOLI", "YEAST"),
-#'                  expected_logFC = c(1, -0.58, 2, -3.3))
-#' opdea_all <- do.call(rbind, lapply(c("cycloess", "quantile"), function(nm) {
-#'   de <- process_proteomics(nadia_dia, norm_method = nm,
-#'                            verbose = FALSE)$DEPs_results
-#'   de$Species <- sp$PG.OrganismId[match(de$Protein.IDs, sp$PG.ProteinGroups)]
-#'   cbind(compute_opdea_metrics(de, ev), Assay = nm)
-#' }))
-#' ranking <- bm_compute_ranking(opdea_all)
-#' bm_plot_metrics_heatmap(ranking)
-#' @export
+#' @keywords internal
+#' @noRd
 bm_plot_metrics_heatmap <- function(ranking_result,
                                     type  = "mean",
                                     title = NULL) {
@@ -1130,22 +933,8 @@ bm_plot_metrics_heatmap <- function(ranking_result,
 #' @param title Optional plot title
 #'
 #' @return ggplot2 object
-#'
-#' @examples
-#' data(nadia_dia)
-#' sp <- utils::read.delim(system.file("extdata", "nadia_dia_spikein.tsv.gz",
-#'                                     package = "NADIA"))
-#' ev <- data.frame(Comparison = rep(c("B-A", "D-A"), each = 2),
-#'                  Species = c("ECOLI", "YEAST"),
-#'                  expected_logFC = c(1, -0.58, 2, -3.3))
-#' opdea_all <- do.call(rbind, lapply(c("cycloess", "quantile"), function(nm) {
-#'   de <- process_proteomics(nadia_dia, norm_method = nm,
-#'                            verbose = FALSE)$DEPs_results
-#'   de$Species <- sp$PG.OrganismId[match(de$Protein.IDs, sp$PG.ProteinGroups)]
-#'   cbind(compute_opdea_metrics(de, ev), Assay = nm)
-#' }))
-#' bm_plot_metrics_comparison(opdea_all)
-#' @export
+#' @keywords internal
+#' @noRd
 bm_plot_metrics_comparison <- function(opdea_combined,
                                        metrics = .BM_METRICS,
                                        title   = NULL) {
@@ -1240,23 +1029,8 @@ bm_plot_metrics_comparison <- function(opdea_combined,
 #' @param title Optional plot title
 #'
 #' @return ggplot2 object
-#'
-#' @examples
-#' data(nadia_dia)
-#' sp <- utils::read.delim(system.file("extdata", "nadia_dia_spikein.tsv.gz",
-#'                                     package = "NADIA"))
-#' ev <- data.frame(Comparison = rep(c("B-A", "D-A"), each = 2),
-#'                  Species = c("ECOLI", "YEAST"),
-#'                  expected_logFC = c(1, -0.58, 2, -3.3))
-#' opdea_all <- do.call(rbind, lapply(c("cycloess", "quantile"), function(nm) {
-#'   de <- process_proteomics(nadia_dia, norm_method = nm,
-#'                            verbose = FALSE)$DEPs_results
-#'   de$Species <- sp$PG.OrganismId[match(de$Protein.IDs, sp$PG.ProteinGroups)]
-#'   cbind(compute_opdea_metrics(de, ev), Assay = nm)
-#' }))
-#' by_comp <- bm_compute_ranking_by_comparison(opdea_all)
-#' bm_plot_ranking_heatmap_by_comp(by_comp, comparison = "B-A")
-#' @export
+#' @keywords internal
+#' @noRd
 bm_plot_ranking_heatmap_by_comp <- function(ranking_by_comp,
                                             comparison,
                                             title = NULL) {
@@ -1311,23 +1085,8 @@ bm_plot_ranking_heatmap_by_comp <- function(ranking_by_comp,
 #' @param title Optional plot title
 #'
 #' @return ggplot2 object
-#'
-#' @examples
-#' data(nadia_dia)
-#' sp <- utils::read.delim(system.file("extdata", "nadia_dia_spikein.tsv.gz",
-#'                                     package = "NADIA"))
-#' ev <- data.frame(Comparison = rep(c("B-A", "D-A"), each = 2),
-#'                  Species = c("ECOLI", "YEAST"),
-#'                  expected_logFC = c(1, -0.58, 2, -3.3))
-#' opdea_all <- do.call(rbind, lapply(c("cycloess", "quantile"), function(nm) {
-#'   de <- process_proteomics(nadia_dia, norm_method = nm,
-#'                            verbose = FALSE)$DEPs_results
-#'   de$Species <- sp$PG.OrganismId[match(de$Protein.IDs, sp$PG.ProteinGroups)]
-#'   cbind(compute_opdea_metrics(de, ev), Assay = nm)
-#' }))
-#' by_comp <- bm_compute_ranking_by_comparison(opdea_all)
-#' bm_plot_ranking_bars_by_comp(by_comp, comparison = "D-A")
-#' @export
+#' @keywords internal
+#' @noRd
 bm_plot_ranking_bars_by_comp <- function(ranking_by_comp,
                                          comparison,
                                          title = NULL) {
@@ -1375,23 +1134,8 @@ bm_plot_ranking_bars_by_comp <- function(ranking_by_comp,
 #' @param title Optional plot title
 #'
 #' @return ggplot2 object
-#'
-#' @examples
-#' data(nadia_dia)
-#' sp <- utils::read.delim(system.file("extdata", "nadia_dia_spikein.tsv.gz",
-#'                                     package = "NADIA"))
-#' ev <- data.frame(Comparison = rep(c("B-A", "D-A"), each = 2),
-#'                  Species = c("ECOLI", "YEAST"),
-#'                  expected_logFC = c(1, -0.58, 2, -3.3))
-#' bench_all <- do.call(rbind, lapply(c("cycloess", "quantile"), function(nm) {
-#'   de <- process_proteomics(nadia_dia, norm_method = nm,
-#'                            verbose = FALSE)$DEPs_results
-#'   de$Species <- sp$PG.OrganismId[match(de$Protein.IDs, sp$PG.ProteinGroups)]
-#'   cbind(compute_benchmark_metrics(de, ev), Assay = nm)
-#' }))
-#' bm_plot_confusion_stacked(bench_all)
-#' bm_plot_confusion_stacked(bench_all, comparison = "B-A")
-#' @export
+#' @keywords internal
+#' @noRd
 bm_plot_confusion_stacked <- function(confusion_combined,
                                       comparison = NULL,
                                       title      = NULL) {
@@ -1498,24 +1242,8 @@ bm_plot_confusion_stacked <- function(confusion_combined,
 #'
 #' @return ggplot2 object, or NULL (with a warning) if the comparison has no
 #'   data from which to draw a ROC curve
-#'
-#' @examples
-#' data(nadia_dia)
-#' sp <- utils::read.delim(system.file("extdata", "nadia_dia_spikein.tsv.gz",
-#'                                     package = "NADIA"))
-#' ev <- data.frame(Comparison = rep(c("B-A", "D-A"), each = 2),
-#'                  Species = c("ECOLI", "YEAST"),
-#'                  expected_logFC = c(1, -0.58, 2, -3.3))
-#' classified_all <- do.call(rbind, lapply(c("cycloess", "quantile"), function(nm) {
-#'   de <- process_proteomics(nadia_dia, norm_method = nm,
-#'                            verbose = FALSE)$DEPs_results
-#'   de$Species <- sp$PG.OrganismId[match(de$Protein.IDs, sp$PG.ProteinGroups)]
-#'   cl <- benchmarking_proteomics(de, ev, verbose = FALSE)$classified_df
-#'   cl$Assay <- nm
-#'   cl
-#' }))
-#' bm_plot_roc(classified_all, comparison = "B-A")
-#' @export
+#' @keywords internal
+#' @noRd
 bm_plot_roc <- function(classified_combined,
                         comparison,
                         p_col   = "adj.P.Val",
@@ -2061,8 +1789,9 @@ bm_plot_roc <- function(classified_combined,
 #'   "benchmark_"), so folder-derived names in \code{results_dir} mode match the
 #'   in-memory ones (e.g. "benchmark_Rlr_none_BERT" -> "Rlr_none_BERT"). Set to
 #'   NULL or "" to keep the full folder name. Harmless when the prefix is absent.
-#' @param bench_metrics_combined Optional pre-built data.frame from
-#'   \code{import_benchmark_metrics()} with columns: Assay, Comparison,
+#' @param bench_metrics_combined Optional pre-built data.frame, the
+#'   \code{metrics_table} of several \code{benchmarking_proteomics()} runs
+#'   stacked with an Assay column. Columns: Assay, Comparison,
 #'   Sensitivity, Specificity, Precision, NPV, F1, Accuracy, MCC, Performance.
 #'   If NULL and \code{results_dir} is provided, imported from
 #'   \code{benchmark_metrics.tsv} files. Used for extended 11-metric ranking.

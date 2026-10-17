@@ -35,8 +35,9 @@ Default: \code{.IM_BENCH_METHODS} (16 methods). Use \code{NULL} or \code{charact
 to skip individual methods when only using combo_methods.}
 
 \item{combo_methods}{Named list of combo/softHybrid configurations.
-Each element: \code{list(mar_method, mnar_method, mode)}.
-See \code{im_compute_metrics()} for details.}
+Each element is a list with: \code{mode} ("combo" or "softHybrid", default
+"combo"), \code{mar_method}, \code{mnar_method}. The list name is used as the method
+label in results. Default: empty list (no combo methods).}
 
 \item{condition_col}{Character. Column in colData for combo methods.
 Default \code{"Condition"}.}
@@ -74,7 +75,8 @@ Default \code{TRUE}.}
 }
 \value{
 Named list of ggplot objects (or NULL for failed plots), plus
-\code{metrics_table}: a data.frame from \code{im_compute_metrics()}.
+\code{metrics_table}: a data.frame with one row per method and the columns
+\code{NRMSE}, \code{SOR}, \code{PSS}, \code{ACC_OI} and \code{Rank_Mean}.
 }
 \description{
 Computes NRMSE, SOR, PSS, ACC_OI via ground-truth simulation, then
