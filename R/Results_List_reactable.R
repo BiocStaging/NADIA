@@ -38,29 +38,38 @@
 }")
 
 
+#' Read a table given as a data frame or as a file
+#'
+#' The reading step shared by the loaders below, which only differ in what
+#' they validate afterwards (Bioconductor review, #186).
+#'
+#' @param input A data frame, or the path to a TSV/TXT, CSV or Parquet file.
+#' @param what Name of the table, used in the error for a missing file.
+#' @return A data frame.
+#' @noRd
+.rl_read_table <- function(input, what = "File") {
+  if (is.character(input) && length(input) == 1) {
+    if (!file.exists(input)) stop(what, " not found: ", input, call. = FALSE)
+    ext <- tolower(tools::file_ext(input))
+    input <- switch(ext,
+      tsv = , txt = .read_delim_file(input),
+      csv = .read_delim_file(input, sep = ","),
+      parquet = {
+        .check_suggests("arrow", "Reading a Parquet file")
+        arrow::read_parquet(input)
+      },
+      stop("Unsupported format: ", ext, ". Use TSV, CSV or Parquet.", call. = FALSE))
+  }
+  as.data.frame(input)
+}
+
+
 #' Load and validate differential expression data
-#' @param input Data frame or path to a TSV/Parquet file
+#' @param input Data frame or path to a TSV, CSV or Parquet file
 #' @return Validated data frame
 #' @noRd
 .rl_load_data <- function(input) {
-  if (is.character(input) && length(input) == 1) {
-    if (!file.exists(input)) {
-      stop("File not found: ", input)
-    }
-    ext <- tolower(tools::file_ext(input))
-    if (ext == "tsv" || ext == "txt") {
-      input <- .read_delim_file(input)
-    } else if (ext == "parquet") {
-      .check_suggests("arrow", "Reading a Parquet file")
-      input <- arrow::read_parquet(input)
-    } else if (ext == "csv") {
-      input <- .read_delim_file(input, sep = ",")
-    } else {
-      stop("Unsupported format: ", ext, ". Use TSV, CSV or Parquet.")
-    }
-  }
-
-  df <- as.data.frame(input)
+  df <- .rl_read_table(input, "File")
 
   # Validate the required columns
   required <- c("Protein.IDs", "Gene.Names", "logFC", "P.Value", "adj.P.Val",
@@ -1058,22 +1067,7 @@ results_list_widget <- function(
 #' @return Validated data frame
 #' @noRd
 .pl_load_data <- function(input) {
-  if (is.character(input) && length(input) == 1) {
-    if (!file.exists(input)) stop("File not found: ", input)
-    ext <- tolower(tools::file_ext(input))
-    if (ext %in% c("tsv", "txt")) {
-      input <- .read_delim_file(input)
-    } else if (ext == "csv") {
-      input <- .read_delim_file(input, sep = ",")
-    } else if (ext == "parquet") {
-      .check_suggests("arrow", "Reading a Parquet file")
-      input <- arrow::read_parquet(input)
-    } else {
-      stop("Unsupported format: ", ext, ". Use TSV, CSV or Parquet.")
-    }
-  }
-
-  df <- as.data.frame(input)
+  df <- .rl_read_table(input, "File")
 
   if (!"PG.ProteinGroups" %in% names(df)) {
     stop("Required column 'PG.ProteinGroups' not found. ",
@@ -1387,22 +1381,7 @@ results_list_widget <- function(
 #' @return Validated data frame
 #' @noRd
 .ql_load_quant <- function(input) {
-  if (is.character(input) && length(input) == 1) {
-    if (!file.exists(input)) stop("Protein_QUANT file not found: ", input)
-    ext <- tolower(tools::file_ext(input))
-    if (ext %in% c("tsv", "txt")) {
-      input <- .read_delim_file(input)
-    } else if (ext == "csv") {
-      input <- .read_delim_file(input, sep = ",")
-    } else if (ext == "parquet") {
-      .check_suggests("arrow", "Reading a Parquet file")
-      input <- arrow::read_parquet(input)
-    } else {
-      stop("Unsupported format: ", ext, ". Use TSV, CSV or Parquet.")
-    }
-  }
-
-  df <- as.data.frame(input)
+  df <- .rl_read_table(input, "Protein_QUANT file")
 
   if (!"PG.ProteinGroups" %in% names(df)) {
     stop("Required column 'PG.ProteinGroups' not found. ",
@@ -1421,22 +1400,7 @@ results_list_widget <- function(
 #' @return Validated data frame
 #' @noRd
 .ql_load_matrix <- function(input) {
-  if (is.character(input) && length(input) == 1) {
-    if (!file.exists(input)) stop("Matrix file not found: ", input)
-    ext <- tolower(tools::file_ext(input))
-    if (ext %in% c("tsv", "txt")) {
-      input <- .read_delim_file(input)
-    } else if (ext == "csv") {
-      input <- .read_delim_file(input, sep = ",")
-    } else if (ext == "parquet") {
-      .check_suggests("arrow", "Reading a Parquet file")
-      input <- arrow::read_parquet(input)
-    } else {
-      stop("Unsupported format: ", ext, ". Use TSV, CSV or Parquet.")
-    }
-  }
-
-  df <- as.data.frame(input)
+  df <- .rl_read_table(input, "Matrix file")
 
   if (!"ProteinGroups" %in% names(df)) {
     stop("Required column 'ProteinGroups' not found in the matrix. ",
@@ -1706,21 +1670,9 @@ results_list_widget <- function(
 #' @return Validated data frame with the display columns
 #' @noRd
 .sl_load_metadata <- function(input) {
-  if (is.character(input) && length(input) == 1) {
-    if (!file.exists(input)) stop("File not found: ", input)
-    ext <- tolower(tools::file_ext(input))
-    if (ext %in% c("tsv", "txt")) {
-      df <- .read_delim_file(input)
-    } else if (ext == "csv") {
-      df <- .read_delim_file(input, sep = ",")
-    } else {
-      stop("Unsupported extension: ", ext)
-    }
-  } else if (is.data.frame(input)) {
-    df <- as.data.frame(input)
-  } else {
+  if (!is.data.frame(input) && !(is.character(input) && length(input) == 1))
     stop("input must be a data.frame or a file path")
-  }
+  df <- .rl_read_table(input, "File")
 
   # Mandatory: present in every source (Spectronaut, LFQ, TMT).
   required <- c("R.FileName", "R.Condition", "R.Replicate", "Coding")
