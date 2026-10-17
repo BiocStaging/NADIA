@@ -721,3 +721,34 @@ test_that("no imputation method prints under verbose = FALSE", {
 
     expect_identical(noisy, character(0))
 })
+
+
+# missForest orientation (Bioconductor review, #186). NADIA fitted the forests
+# on the samples, as NAguideR does; with few samples each forest learnt from at
+# most n - 1 points, and the error on hidden values was clearly higher than
+# with the proteins as observations, MsCoreUtils' default. The default changed;
+# NAguideR's orientation remains as observations = "samples".
+test_that("missForest learns from the proteins by default, and from the samples on request", {
+    skip_if_not_installed("missForest")
+    set.seed(1)
+    n <- 150
+    base <- rnorm(n, 20, 2)
+    x <- outer(base, rep(1, 8)) + matrix(rnorm(n * 8, 0, 0.2), n)
+    dimnames(x) <- list(paste0("sp|P", seq_len(n), "|PROT"), paste0(rep(c("A", "B"), each = 4), "_", 1:4))
+    hidden <- matrix(runif(n * 8) < 0.1, n)
+    m <- x; m[hidden] <- NA
+
+    set.seed(2); feat <- .imp_missForest(m, list(ntree = 20, maxiter = 3))
+    set.seed(2); samp <- .imp_missForest(m, list(observations = "samples", ntree = 20, maxiter = 3))
+    # Both keep the observed values, the dimnames and fill every gap
+    for (r in list(feat, samp)) {
+        expect_identical(dimnames(r), dimnames(m))
+        expect_false(anyNA(r))
+        expect_identical(r[!hidden], m[!hidden])
+    }
+    # The two orientations are different models. Which one recovers hidden
+    # values better was measured on the example data, not on this toy matrix:
+    # see CODE_REVIEW_2026-10_bioc_review.md, point 16.
+    expect_false(isTRUE(all.equal(feat, samp)))
+    expect_error(.imp_missForest(m, list(observations = "proteins")), "features")
+})

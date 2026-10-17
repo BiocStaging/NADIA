@@ -7,13 +7,30 @@
 .imp_missForest(x, args = list())
 }
 \arguments{
-\item{args}{list with optional \code{maxiter} (default 10), \code{ntree} (default 100),
-\code{mtry} (default floor(nrow(x)^(1/3)), NAguideR cube root strategy)}
+\item{args}{list with optional \code{observations} (\code{"features"}, the default,
+or \code{"samples"}), \code{maxiter} (default 10), \code{ntree} (default 100) and \code{mtry}
+(default \code{floor(sqrt(p))} with \code{"features"}, the missForest default, and
+\code{floor(p^(1/3))} with \code{"samples"}, NAguideR's cube root of the number of
+proteins).}
 }
 \description{
-missForest: Random Forest imputation
+Which unit the forests learn from is set by \code{observations}:
+\itemize{
+\item \code{"features"} (default): the proteins are the observations and the samples
+the variables, so each sample is predicted from the other samples, with
+forests trained over thousands of proteins. This is the default of
+\code{MsCoreUtils::impute_RF()} and the orientation of \code{knn} and \code{bpca} here.
+\item \code{"samples"}: the samples are the observations and every protein is a
+variable, as NAguideR does. Each forest then trains on at most n - 1
+samples, which suits large cohorts only.
+}
 }
 \details{
+Until NADIA 0.99.2 the only orientation was \code{"samples"}. On \code{nadia_dia}
+(12 samples) with values hidden at random, the RMSE was 0.264 against 0.402,
+and on the TMT example 0.113 against 0.165 with 24 samples and 0.153 against
+0.455 with 12 (Bioconductor review, #186).
+
 This method is stochastic and takes no seed of its own, because
 \code{missForest::missForest()} does not accept one. To reproduce a run, call
 \code{set.seed()} before \code{impute_proteomics()}, as for every stochastic

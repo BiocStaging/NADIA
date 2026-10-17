@@ -78,6 +78,15 @@ Changes made in response to the Bioconductor review.
   reachable as `NADIA:::name()`.
   `import_norm_matrices()` and `import_imp_matrices()` stay exported: they are
   how matrices from other pipelines enter the metrics.
+* `imp_method = "missForest"` now fits the random forests with the proteins as
+  observations and the samples as variables, the default of
+  `MsCoreUtils::impute_RF()`. It used to transpose the matrix, as NAguideR
+  does, so that each forest learnt from at most n - 1 samples; with the few
+  replicates of a differential-abundance design that recovered hidden values
+  clearly worse. On the example data the error on hidden values falls from
+  0.203 to 0.110 (NRMSE, `imputation_metrics()`), and the spike-in MCC of the
+  whole pipeline rises from 0.58 to 0.67. NAguideR's orientation remains
+  available as `method_args = list(missForest = list(observations = "samples"))`.
 
 # NADIA 0.99.0
 

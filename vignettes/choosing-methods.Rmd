@@ -297,7 +297,7 @@ unambiguously.
 | Structure-based, generally used for MAR | `bpca` | Bayesian principal-component imputation using `pcaMethods`. |
 |  | `knn` | Estimates a value from similar proteins using k-nearest neighbours. |
 |  | `mice` | Multiple imputation by chained equations; NADIA averages the completed matrices. |
-|  | `missForest` | Non-parametric random-forest imputation using relationships among variables. |
+|  | `missForest` | Non-parametric random-forest imputation: each sample is predicted from the others, learned over the proteins (`observations = "samples"` in `method_args` reverses it, as NAguideR does). |
 |  | `Impseq` | Sequential model-based imputation from `rrcovNA`. |
 |  | `Impseqrob` | Robust sequential imputation that reduces sensitivity to outlying profiles. |
 |  | `MLE` | Maximum-likelihood imputation under a multivariate normal model. |

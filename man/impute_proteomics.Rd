@@ -55,7 +55,9 @@ before imputation. \code{NULL} (the default) disables the filter, so every
 method receives the same proteins.}
 
 \item{method_args}{Named list of per-method argument lists (e.g.,
-list(knn = list(k = 10), bpca = list(nPcs = 3)))}
+list(knn = list(k = 10), bpca = list(nPcs = 3))). For \code{missForest},
+\code{observations = "samples"} fits the forests on the samples, as NAguideR
+does, instead of on the proteins (the default).}
 
 \item{with_value}{Constant value for imp_method="with" (default: NA_real_)}
 

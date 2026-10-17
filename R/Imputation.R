@@ -276,8 +276,26 @@
 }
 
 #' missForest: Random Forest imputation
-#' @param args list with optional `maxiter` (default 10), `ntree` (default 100),
-#'   `mtry` (default floor(nrow(x)^(1/3)), NAguideR cube root strategy)
+#'
+#' Which unit the forests learn from is set by `observations`:
+#' - `"features"` (default): the proteins are the observations and the samples
+#'   the variables, so each sample is predicted from the other samples, with
+#'   forests trained over thousands of proteins. This is the default of
+#'   `MsCoreUtils::impute_RF()` and the orientation of `knn` and `bpca` here.
+#' - `"samples"`: the samples are the observations and every protein is a
+#'   variable, as NAguideR does. Each forest then trains on at most n - 1
+#'   samples, which suits large cohorts only.
+#'
+#' Until NADIA 0.99.2 the only orientation was `"samples"`. On `nadia_dia`
+#' (12 samples) with values hidden at random, the RMSE was 0.264 against 0.402,
+#' and on the TMT example 0.113 against 0.165 with 24 samples and 0.153 against
+#' 0.455 with 12 (Bioconductor review, #186).
+#'
+#' @param args list with optional `observations` (`"features"`, the default,
+#'   or `"samples"`), `maxiter` (default 10), `ntree` (default 100) and `mtry`
+#'   (default `floor(sqrt(p))` with `"features"`, the missForest default, and
+#'   `floor(p^(1/3))` with `"samples"`, NAguideR's cube root of the number of
+#'   proteins).
 #' @details This method is stochastic and takes no seed of its own, because
 #'   `missForest::missForest()` does not accept one. To reproduce a run, call
 #'   `set.seed()` before `impute_proteomics()`, as for every stochastic
@@ -285,14 +303,23 @@
 #' @keywords internal
 .imp_missForest <- function(x, args = list()) {
   .check_suggests("missForest", "imp_method = 'missForest'")
+  observations <- args$observations %||% "features"
+  if (!identical(observations, "features") && !identical(observations, "samples"))
+    stop("method_args$missForest$observations must be \"features\" or ",
+         "\"samples\".", call. = FALSE)
+  # missForest() treats rows as observations and columns as variables
+  m <- if (observations == "samples") t(x) else x
+  # Plain variable names: the forests are fitted by name, and a protein
+  # identifier is not always a name they accept
+  dimnames(m) <- list(NULL, paste0("v", seq_len(ncol(m))))
   maxiter <- args$maxiter %||% 10
   ntree   <- args$ntree   %||% 100
-  mtry    <- args$mtry    %||% floor(nrow(x)^(1/3))
-  # NAguideR: transpose, mtry = cube root of n_features
-  x_t <- t(x)
-  res <- missForest::missForest(x_t, maxiter = maxiter, ntree = ntree,
-                                mtry = mtry, verbose = FALSE)
-  out <- t(res$ximp)
+  mtry    <- args$mtry    %||% if (observations == "samples")
+    floor(ncol(m)^(1/3)) else floor(sqrt(ncol(m)))
+  res <- missForest::missForest(m, maxiter = maxiter, ntree = ntree,
+                                mtry = mtry, verbose = FALSE)$ximp
+  out <- if (observations == "samples") t(res) else res
+  out <- as.matrix(out)
   dimnames(out) <- dimnames(x)
   out
 }
@@ -910,7 +937,9 @@
 #'   before imputation. `NULL` (the default) disables the filter, so every
 #'   method receives the same proteins.
 #' @param method_args Named list of per-method argument lists (e.g.,
-#'   list(knn = list(k = 10), bpca = list(nPcs = 3)))
+#'   list(knn = list(k = 10), bpca = list(nPcs = 3))). For `missForest`,
+#'   `observations = "samples"` fits the forests on the samples, as NAguideR
+#'   does, instead of on the proteins (the default).
 #' @param with_value Constant value for imp_method="with" (default: NA_real_)
 #' @param verbose Print progress messages (default: TRUE)
 #'
