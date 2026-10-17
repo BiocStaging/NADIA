@@ -57,6 +57,13 @@ Changes made in response to the Bioconductor review.
   one page no longer act on each other: a condition chip or the filter button
   of one table used to change the other. The label above the condition chips
   gives the number of columns a condition hides, which was fixed at 16.
+* `proteomics_heatmap()` accepts a row annotation that does not mention every
+  protein shown: those proteins are annotated "NA", drawn white and placed last,
+  as empty values already were. The heatmap used to fail.
+* In a targeted heatmap the conditions keep their colours. tidyHeatmap gives
+  the colours to the condition levels by position, and the level of the
+  condition left out of the comparison was kept, so in a comparison such as
+  `D-A` the D samples were drawn without colour.
 
 # NADIA 0.99.0
 

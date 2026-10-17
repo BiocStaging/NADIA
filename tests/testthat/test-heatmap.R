@@ -167,3 +167,39 @@ test_that("the input is validated", {
     expect_error(proteomics_heatmap(pca, mode = "target"), "comparison",
                  ignore.case = TRUE)
 })
+
+test_that("a row annotation does not have to mention every protein", {
+    .hm_skip()
+    pca <- .hm_res()$PCA_Input
+    ids <- unique(pca$FeatureID)
+    shown <- unique(pca$FeatureID[pca$sig_any])
+    # Half the proteins shown are annotated; one value is empty
+    part <- data.frame(FeatureID = shown[seq(1, length(shown), 2)],
+                       Type = c("", rep_len(c("x", "y"), ceiling(length(shown) / 2) - 1)))
+    hm <- suppressMessages(proteomics_heatmap(pca, mode = "any", row_annotation = part,
+                                              row_order_by = "Type", split_rows_by = "Type"))
+    d <- hm@data
+    expect_false(anyNA(d$FeatureID))
+    expect_setequal(unique(as.character(d$FeatureID)), shown)
+    # Unannotated and empty both become "NA", drawn white and placed last
+    expect_identical(levels(d$Type), c("x", "y", "NA"))
+    unannotated <- setdiff(shown, part$FeatureID)
+    expect_true(all(d$Type[d$FeatureID %in% unannotated] == "NA"))
+    expect_true(all(tail(levels(d$FeatureID), length(unannotated) + 1) %in%
+                    c(unannotated, part$FeatureID[1])))
+    expect_no_error(suppressMessages(tidyHeatmap::as_ComplexHeatmap(hm)))
+})
+
+test_that("each condition keeps its colour in a targeted heatmap", {
+    .hm_skip()
+    pca <- .hm_res()$PCA_Input
+    pal <- c(A = "#FF0000", B = "#0000FF", D = "#00FF00")
+    hm <- suppressMessages(proteomics_heatmap(pca, mode = "target", comparison = "D-A",
+                                              alpha = 0.01, palette_annotation = pal))
+    expect_identical(levels(hm@data$Condition), c("A", "D"))
+    # tidyHeatmap assigns colours by level position, so the D samples used to
+    # get B's colour, or none
+    cm <- suppressMessages(tidyHeatmap::as_ComplexHeatmap(hm))@top_annotation@
+        anno_list$Condition@color_mapping@colors
+    expect_identical(toupper(substr(cm[c("A", "D")], 1, 7)), pal[c("A", "D")])
+})

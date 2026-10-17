@@ -452,18 +452,34 @@ prepare_heatmap_data <- function(data,
     }
   }
 
-  # Keep only the FeatureIDs present in the data
+  # Keep only the FeatureIDs present in the data, and add those the annotation
+  # does not mention, with missing values: they are drawn as "NA" below. A
+  # protein missing from the annotation used to make the heatmap fail.
   annot <- annot[annot$FeatureID %in% feature_ids, , drop = FALSE]
+  absent <- setdiff(feature_ids, annot$FeatureID)
+  if (length(absent) > 0) {
+    filler <- annot[rep(NA_integer_, length(absent)), , drop = FALSE]
+    filler$FeatureID <- absent
+    annot <- rbind(annot, filler)
+    rownames(annot) <- NULL
+  }
 
   # One palette per annotation, in the EXACT order of the factor levels (real
   # levels sorted, then "NA" in white): this is what makes tidyHeatmap assign
-  # the colours correctly
+  # the colours correctly. A missing value that is still NA (a column that is
+  # not text, or a protein added above) becomes "NA" too.
   colors <- list()
   for (col in row_annotation_cols) {
-    all_levels <- unique(annot[[col]])
+    values <- annot[[col]]
+    all_levels <- unique(values)
     real_levels <- sort(all_levels[all_levels != "NA"])
-    ordered_levels <- if ("NA" %in% all_levels) c(real_levels, "NA") else real_levels
-    annot[[col]] <- factor(annot[[col]], levels = ordered_levels)
+    ordered_levels <- if ("NA" %in% all_levels || anyNA(all_levels))
+      c(real_levels, "NA") else real_levels
+    if (anyNA(values)) {
+      values <- as.character(values)
+      values[is.na(values)] <- "NA"
+    }
+    annot[[col]] <- factor(values, levels = ordered_levels)
 
     col_palette <- if (!is.null(row_annotation_palette) &&
                        col %in% names(row_annotation_palette))
@@ -766,6 +782,9 @@ prepare_heatmap_data <- function(data,
 #'   - Path to a TSV file with a "FeatureID" column plus additional categorical columns
 #'   - Data frame with the same structure
 #'   - NULL: no row annotations (default)
+#'
+#'   Empty values, and proteins the annotation does not list, are shown as
+#'   "NA" in white and placed last when ordering or splitting by it.
 #' @param row_annotation_cols Vector of column names to display as annotations.
 #'   Default: NULL (uses every column except FeatureID)
 #' @param row_annotation_palette Named list of palettes, one per annotation.
@@ -990,6 +1009,17 @@ proteomics_heatmap <- function(data,
   # 4) The heatmap and its annotations
   # ---------------------------------------------------------------------------
   hm_data <- .hm_tidy_input(hm_data)
+
+  # tidyHeatmap gives the palette to the factor levels by position, not by
+  # name: drop the conditions with no sample (a targeted heatmap shows two of
+  # them) and put the colours in level order. Otherwise, in a comparison such
+  # as D-A, the D samples were left without colour.
+  if (is.factor(hm_data$Condition)) {
+    hm_data$Condition <- droplevels(hm_data$Condition)
+    if (all(levels(hm_data$Condition) %in% names(annotation_colors))) {
+      annotation_colors <- annotation_colors[levels(hm_data$Condition)]
+    }
+  }
 
   extra_args <- list(
     column_dend_height = column_dend_height,

@@ -72,7 +72,10 @@ When supplied, only these proteins are shown and the mode/alpha filtering is ign
 \item Path to a TSV file with a "FeatureID" column plus additional categorical columns
 \item Data frame with the same structure
 \item NULL: no row annotations (default)
-}}
+}
+
+Empty values, and proteins the annotation does not list, are shown as
+"NA" in white and placed last when ordering or splitting by it.}
 
 \item{row_annotation_cols}{Vector of column names to display as annotations.
 Default: NULL (uses every column except FeatureID)}
