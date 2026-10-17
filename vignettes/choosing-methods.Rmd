@@ -38,7 +38,7 @@ four steps:
    the differential abundance results.
 
 NADIA exposes 13 normalisation labels and 19 imputation strategies. At the
-level of selectable methods, this gives **13 × 20 = 260** nominal
+level of selectable methods, this gives **13 × 19 = 247** nominal
 normalisation--imputation combinations. Running and interpreting every
 combination is possible, but it is rarely an efficient first step. The metrics
 in this vignette provide a staged screen: first rank plausible normalisation
@@ -47,7 +47,7 @@ imputation methods on the selected---or a small number of plausible---normalised
 assays. The resulting ranks reduce the search space; they do not by themselves
 prove that the highest-ranked combination is biologically correct.
 
-The value 260 is a catalogue-level count rather than 260 fully interchangeable
+The value 247 is a catalogue-level count rather than 247 fully interchangeable
 completed matrices: `log2` and `log2Norm` are numerically redundant, and `limpa`
 and `none` have special downstream interpretations. The count nevertheless
 illustrates why a principled shortlist is preferable to choosing a pipeline by

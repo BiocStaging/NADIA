@@ -519,7 +519,9 @@ analysis:
 - `read_nadia()` opens the archive and exposes its metadata, canonical tables,
   and stored views through a `nadia_db` object.
 - `nadia_result()` reconstructs the `proteomics_result` returned by
-  `process_proteomics()`, ready for NADIA plotting and reporting functions.
+  `process_proteomics()`, ready for NADIA plotting and reporting functions. The
+  object is identical to the original except, after `imp_method = "limpa"`, for
+  the `limpa` precision weights, which are not stored.
 - `nadia_preprocessing()` restores the original `proteomics_data` object so that
   the processing workflow can be run again.
 

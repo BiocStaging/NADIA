@@ -294,7 +294,7 @@ the complete reference is available in `?volcano_highchart_list`.
   <li><code>show_top_genes</code>: number of significant genes labelled automatically, ranked by the selected p-value; the default is 0.</li>
   <li><code>highlight_genes</code>: gene names to highlight manually, including proteins that do not pass the thresholds.</li>
   <li><code>colors</code>: custom colours for up-regulated, down-regulated, and non-significant proteins.</li>
-  <li><code>palette</code>: a three-colour <strong>paletteer</strong> palette; when supplied, it takes precedence over <code>colors</code>.</li>
+  <li><code>palette</code>: three colours for up, down and non-significant, as a <strong>paletteer</strong> or <strong>RColorBrewer</strong> palette name or a colour vector; when supplied, it takes precedence over <code>colors</code>.</li>
   <li><code>title</code>: optional chart title; <code>{comparison}</code> inserts the current comparison name.</li>
 </ul>
 
@@ -1378,18 +1378,21 @@ When a named palette is preferred, `paletteer` themes use the
 `"package::palette"` format and `RColorBrewer` themes use
 `"brewer:PaletteName"`. `paletteer` is a suggested package: it is needed only
 for the `"package::palette"` format, together with the package that provides
-the palette (`ggsci` in the example below). The accepted formats vary slightly between plotting
-functions, as summarised below.
+the palette (`ggsci` in the example below). Every plotting function accepts the
+same forms: `"package::palette"`, `"brewer:Name"` (or the bare RColorBrewer
+name), or a vector of colours, named after the groups or not. A palette with
+fewer colours than groups is interpolated, and an unknown palette name is an
+error. What differs between functions is which argument takes the palette:
 
 ::: {.palette-reference-table}
 
 | Function | Palette argument | Example |
 |:--|:--|:--|
-| `volcano_highchart_list()` | `paletteer` name or `colors = list(up, down, ns)` | `palette = "ggsci::default_jco"` |
-| `boxplot_highchart_list()` | `paletteer` name, `"brewer:Name"`, or colour vector | `palette = "brewer:Dark2"` |
-| `pca_highchart_list()` | `paletteer` name, `"brewer:Name"`, or preferably a named vector | `palette = condition_colours` |
-| Pattern Profiler Highcharts | `ggsci` palette through `paletteer`, `"brewer:Name"`, or colour vector | `palette = "ggsci::default_jco"` |
-| `proteomics_heatmap()` | Separate `paletteer` or `RColorBrewer` palettes for values and annotations | `palette_value = "brewer:RdBu"` |
+| `volcano_highchart_list()` | `palette` (three colours: up, down, non-significant), or `colors = list(up, down, ns)` | `palette = "ggsci::default_jco"` |
+| `boxplot_highchart_list()` | `palette`, one colour per condition | `palette = "brewer:Dark2"` |
+| `pca_highchart_list()` | `palette`, preferably a vector named after the conditions | `palette = condition_colours` |
+| Pattern Profiler Highcharts | `palette`, one colour per cluster | `palette = "ggsci::default_jco"` |
+| `proteomics_heatmap()` | `palette_value` for the values, `palette_annotation` for the conditions and `palette_adjp` for the adjusted p-value | `palette_value = "brewer:RdBu"` |
 
 :::
 

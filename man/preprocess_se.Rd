@@ -66,9 +66,9 @@ column the samples are numbered within each condition, in column order.
 
 The samples are renamed \verb{<condition>_<replicate>}, the convention the rest
 of NADIA relies on, and the original column names are kept in
-\code{metadata$R.FileName}. A \code{SummarizedExperiment} carries no identification
-metrics (precursor or peptide counts, scores), so those columns of the
-tables are left empty.
+\code{metadata$R.FileName}. Identification metrics (precursor or peptide counts,
+scores) are not read from \code{rowData()}, so those columns of the tables are
+left empty.
 }
 \examples{
 data(nadia_dia)

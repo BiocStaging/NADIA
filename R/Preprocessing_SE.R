@@ -36,9 +36,9 @@
 #'
 #' The samples are renamed `<condition>_<replicate>`, the convention the rest
 #' of NADIA relies on, and the original column names are kept in
-#' `metadata$R.FileName`. A `SummarizedExperiment` carries no identification
-#' metrics (precursor or peptide counts, scores), so those columns of the
-#' tables are left empty.
+#' `metadata$R.FileName`. Identification metrics (precursor or peptide counts,
+#' scores) are not read from `rowData()`, so those columns of the tables are
+#' left empty.
 #'
 #' @param se A `SummarizedExperiment` with protein intensities.
 #' @param condition_order Optional character vector with the conditions to
@@ -224,7 +224,7 @@ preprocess_se <- function(
     PG.MolecularWeight     = NA_real_,
     stringsAsFactors       = FALSE
   )
-  # A SummarizedExperiment carries no identification metrics. The precursor
+  # No identification metrics are read from the object. The precursor
   # families are created empty, as for DIA-NN, because the protein tables need
   # one of them to find the samples.
   empty_family <- function(prefix) {

@@ -668,9 +668,13 @@ the FPR range can change the comparison between analytical pipelines.
 The search engine determines which proteins and quantitative evidence enter the
 downstream differential-expression analysis. To measure its influence, the same
 twelve injections were processed with Spectronaut and DIA-NN and evaluated
-against the same `expected` spike-in ratios. Keeping the experimental truth and
-the downstream benchmark fixed makes differences between their results directly
-attributable to the search-engine pipelines. This comparison also provides a
+against the same `expected` spike-in ratios, with the downstream benchmark kept
+fixed. With the full reports, that design isolates the search-engine pipeline.
+The example reports shipped with NADIA, however, are trimmed to 2,000 proteins
+sampled separately for each engine (only a few hundred are shared), so the
+results below describe these two example datasets and do not isolate a
+search-engine effect: part of any difference comes from the proteins retained.
+This comparison also provides a
 practical example of why both views are needed: the ranking suggested by the
 full ROC range can reverse when the low-FPR region is examined.
 
@@ -721,15 +725,16 @@ knitr::kable(engine_auc, digits = 3,
 
 DIA-NN has the higher full AUC in every comparison: 0.909 versus 0.832 in
 `B-A`, 0.995 versus 0.978 in `D-A`, and 0.967 versus 0.949 in `D-B`. Thus, when
-the entire ROC range is considered, DIA-NN provides the stronger overall
-ranking. Both engines nevertheless show the same biological pattern, performing
+the entire ROC range is considered, DIA-NN gives the stronger overall ranking in
+these example data. Both engines nevertheless show the same biological pattern, performing
 best in `D-A` and worst in the more difficult `B-A` comparison.
 
 The `N` column also shows that Spectronaut and DIA-NN contribute 1,997 and 1,965
-proteins, respectively. AUC is based on rates and is therefore more suitable
-than raw TP or FP counts for comparing these different-sized protein sets.
-However, the benchmark remains conditional on the proteins identified by each
-engine; identification coverage is a separate question.
+proteins, respectively. AUC is based on rates, which makes it more comparable
+than raw TP or FP counts across protein sets of different sizes, but it does not
+remove differences in how difficult each set is to classify. The benchmark
+remains conditional on the proteins each example retains; identification
+coverage is a separate question.
 
 **Low-FPR comparison.** Full AUC includes thresholds with large false-positive
 rates that would rarely be accepted in practice. We therefore repeat the
@@ -749,8 +754,9 @@ knitr::kable(engine_pauc, digits = 3,
 The result now depends on the FPR limit. At 1%, Spectronaut has the higher pAUC
 in all three comparisons: 0.768 versus 0.688 in `B-A`, 0.912 versus 0.855 in
 `D-A`, and 0.868 versus 0.778 in `D-B`. At 5% and 10%, the order reverses and
-DIA-NN has the higher pAUC in every comparison. Its greater recovery becomes
-advantageous once the analysis allows a slightly larger false-positive budget.
+DIA-NN has the higher pAUC in every comparison. In these data, its greater
+recovery becomes advantageous once the analysis allows a slightly larger
+false-positive budget.
 
 Choosing a search engine therefore requires an explicit decision about the
 acceptable FPR. A 1% limit means tolerating approximately one false positive

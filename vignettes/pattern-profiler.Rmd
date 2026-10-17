@@ -496,7 +496,7 @@ knitr::kable(
 )
 ```
 
-Raising the threshold from 0.25 to 0.50 removes low-confidence secondary
+Raising the threshold from 0.25 to 0.50 removes low-membership secondary
 associations while retaining one best-supported assignment for every protein in
 this two-cluster solution. At 0.90, only 554 highly characteristic associations
 remain. The appropriate threshold depends on whether the aim is broad discovery
@@ -517,7 +517,8 @@ within individual clusters and for comparing cluster centroids.
 
 `cluster_profile_highchart_list()` creates one interactive figure per cluster.
 Individual protein lines reveal within-cluster heterogeneity, while the centroid
-summarises the dominant pattern. Here, a membership threshold of 0.70 is used as
+line, the mean or median of the proteins drawn (not the centre fitted by the
+clustering), summarises the dominant pattern. Here, a membership threshold of 0.70 is used as
 a conservative starting point for displaying reliable cluster profiles.
 
 ```{r individual-profile-code, eval = if (have_pp_charts) 1 else FALSE}

@@ -173,9 +173,11 @@ must have at least two non-missing quantitative values within each of these
 combinations for BERT to estimate its correction. NADIA corrects the proteins
 that lack them for the batch alone, without protecting the covariates, so that
 none of their measured values is lost, and lists them in
-`metadata(se)$batch_correction`. This is harmless when every condition is
-equally represented in every batch; when the design is unbalanced, it can remove
-part of the biological signal of those proteins. Proteins with fewer than two
+`metadata(se)$batch_correction`. This is reasonable when every condition is
+equally represented in every batch, although missing values can still leave an
+individual protein unbalanced; when the design is unbalanced, it can remove
+part of the biological signal of those proteins, so check the proteins listed
+there. Proteins with fewer than two
 values in a batch cannot be corrected at all and are kept unadjusted.
 :::
 
@@ -377,11 +379,14 @@ is included in the batch-correction model so that its biological differences are
 retained. `Injection` and `Subject` do not participate in BERT/ComBat: they are
 used later during differential abundance analysis.
 
-In the simulated example used in this vignette, `Condition` is not protected
-because the small batch-by-condition groups do not provide enough usable
-observations for BERT to fit the protected model. The unprotected correction is
-acceptable here only because the simulated digestion effect is balanced across
-conditions and its removal can be evaluated against a known result.
+In the simulated example used in this vignette, `Condition` is not protected.
+With two samples per batch and condition, many proteins lack the two values in
+every batch-by-condition cell that the protected model needs: NADIA would
+correct those for the batch alone, and leave unadjusted those with fewer than
+two values in a batch, so protecting `Condition` would mix kinds of correction.
+The unprotected correction is acceptable here only because the simulated
+digestion effect is balanced across conditions and its removal can be evaluated
+against a known result.
 
 # Step 4: verify
 

@@ -25,7 +25,7 @@ absent because a protein was present but not quantified successfully, or because
 its abundance was too low to be detected. These mechanisms call for different
 assumptions and can coexist within the same experiment.
 
-This vignette explains how to inspect that missingness, summarises the 20
+This vignette explains how to inspect that missingness, summarises the 19
 strategies available in NADIA and describes the behaviour of the hybrid and
 detection-aware options. It does not repeat the benchmarking metrics used to
 rank candidate methods; those are covered in `vignette("choosing-methods")`.
@@ -224,7 +224,7 @@ analysed.
 
 # Imputation strategies available in NADIA
 
-NADIA offers 20 selectable imputation strategies. The table below groups them
+NADIA offers 19 selectable imputation strategies. The table below groups them
 according to their main purpose and the type of missingness they are generally
 intended to address. This grouping provides practical guidance; it does not
 imply that the mechanism behind every missing value can be determined

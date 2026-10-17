@@ -722,9 +722,9 @@ from_se
 head(from_se$metadata[, c("R.FileName", "R.Condition", "R.Replicate", "Coding")])
 ```
 
-A `SummarizedExperiment` carries no identification evidence: the precursor
-counts of `protein_id` are left empty, and there are no peptide counts or
-scores, so the interactive tables show only what the object provides. The
+This importer does not transfer identification metrics from `rowData()`: the
+precursor counts of `protein_id` are left empty, and no peptide counts or
+scores are created, so the interactive tables show only the quantities. The
 quantitative analysis is unaffected.
 
 # Session information

@@ -423,6 +423,11 @@ res <- process_proteomics(
     export_boxplot = TRUE,
     export_pca = TRUE,
 
+    # SummarizedExperiment input only (see "Using NADIA together with other
+    # packages")
+    assay_name = NULL,
+    log2_input = FALSE,
+
     # Progress messages
     verbose = TRUE
 )
@@ -725,12 +730,13 @@ The figure uses the following options:
   differences in absolute abundance between proteins;
 - `sample_order = "condition"` groups the samples by condition;
 - `condition_order = c("A", "B", "D")` sets the order of those conditions
-  explicitly;
+  explicitly; with `mode = "target"` only the two compared are drawn, so D does
+  not appear;
 - `show_row_names = FALSE` hides the identifiers, which would otherwise be
   illegible when many rows are drawn.
 
 The heatmap therefore shows the relative patterns of the selected protein groups
-across the A, B and D samples. It should not be interpreted as a map of absolute
+across the eight samples of A and B. It should not be interpreted as a map of absolute
 protein abundances.
 
 Further options for selection, clustering, ordering and customisation are
@@ -746,7 +752,7 @@ how each one relates to it.
 
 | Package | What it does | Relation to NADIA |
 |---|---|---|
-| [`QFeatures`](https://bioconductor.org/packages/QFeatures) | Infrastructure that keeps PSMs, peptides and proteins of an experiment as linked assays | Complementary: NADIA's assays are `SummarizedExperiment` objects and can be stored in a `QFeatures` object |
+| [`QFeatures`](https://bioconductor.org/packages/QFeatures) | Infrastructure that keeps PSMs, peptides and proteins of an experiment as linked assays | Complementary: NADIA stores its assays in a `SummarizedExperiment`, which can be included in a `QFeatures` object, and accepts one as input |
 | [`msqrob2`](https://bioconductor.org/packages/msqrob2) | Robust linear (mixed) models for differential abundance from peptides or proteins, with a hurdle workflow that handles missing values without imputation | Can model NADIA's normalised protein assay, missing values included |
 | [`DEP`](https://bioconductor.org/packages/DEP) | Workflow for label-free and TMT tables from MaxQuant or IsobarQuant: filtering, `vsn` normalisation, imputation with one of the `MSnbase` methods, `limma`, plots and Shiny apps | The closest in scope; NADIA adds the points listed below |
 | [`limpa`](https://bioconductor.org/packages/limpa) | Models the probability of detecting each precursor to quantify proteins and test them with `limma` without imputation | Built into NADIA: `imp_method = "limpa"` and `de_method = "limpa"` |
@@ -762,7 +768,7 @@ how each one relates to it.
 - **Import of protein-level reports** from Spectronaut, DIA-NN and Proteome
   Discoverer (TMT and label-free) into one common structure
   (`vignette("input-formats")`).
-- **Missing values at the centre of the analysis.** Twenty imputation
+- **Missing values at the centre of the analysis.** Nineteen imputation
   strategies, from single methods to the two-stage `combo`, which classifies the
   missing values of each protein as missing at random or not and imputes each
   kind with a different method. Two strategies avoid that binary decision:
@@ -799,9 +805,10 @@ how each one relates to it.
   (`vignette("results-and-export")`).
 
 NADIA works with protein-level quantities: it does not model peptides or
-precursors, as `MSstats`, `msqrob2` and `limpa` can. Except with `limpa`, its
-differential analysis uses imputed values, whereas `proDA`, `limpa` and the
-hurdle workflow of `msqrob2` keep the missing values in the model.
+precursors, as `MSstats`, `msqrob2` and `limpa` can. By default its differential
+analysis uses imputed values; with `imp_method = "none"` the missing values
+reach `limma` as they are, and with `limpa` they are modelled, as `proDA` and the
+hurdle workflow of `msqrob2` also do.
 
 ## Using NADIA together with other packages
 
