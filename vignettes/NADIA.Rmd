@@ -864,7 +864,9 @@ the log2 scale are declared with `log2_input = TRUE`, and `assay_name` chooses
 the assay when there are several. `preprocess_se()` performs the conversion on
 its own, which keeps the imported object, for example to store it with
 `write_nadia()`. The same route takes a protein-level assay of a `QFeatures`
-object, or an `EList` from `limpa`:
+object, or the protein quantities estimated by `limpa`. NADIA analyses
+proteins, so precursor-level data must be summarised first: `readDIANN()`
+returns one row per precursor, and `dpcQuant()` turns them into proteins.
 
 ```{r se-from-other-tools, eval = FALSE}
 # QFeatures: the protein-level assay, with the condition added to its colData
@@ -872,13 +874,20 @@ se <- qf[["proteins"]]
 se$Condition <- c("A", "A", "A", "B", "B", "B")
 res <- process_proteomics(se)
 
-# limpa: an EList holds log2 intensities
-y <- limpa::readDIANN("report.parquet")
-se <- SummarizedExperiment::SummarizedExperiment(
-    assays  = list(log2 = y$E),
+# limpa: precursors read from the DIA-NN report, summarised into proteins
+y   <- limpa::readDIANN("report.parquet")
+dpc <- limpa::dpcCN(y)
+yp  <- limpa::dpcQuant(y, protein.id = "Protein.Group", dpc = dpc)
+se  <- SummarizedExperiment::SummarizedExperiment(
+    assays  = list(log2 = yp$E),
     colData = data.frame(Condition = c("A", "A", "A", "B", "B", "B")))
 res <- process_proteomics(se, log2_input = TRUE)
 ```
+
+`dpcQuant()` returns complete protein values, because `limpa` models the
+missing values itself, so NADIA's imputation has nothing left to fill. To apply
+NADIA's own handling of missing values to DIA-NN data, read its protein-group
+matrix with `preprocess_diann()` instead (`vignette("input-formats")`).
 
 A differential-abundance table produced with `MSstats` or any other tool can
 also be adapted to NADIA's format and benchmarked together with NADIA's

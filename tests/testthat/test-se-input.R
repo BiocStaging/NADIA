@@ -102,3 +102,21 @@ test_that("an imported SummarizedExperiment can be stored in a .nadia file", {
     expect_identical(back$protein_quant, pre$protein_quant)
     expect_identical(back$metadata, pre$metadata)
 })
+
+test_that("limpa's protein quantities enter as a SummarizedExperiment", {
+    # The route shown in the main vignette: limpa reads precursors, dpcQuant()
+    # summarises them into proteins, and those enter NADIA on the log2 scale.
+    skip_if_not_installed("limpa")
+    set.seed(1)
+    y   <- limpa::simProteinDataSet()
+    dpc <- limpa::dpcCN(y)
+    yp  <- suppressMessages(limpa::dpcQuant(y, protein.id = "Protein", dpc = dpc,
+                                            verbose = FALSE))
+    se <- SummarizedExperiment::SummarizedExperiment(
+        assays  = list(log2 = yp$E),
+        colData = data.frame(Condition = paste0("G", y$targets$Group)))
+    res <- suppressWarnings(process_proteomics(se, log2_input = TRUE, verbose = FALSE))
+    # One row per protein, not per precursor
+    expect_setequal(unique(res$DEPs_results$Protein.IDs), rownames(yp))
+    expect_lt(nrow(yp), nrow(y))
+})
