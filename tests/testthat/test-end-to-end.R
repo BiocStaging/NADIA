@@ -181,8 +181,9 @@ test_that("the widgets ship their JavaScript, with no CDN reference", {
     expect_true(any(grepl("papaparse", js)))
     expect_true(any(grepl("LICENSE", js)))   # both are MIT; the terms travel
 
-    deps <- NADIA:::.rl_export_deps()
-    expect_length(deps, 2L)
+    deps <- NADIA:::.rl_js_deps()
+    expect_length(deps, 3L)
+    expect_true("nadia-tables" %in% vapply(deps, `[[`, "", "name"))
     for (d in deps) {
         expect_s3_class(d, "html_dependency")
         expect_true(file.exists(file.path(d$src$file, d$script)))

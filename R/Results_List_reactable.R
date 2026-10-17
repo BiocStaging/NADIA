@@ -205,37 +205,172 @@
 }
 
 
-#' JavaScript libraries backing the "Export to Excel" button
+#' JavaScript behind the tables: NADIA's own script and the export libraries
 #'
-#' ExcelJS builds the workbook and PapaParse parses the TSV that
-#' `Reactable.getDataCSV()` produces. Both are shipped inside the package rather
-#' than pulled from a CDN, so the button works without an internet connection and
-#' `htmlwidgets::saveWidget(selfcontained = TRUE)` embeds them in the HTML.
+#' `nadia-tables.js` holds the filter panel, the condition chips and the Excel
+#' export shared by the four `*_widget()` functions; each widget only registers
+#' its settings with it (see [.rl_assemble()]). ExcelJS builds the workbook and
+#' PapaParse parses the TSV that `Reactable.getDataCSV()` produces. All three are
+#' shipped inside the package rather than pulled from a CDN, so the buttons work
+#' without an internet connection and `htmlwidgets::saveWidget(selfcontained =
+#' TRUE)` embeds them in the HTML.
 #'
 #' PapaParse is kept, small as it is, because `getDataCSV()` quotes any field
 #' containing the separator, a quote or a newline; splitting the TSV by hand would
 #' corrupt those rows.
 #'
-#' Both libraries are under the MIT licence; their terms travel with them in
-#' `inst/js/*/LICENSE`.
+#' ExcelJS and PapaParse are under the MIT licence; their terms travel with them
+#' in `inst/js/*/LICENSE`.
 #'
-#' @return A list of two htmlDependency objects.
+#' @return A list of three htmlDependency objects.
 #' @noRd
-.rl_export_deps <- function() {
-  list(
+.rl_js_deps <- function() {
+  dep <- function(name, version, script) {
     htmltools::htmlDependency(
-      name       = "exceljs",
-      version    = "4.4.0",
-      src        = c(file = system.file("js", "exceljs", package = "NADIA")),
-      script     = "exceljs.min.js",
-      all_files  = FALSE),
-    htmltools::htmlDependency(
-      name       = "papaparse",
-      version    = "5.4.1",
-      src        = c(file = system.file("js", "papaparse", package = "NADIA")),
-      script     = "papaparse.min.js",
+      name       = name,
+      version    = version,
+      src        = c(file = system.file("js", name, package = "NADIA")),
+      script     = script,
       all_files  = FALSE)
+  }
+  list(
+    dep("exceljs", "4.4.0", "exceljs.min.js"),
+    dep("papaparse", "5.4.1", "papaparse.min.js"),
+    dep("nadia-tables", as.character(utils::packageVersion("NADIA")),
+        "nadia-tables.js")
   )
+}
+
+
+# --- Controls shared by the four widgets --------------------------------------
+
+.RL_ICON_FILTER <- '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>'
+.RL_ICON_CLEAR <- '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path><path d="M19 6l-1 14c0 1-1 2-2 2H8c-1 0-2-1-2-2L5 6"></path><line x1="1" y1="1" x2="23" y2="23" stroke="#E63946" stroke-width="2"></line></svg>'
+.RL_ICON_EXPORT <- '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>'
+
+#' Search box and the three action buttons above a table
+#' @param element_id Id of the reactable table.
+#' @param placeholder Placeholder of the search box, or `NULL` for no box.
+#' @return A div tag.
+#' @noRd
+.rl_search_actions <- function(element_id, placeholder) {
+  button <- function(fn, title, icon, class = "rl-btn-action") {
+    tags$button(class = class,
+                onclick = sprintf("NadiaTables.%s('%s')", fn, element_id),
+                title = title, HTML(icon))
+  }
+  div(class = "rl-search-actions",
+    if (!is.null(placeholder)) tags$input(
+      type = "search",
+      placeholder = placeholder,
+      class = "rl-search-input",
+      oninput = sprintf("Reactable.setSearch('%s', this.value)", element_id)
+    ),
+    div(class = "rl-action-buttons",
+      button("toggleFilters", "Show/Hide filters", .RL_ICON_FILTER,
+             "rl-btn-action rl-btn-toggle-filters filters-hidden"),
+      button("clearFilters", "Clear filters", .RL_ICON_CLEAR),
+      button("exportExcel", "Export to Excel", .RL_ICON_EXPORT)
+    )
+  )
+}
+
+#' A numeric filter box of the filter panel
+#' @param element_id Id of the reactable table.
+#' @param label,placeholder,hint Texts of the box.
+#' @param column Column the filter applies to.
+#' @return A div tag.
+#' @noRd
+.rl_numeric_filter <- function(element_id, label, column, placeholder, hint) {
+  div(class = "rl-filter-item",
+    tags$label(class = "rl-filter-label", label),
+    tags$input(
+      type = "text",
+      class = "rl-numeric-input",
+      `data-column` = column,
+      placeholder = placeholder,
+      oninput = sprintf(
+        "NadiaTables.setFilter('%s', this.getAttribute('data-column'), this.value)",
+        element_id)
+    ),
+    tags$span(class = "rl-filter-hint", hint)
+  )
+}
+
+#' Condition chips that hide or show a condition when clicked
+#' @param element_id Id of the reactable table.
+#' @param conditions Condition names.
+#' @param palette Named vector of colours, one per condition.
+#' @param label Text above the chips.
+#' @return A div tag.
+#' @noRd
+.rl_condition_chips <- function(element_id, conditions, palette, label) {
+  div(class = "rl-filter-item", style = "flex: 2 1 300px;",
+    tags$label(class = "rl-filter-label", label),
+    div(class = "pl-cond-chips", lapply(conditions, function(cc) {
+      tags$span(
+        class = "pl-cond-chip",
+        `data-cond` = cc,
+        style = sprintf("background-color:%s;", palette[[cc]]),
+        onclick = sprintf(
+          "NadiaTables.toggleCondition('%s', this.getAttribute('data-cond'))",
+          element_id),
+        cc
+      )
+    }))
+  )
+}
+
+#' Put a widget together: styles, scripts, controls and table
+#'
+#' Everything but the styles and scripts goes inside one element marked with
+#' the table id, which is what lets `nadia-tables.js` keep two tables on the
+#' same page apart.
+#'
+#' @param element_id Id of the reactable table.
+#' @param settings List registered with `NadiaTables.register()`: how the
+#'   condition chips act (`conditionMode`, `conditions`) and the layout of the
+#'   Excel export (`excel`). Converted with `auto_unbox = TRUE`, so every
+#'   vector that must stay a JSON array is wrapped in `I()`.
+#' @param ... The controls and the table, in display order.
+#' @return A browsable tag list.
+#' @noRd
+.rl_assemble <- function(element_id, settings, ...) {
+  register <- sprintf("NadiaTables.register(%s, %s);",
+                      jsonlite::toJSON(element_id, auto_unbox = TRUE),
+                      jsonlite::toJSON(settings, auto_unbox = TRUE))
+  browsable(tagList(
+    .rl_css(),
+    .rl_js_deps(),
+    div(`data-nadia-table` = element_id, ..., tags$script(HTML(register)))
+  ))
+}
+
+#' Excel column widths of the Protein_ID and Protein_QUANT exports
+#' @param cols Exported columns, in order.
+#' @param default Width of the per-sample columns.
+#' @return Numeric vector of widths.
+#' @noRd
+.pl_excel_widths <- function(cols, default) {
+  w <- rep(default, length(cols))
+  w[grepl(".Global", cols, fixed = TRUE) | cols == "PG.Cscore"] <- 12
+  w[startsWith(cols, "PG.Quantity_")] <- 14
+  w[cols %in% c("PG.ProteinGroups", "PG.Genes")] <- 22
+  w[cols == "PG.ProteinDescriptions"] <- 42
+  w[cols == "PG.MolecularWeight"] <- 12
+  w
+}
+
+#' Label above the condition chips of a table that hides columns
+#' @param cond_struct Named list: the columns of each condition.
+#' @return A string.
+#' @noRd
+.pl_chips_label <- function(cond_struct) {
+  n <- unique(lengths(cond_struct))
+  if (length(n) == 1)
+    sprintf("Conditions (click to hide/show %d cols)", n)
+  else
+    "Conditions (click to hide/show their columns)"
 }
 
 
@@ -761,188 +896,22 @@ results_list_widget <- function(
   # --- SharedData for crosstalk ---
   shared_data <- crosstalk::SharedData$new(df)
 
-  # --- CSS ---
-  css <- .rl_css()
-
-  # --- ExcelJS and PapaParse, shipped with the package (see .rl_export_deps) ---
-  export_deps <- .rl_export_deps()
-
-  # --- JavaScript: toggle filters, clear filters, export to Excel ---
-  js_code <- tags$script(HTML(sprintf("
-    var rlFiltersVisible = false;
-
-    function rlToggleFilters() {
-      var container = document.querySelector('.rl-filters-container');
-      var btn = document.querySelector('.rl-btn-toggle-filters');
-      if (rlFiltersVisible) {
-        container.style.maxHeight = '0';
-        container.style.opacity = '0';
-        container.style.marginBottom = '0';
-        container.style.padding = '0';
-        container.style.borderWidth = '0';
-        container.style.boxShadow = 'none';
-        container.style.overflow = 'hidden';
-        btn.classList.add('filters-hidden');
-      } else {
-        container.style.maxHeight = '500px';
-        container.style.opacity = '1';
-        container.style.marginBottom = '1rem';
-        container.style.padding = '1.5rem';
-        container.style.borderWidth = '1px';
-        container.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.05)';
-        container.style.overflow = 'visible';
-        btn.classList.remove('filters-hidden');
-      }
-      rlFiltersVisible = !rlFiltersVisible;
-    }
-
-    function rlApplyNumericFilter(columnId, value) {
-      Reactable.setFilter('%s', columnId, value || undefined);
-    }
-
-    function rlClearFilters() {
-      var selects = document.querySelectorAll('.rl-filter-item .selectized');
-      selects.forEach(function(sel) {
-        if (sel.selectize) sel.selectize.clear();
-      });
-      var numInputs = document.querySelectorAll('.rl-numeric-input');
-      numInputs.forEach(function(inp) {
-        inp.value = '';
-        var col = inp.getAttribute('data-column');
-        if (col) Reactable.setFilter('%s', col, undefined);
-      });
-      var searchInput = document.querySelector('.rl-search-input');
-      if (searchInput) {
-        searchInput.value = '';
-        Reactable.setSearch('%s', '');
-      }
-    }
-
-    async function rlExportExcel() {
-      try {
-        var tsv = Reactable.getDataCSV('%s', { sep: '\\t' });
-        var parseResult = Papa.parse(tsv, { header: true, delimiter: '\\t', skipEmptyLines: true });
-        var rows = parseResult.data;
-        var headers = parseResult.meta.fields;
-
-        var headerMap = {
-          'Gene.Names': 'Gene Names',
-          'Comparison': 'Comparison',
-          'Change': 'Change',
-          'logFC': 'log2 FC',
-          'adj.P.Val': 'FDR',
-          'P.Value': 'P-value',
-          'Protein.IDs': 'Protein Groups',
-          'Description': 'Description',
-          'Quant_Pepts': 'Quant Pepts',
-          'Assay': 'Method',
-          'MissGlobal': '%%Global',
-          'MissComp': '%%Comp',
-          'MissCND1': '%%Cond1',
-          'MissCND2': '%%Cond2'
-        };
-
-        var wb = new ExcelJS.Workbook();
-        var ws = wb.addWorksheet('DE Results');
-
-        var visibleHeaders = headers;
-
-        ws.columns = visibleHeaders.map(function(h) {
-          return {
-            header: headerMap[h] || h,
-            key: h,
-            width: (h === 'Protein.IDs' || h === 'Gene.Names') ? 25 :
-                   (h === 'Description') ? 40 : 15
-          };
-        });
-
-        var headerRow = ws.getRow(1);
-        headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 11 };
-        headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0E6655' } };
-        headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
-        headerRow.height = 30;
-
-        rows.forEach(function(row) {
-          var rowData = {};
-          visibleHeaders.forEach(function(h) { rowData[h] = row[h]; });
-          var addedRow = ws.addRow(rowData);
-
-          ['logFC', 'P.Value', 'adj.P.Val', 'MissGlobal', 'MissComp', 'MissCND1', 'MissCND2', 'Quant_Pepts'].forEach(function(col) {
-            if (visibleHeaders.indexOf(col) === -1) return;
-            var cell = addedRow.getCell(col);
-            if (cell && cell.value) {
-              var num = parseFloat(cell.value);
-              if (!isNaN(num)) cell.value = num;
-            }
-          });
-        });
-
-        ws.eachRow(function(row) {
-          row.eachCell(function(cell) {
-            cell.border = {
-              top: { style: 'thin' }, left: { style: 'thin' },
-              bottom: { style: 'thin' }, right: { style: 'thin' }
-            };
-          });
-        });
-
-        var buffer = await wb.xlsx.writeBuffer();
-        var blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-        var url = window.URL.createObjectURL(blob);
-        var a = document.createElement('a');
-        a.href = url;
-        a.download = 'DEPs_Results_' + new Date().toISOString().split('T')[0] + '.xlsx';
-        a.click();
-        window.URL.revokeObjectURL(url);
-      } catch(e) {
-        console.error('Error while exporting:', e);
-      }
-    }
-  ", element_id, element_id, element_id, element_id)))
-
-  # --- Search bar + action buttons ---
-  search_actions <- div(class = "rl-search-actions",
-    tags$input(
-      type = "search",
-      placeholder = "Search...",
-      class = "rl-search-input",
-      oninput = sprintf("Reactable.setSearch('%s', this.value)", element_id)
-    ),
-    div(class = "rl-action-buttons",
-      tags$button(
-        class = "rl-btn-action rl-btn-toggle-filters filters-hidden",
-        onclick = "rlToggleFilters()",
-        title = "Show/Hide filters",
-        HTML('<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>')
-      ),
-      tags$button(
-        class = "rl-btn-action",
-        onclick = "rlClearFilters()",
-        title = "Clear filters",
-        HTML('<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path><path d="M19 6l-1 14c0 1-1 2-2 2H8c-1 0-2-1-2-2L5 6"></path><line x1="1" y1="1" x2="23" y2="23" stroke="#E63946" stroke-width="2"></line></svg>')
-      ),
-      tags$button(
-        class = "rl-btn-action",
-        onclick = "rlExportExcel()",
-        title = "Export to Excel",
-        HTML('<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>')
-      )
-    )
-  )
+  # --- Search box and buttons ---
+  search_actions <- .rl_search_actions(element_id, "Search...")
 
   # --- Crosstalk + numeric filter panel ---
   filter_items <- list(
     div(class = "rl-filter-item",
       tags$label(class = "rl-filter-label", "Comparison"),
       crosstalk::filter_select(
-        id = "rl_filter_comparison", label = NULL,
+        id = paste0(element_id, "_filter_comparison"), label = NULL,
         sharedData = shared_data, group = ~Comparison, multiple = TRUE
       )
     ),
     div(class = "rl-filter-item",
       tags$label(class = "rl-filter-label", "Change"),
       crosstalk::filter_select(
-        id = "rl_filter_change", label = NULL,
+        id = paste0(element_id, "_filter_change"), label = NULL,
         sharedData = shared_data, group = ~Change, multiple = TRUE
       )
     )
@@ -953,7 +922,7 @@ results_list_widget <- function(
       div(class = "rl-filter-item",
         tags$label(class = "rl-filter-label", "Method"),
         crosstalk::filter_select(
-          id = "rl_filter_assay", label = NULL,
+          id = paste0(element_id, "_filter_assay"), label = NULL,
           sharedData = shared_data, group = ~Assay, multiple = TRUE
         )
       )
@@ -962,17 +931,8 @@ results_list_widget <- function(
 
   # --- Numeric filters (same row, same styles) ---
   .make_numeric_filter <- function(label, column_id, placeholder) {
-    div(class = "rl-filter-item",
-      tags$label(class = "rl-filter-label", label),
-      tags$input(
-        type = "text",
-        class = "rl-numeric-input",
-        `data-column` = column_id,
-        placeholder = placeholder,
-        oninput = sprintf("rlApplyNumericFilter('%s', this.value)", column_id)
-      ),
-      tags$span(class = "rl-filter-hint", "AND: >=2, <=5 \u00b7 OR: <=-1 | >=1")
-    )
+    .rl_numeric_filter(element_id, label, column_id, placeholder,
+                       "AND: >=2, <=5 \u00b7 OR: <=-1 | >=1")
   }
 
   filter_items <- c(filter_items, list(
@@ -1045,14 +1005,22 @@ results_list_widget <- function(
     details    = .rl_detail_row(has_assay, has_description)
   )
 
-  browsable(tagList(
-    css,
-    export_deps,
-    js_code,
-    search_actions,
-    filters_panel,
-    tbl
+  # --- Settings for nadia-tables.js: the Excel export ---
+  settings <- list(excel = list(
+    layout = "flat", sheet = "DE Results", file = "DEPs_Results",
+    headerFill = "FF0E6655",
+    headers = list(Gene.Names = "Gene Names", logFC = "log2 FC",
+                   adj.P.Val = "FDR", P.Value = "P-value",
+                   Protein.IDs = "Protein Groups", Quant_Pepts = "Quant Pepts",
+                   Assay = "Method", MissGlobal = "%Global", MissComp = "%Comp",
+                   MissCND1 = "%Cond1", MissCND2 = "%Cond2"),
+    widths = list(Protein.IDs = 25, Gene.Names = 25, Description = 40),
+    defaultWidth = 15,
+    numeric = I(c("logFC", "P.Value", "adj.P.Val", "MissGlobal", "MissComp",
+                  "MissCND1", "MissCND2", "Quant_Pepts"))
   ))
+
+  .rl_assemble(element_id, settings, search_actions, filters_panel, tbl)
 }
 
 
@@ -1829,19 +1797,17 @@ results_list_widget <- function(
 
 
 #' rowStyle JS function that tints the rows by condition
+#' @param tint_palette Named vector of tint colours, one per condition.
 #' @return A JS object for reactable::rowStyle
 #' @noRd
-.sl_build_row_style <- function() {
-  reactable::JS("
+.sl_build_row_style <- function(tint_palette) {
+  reactable::JS(sprintf("
     function(rowInfo) {
       if (!rowInfo || !rowInfo.values) return null;
-      var cond = rowInfo.values['Condition'];
-      var pal = (typeof SL_TINT_PALETTE !== 'undefined') ? SL_TINT_PALETTE : null;
-      if (!pal) return null;
-      var t = pal[cond];
+      var t = %s[rowInfo.values['Condition']];
       return t ? { backgroundColor: t } : null;
     }
-  ")
+  ", jsonlite::toJSON(as.list(tint_palette), auto_unbox = TRUE)))
 }
 
 
@@ -2041,12 +2007,11 @@ protein_list_widget <- function(
   conditions <- unique(sample_map$condition)
   palette    <- .pl_condition_palette(conditions)
 
-  # --- JSON structures for the client side ---
+  # --- Columns of each condition, and the header groups of the Excel export ---
   cond_struct <- setNames(
     lapply(conditions, function(cc) sample_map$column[sample_map$condition == cc]),
     conditions
   )
-  cond_struct_json <- jsonlite::toJSON(cond_struct, auto_unbox = FALSE)
 
   static_headers_map <- c(
     PG.ProteinGroups       = "Protein Groups",
@@ -2057,9 +2022,9 @@ protein_list_widget <- function(
   group_struct <- list()
   if (length(static_cols) > 0) {
     group_struct[[length(group_struct) + 1]] <- list(
-      name    = jsonlite::unbox("PROTEIN ANNOTATION"),
-      columns = static_cols,
-      headers = unname(static_headers_map[static_cols])
+      name    = "PROTEIN ANNOTATION",
+      columns = I(static_cols),
+      headers = I(unname(static_headers_map[static_cols]))
     )
   }
   metric_labels <- c(
@@ -2073,239 +2038,15 @@ protein_list_widget <- function(
     if (length(cc) == 0) next
     hh <- sample_map$coding[sample_map$metric == m]
     group_struct[[length(group_struct) + 1]] <- list(
-      name    = jsonlite::unbox(metric_labels[[m]]),
-      columns = cc,
-      headers = hh
+      name    = metric_labels[[m]],
+      columns = I(cc),
+      headers = I(hh)
     )
   }
-  group_struct_json <- jsonlite::toJSON(group_struct)
 
-  palette_json <- jsonlite::toJSON(as.list(palette), auto_unbox = TRUE)
-
-  # --- CSS + CDN scripts ---
-  css <- .rl_css()
-  # --- ExcelJS and PapaParse, shipped with the package (see .rl_export_deps) ---
-  export_deps <- .rl_export_deps()
-
-  # --- JavaScript (toggle filters, condition chips, clear, export) ---
-  js_code <- tags$script(HTML(sprintf("
-    var plFiltersVisible = false;
-    var plHiddenConditions = {};
-    var plCondStruct = %s;
-    var plGroupStruct = %s;
-    var plPalette = %s;
-
-    function plToggleFilters() {
-      var container = document.querySelector('.pl-filters-container');
-      var btn = document.querySelector('.pl-btn-toggle-filters');
-      if (plFiltersVisible) {
-        container.style.maxHeight = '0';
-        container.style.opacity = '0';
-        container.style.marginBottom = '0';
-        container.style.padding = '0';
-        container.style.borderWidth = '0';
-        container.style.boxShadow = 'none';
-        container.style.overflow = 'hidden';
-        btn.classList.add('filters-hidden');
-      } else {
-        container.style.maxHeight = '500px';
-        container.style.opacity = '1';
-        container.style.marginBottom = '1rem';
-        container.style.padding = '1.5rem';
-        container.style.borderWidth = '1px';
-        container.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.05)';
-        container.style.overflow = 'visible';
-        btn.classList.remove('filters-hidden');
-      }
-      plFiltersVisible = !plFiltersVisible;
-    }
-
-    function plApplyNumericFilter(columnId, value) {
-      Reactable.setFilter('%s', columnId, value || undefined);
-    }
-
-    function plToggleCondition(cond) {
-      plHiddenConditions[cond] = !plHiddenConditions[cond];
-      var chip = document.querySelector('.pl-cond-chip[data-cond=\"' + cond + '\"]');
-      if (chip) chip.classList.toggle('off', plHiddenConditions[cond]);
-      var hiddenCols = [];
-      Object.keys(plHiddenConditions).forEach(function(c) {
-        if (plHiddenConditions[c] && plCondStruct[c]) {
-          hiddenCols = hiddenCols.concat(plCondStruct[c]);
-        }
-      });
-      Reactable.setHiddenColumns('%s', hiddenCols);
-    }
-
-    function plClearFilters() {
-      var numInputs = document.querySelectorAll('.pl-filters-container .rl-numeric-input');
-      numInputs.forEach(function(inp) {
-        inp.value = '';
-        var col = inp.getAttribute('data-column');
-        if (col) Reactable.setFilter('%s', col, undefined);
-      });
-      Object.keys(plHiddenConditions).forEach(function(c) {
-        plHiddenConditions[c] = false;
-        var chip = document.querySelector('.pl-cond-chip[data-cond=\"' + c + '\"]');
-        if (chip) chip.classList.remove('off');
-      });
-      Reactable.setHiddenColumns('%s', []);
-      var searchInput = document.querySelector('.pl-search-input');
-      if (searchInput) {
-        searchInput.value = '';
-        Reactable.setSearch('%s', '');
-      }
-    }
-
-    function plHex2Argb(hex) {
-      var h = (hex || '').replace('#', '');
-      if (h.length !== 6) return 'FF808080';
-      return 'FF' + h.toUpperCase();
-    }
-
-    async function plExportExcel() {
-      try {
-        var tsv = Reactable.getDataCSV('%s', { sep: '\\t' });
-        var parseResult = Papa.parse(tsv, { header: true, delimiter: '\\t', skipEmptyLines: true });
-        var rows = parseResult.data;
-
-        var wb = new ExcelJS.Workbook();
-        var ws = wb.addWorksheet('Protein-List_ID');
-
-        var flatCols = [];
-        var flatHeaders = [];
-        var colCondMap = {};
-        plGroupStruct.forEach(function(g) {
-          g.columns.forEach(function(c, i) {
-            flatCols.push(c);
-            flatHeaders.push(g.headers[i]);
-            var mm = (g.headers[i] || '').match(/^([A-Za-z0-9]+)_[0-9]+$/);
-            if (mm) colCondMap[c] = mm[1];
-          });
-        });
-
-        flatCols.forEach(function(c, i) {
-          var width;
-          if (c === 'PG.ProteinGroups' || c === 'PG.Genes') width = 22;
-          else if (c === 'PG.ProteinDescriptions') width = 42;
-          else if (c === 'PG.MolecularWeight') width = 12;
-          else width = 8;
-          ws.getColumn(i + 1).width = width;
-        });
-
-        // Row 1: group headers (merged)
-        var colOffset = 1;
-        plGroupStruct.forEach(function(g) {
-          if (!g.columns || g.columns.length === 0) return;
-          var startCol = colOffset;
-          var endCol = colOffset + g.columns.length - 1;
-          var cell = ws.getCell(1, startCol);
-          cell.value = g.name;
-          if (endCol > startCol) ws.mergeCells(1, startCol, 1, endCol);
-          cell.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 12 };
-          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1F5078' } };
-          cell.alignment = { vertical: 'middle', horizontal: 'center' };
-          colOffset = endCol + 1;
-        });
-        ws.getRow(1).height = 28;
-
-        // Row 2: per-column headers tinted by condition
-        flatCols.forEach(function(c, i) {
-          var cell = ws.getCell(2, i + 1);
-          cell.value = flatHeaders[i];
-          var cond = colCondMap[c];
-          var fillColor = cond && plPalette[cond] ? plHex2Argb(plPalette[cond]) : 'FF595959';
-          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: fillColor } };
-          cell.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 11 };
-          cell.alignment = { vertical: 'middle', horizontal: 'center' };
-        });
-        ws.getRow(2).height = 24;
-
-        // Data rows starting at 3
-        var nextRow = 3;
-        rows.forEach(function(row) {
-          var excelRow = ws.getRow(nextRow);
-          flatCols.forEach(function(c, i) {
-            var cell = excelRow.getCell(i + 1);
-            var v = row[c];
-            if (v != null && v !== '') {
-              var num = parseFloat(v);
-              cell.value = !isNaN(num) ? num : v;
-            }
-          });
-          excelRow.commit();
-          nextRow++;
-        });
-
-        // Thin borders across used range
-        for (var r = 1; r < nextRow; r++) {
-          var row = ws.getRow(r);
-          for (var c = 1; c <= flatCols.length; c++) {
-            row.getCell(c).border = {
-              top: { style: 'thin' }, left: { style: 'thin' },
-              bottom: { style: 'thin' }, right: { style: 'thin' }
-            };
-          }
-        }
-
-        // Freeze header rows + first 4 cols
-        ws.views = [{ state: 'frozen', xSplit: Math.min(4, flatCols.length), ySplit: 2 }];
-
-        var buffer = await wb.xlsx.writeBuffer();
-        var blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-        var url = window.URL.createObjectURL(blob);
-        var a = document.createElement('a');
-        a.href = url;
-        a.download = 'Protein_List_ID_' + new Date().toISOString().split('T')[0] + '.xlsx';
-        a.click();
-        window.URL.revokeObjectURL(url);
-      } catch(e) {
-        console.error('Error while exporting:', e);
-      }
-    }
-  ", cond_struct_json, group_struct_json, palette_json,
-      element_id, element_id, element_id, element_id, element_id, element_id)))
-
-  # --- Search bar + buttons ---
-  search_actions <- div(class = "rl-search-actions",
-    tags$input(
-      type = "search",
-      placeholder = "Search proteins, genes, descriptions...",
-      class = "rl-search-input pl-search-input",
-      oninput = sprintf("Reactable.setSearch('%s', this.value)", element_id)
-    ),
-    div(class = "rl-action-buttons",
-      tags$button(
-        class = "rl-btn-action pl-btn-toggle-filters filters-hidden",
-        onclick = "plToggleFilters()",
-        title = "Show/Hide filters",
-        HTML('<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>')
-      ),
-      tags$button(
-        class = "rl-btn-action",
-        onclick = "plClearFilters()",
-        title = "Clear filters",
-        HTML('<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path><path d="M19 6l-1 14c0 1-1 2-2 2H8c-1 0-2-1-2-2L5 6"></path><line x1="1" y1="1" x2="23" y2="23" stroke="#E63946" stroke-width="2"></line></svg>')
-      ),
-      tags$button(
-        class = "rl-btn-action",
-        onclick = "plExportExcel()",
-        title = "Export to Excel",
-        HTML('<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>')
-      )
-    )
-  )
-
-  # --- Filter panel ---
-  cond_chips <- lapply(conditions, function(cc) {
-    tags$span(
-      class = "pl-cond-chip",
-      `data-cond` = cc,
-      style = sprintf("background-color:%s;", palette[[cc]]),
-      onclick = sprintf("plToggleCondition('%s')", cc),
-      cc
-    )
-  })
+  # --- Search box and buttons ---
+  search_actions <- .rl_search_actions(
+    element_id, "Search proteins, genes, descriptions...")
 
   # --- Aggregated filter anchors (first column of each metric) ---
   .first_of <- function(mm) {
@@ -2319,25 +2060,14 @@ protein_list_widget <- function(
     list(label = "Spectronaut Cscore",       anchor = .first_of("PG.Cscore.RunWise"),                  placeholder = "\u2265 2 ...")
   )
   metric_filter_items <- lapply(Filter(function(f) !is.na(f$anchor), metric_filters), function(f) {
-    div(class = "rl-filter-item",
-      tags$label(class = "rl-filter-label", f$label),
-      tags$input(
-        type = "text",
-        class = "rl-numeric-input",
-        `data-column` = f$anchor,
-        placeholder = f$placeholder,
-        oninput = sprintf("plApplyNumericFilter('%s', this.value)", f$anchor)
-      ),
-      tags$span(class = "rl-filter-hint", "OR across the samples in the block")
-    )
+    .rl_numeric_filter(element_id, f$label, f$anchor, f$placeholder,
+                       "OR across the samples in the block")
   })
 
-  filters_panel <- div(class = "rl-filters-container pl-filters-container",
+  filters_panel <- div(class = "rl-filters-container",
     div(class = "rl-filters-row",
-      div(class = "rl-filter-item", style = "flex: 2 1 300px;",
-        tags$label(class = "rl-filter-label", "Conditions (click to hide/show 16 cols)"),
-        div(class = "pl-cond-chips", cond_chips)
-      ),
+      .rl_condition_chips(element_id, conditions, palette,
+                          .pl_chips_label(cond_struct)),
       metric_filter_items
     )
   )
@@ -2379,14 +2109,21 @@ protein_list_widget <- function(
     details      = .pl_detail_row()
   )
 
-  browsable(tagList(
-    css,
-    export_deps,
-    js_code,
-    search_actions,
-    filters_panel,
-    tbl
-  ))
+  # --- Settings for nadia-tables.js: condition chips and Excel export ---
+  settings <- list(
+    conditionMode = "columns",
+    conditions    = lapply(cond_struct, I),
+    excel = list(
+      layout = "grouped", sheet = "Protein-List_ID", file = "Protein_List_ID",
+      headerFill = "FF1F5078",
+      groups  = group_struct,
+      widths  = I(.pl_excel_widths(
+        unlist(lapply(group_struct, `[[`, "columns")), default = 8)),
+      palette = as.list(palette)
+    )
+  )
+
+  .rl_assemble(element_id, settings, search_actions, filters_panel, tbl)
 }
 
 
@@ -2495,7 +2232,6 @@ quant_list_widget <- function(
     lapply(conditions, function(cc) sample_map$column[sample_map$condition == cc]),
     conditions
   )
-  cond_struct_json <- jsonlite::toJSON(cond_struct, auto_unbox = FALSE)
 
   static_headers_map <- c(
     PG.ProteinGroups       = "Protein Groups",
@@ -2513,16 +2249,16 @@ quant_list_widget <- function(
   group_struct <- list()
   if (length(static_cols) > 0) {
     group_struct[[length(group_struct) + 1]] <- list(
-      name    = jsonlite::unbox("PROTEIN ANNOTATION"),
-      columns = static_cols,
-      headers = unname(static_headers_map[static_cols])
+      name    = "PROTEIN ANNOTATION",
+      columns = I(static_cols),
+      headers = I(unname(static_headers_map[static_cols]))
     )
   }
   if (length(global_cols) > 0) {
     group_struct[[length(group_struct) + 1]] <- list(
-      name    = jsonlite::unbox("GLOBAL IDENTIFICATION DATA"),
-      columns = global_cols,
-      headers = unname(global_headers_map[global_cols])
+      name    = "GLOBAL IDENTIFICATION DATA",
+      columns = I(global_cols),
+      headers = I(unname(global_headers_map[global_cols]))
     )
   }
   metric_labels <- c(
@@ -2536,236 +2272,15 @@ quant_list_widget <- function(
     if (length(cc) == 0) next
     hh <- sample_map$coding[sample_map$metric == m]
     group_struct[[length(group_struct) + 1]] <- list(
-      name    = jsonlite::unbox(metric_labels[[m]]),
-      columns = cc,
-      headers = hh
+      name    = metric_labels[[m]],
+      columns = I(cc),
+      headers = I(hh)
     )
   }
-  group_struct_json <- jsonlite::toJSON(group_struct)
 
-  palette_json <- jsonlite::toJSON(as.list(palette), auto_unbox = TRUE)
-
-  css <- .rl_css()
-  # --- ExcelJS and PapaParse, shipped with the package (see .rl_export_deps) ---
-  export_deps <- .rl_export_deps()
-
-  js_code <- tags$script(HTML(sprintf("
-    var qlFiltersVisible = false;
-    var qlHiddenConditions = {};
-    var qlCondStruct = %s;
-    var qlGroupStruct = %s;
-    var qlPalette = %s;
-
-    function qlToggleFilters() {
-      var container = document.querySelector('.ql-filters-container');
-      var btn = document.querySelector('.ql-btn-toggle-filters');
-      if (qlFiltersVisible) {
-        container.style.maxHeight = '0';
-        container.style.opacity = '0';
-        container.style.marginBottom = '0';
-        container.style.padding = '0';
-        container.style.borderWidth = '0';
-        container.style.boxShadow = 'none';
-        container.style.overflow = 'hidden';
-        btn.classList.add('filters-hidden');
-      } else {
-        container.style.maxHeight = '500px';
-        container.style.opacity = '1';
-        container.style.marginBottom = '1rem';
-        container.style.padding = '1.5rem';
-        container.style.borderWidth = '1px';
-        container.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.05)';
-        container.style.overflow = 'visible';
-        btn.classList.remove('filters-hidden');
-      }
-      qlFiltersVisible = !qlFiltersVisible;
-    }
-
-    function qlApplyNumericFilter(columnId, value) {
-      Reactable.setFilter('%s', columnId, value || undefined);
-    }
-
-    function qlToggleCondition(cond) {
-      qlHiddenConditions[cond] = !qlHiddenConditions[cond];
-      var chip = document.querySelector('.ql-cond-chip[data-cond=\"' + cond + '\"]');
-      if (chip) chip.classList.toggle('off', qlHiddenConditions[cond]);
-      var hiddenCols = [];
-      Object.keys(qlHiddenConditions).forEach(function(c) {
-        if (qlHiddenConditions[c] && qlCondStruct[c]) {
-          hiddenCols = hiddenCols.concat(qlCondStruct[c]);
-        }
-      });
-      Reactable.setHiddenColumns('%s', hiddenCols);
-    }
-
-    function qlClearFilters() {
-      var numInputs = document.querySelectorAll('.ql-filters-container .rl-numeric-input');
-      numInputs.forEach(function(inp) {
-        inp.value = '';
-        var col = inp.getAttribute('data-column');
-        if (col) Reactable.setFilter('%s', col, undefined);
-      });
-      Object.keys(qlHiddenConditions).forEach(function(c) {
-        qlHiddenConditions[c] = false;
-        var chip = document.querySelector('.ql-cond-chip[data-cond=\"' + c + '\"]');
-        if (chip) chip.classList.remove('off');
-      });
-      Reactable.setHiddenColumns('%s', []);
-      var searchInput = document.querySelector('.ql-search-input');
-      if (searchInput) {
-        searchInput.value = '';
-        Reactable.setSearch('%s', '');
-      }
-    }
-
-    function qlHex2Argb(hex) {
-      var h = (hex || '').replace('#', '');
-      if (h.length !== 6) return 'FF808080';
-      return 'FF' + h.toUpperCase();
-    }
-
-    async function qlExportExcel() {
-      try {
-        var tsv = Reactable.getDataCSV('%s', { sep: '\\t' });
-        var parseResult = Papa.parse(tsv, { header: true, delimiter: '\\t', skipEmptyLines: true });
-        var rows = parseResult.data;
-
-        var wb = new ExcelJS.Workbook();
-        var ws = wb.addWorksheet('Protein-List_QUANT');
-
-        var flatCols = [];
-        var flatHeaders = [];
-        var colCondMap = {};
-        qlGroupStruct.forEach(function(g) {
-          g.columns.forEach(function(c, i) {
-            flatCols.push(c);
-            flatHeaders.push(g.headers[i]);
-            var mm = (g.headers[i] || '').match(/^([A-Za-z0-9]+)_[0-9]+$/);
-            if (mm) colCondMap[c] = mm[1];
-          });
-        });
-
-        flatCols.forEach(function(c, i) {
-          var width;
-          if (c === 'PG.ProteinGroups' || c === 'PG.Genes') width = 22;
-          else if (c === 'PG.ProteinDescriptions') width = 42;
-          else if (c === 'PG.MolecularWeight') width = 12;
-          else if (c.indexOf('.Global') !== -1 || c === 'PG.Cscore') width = 12;
-          else if (c.indexOf('PG.Quantity_') === 0) width = 14;
-          else width = 9;
-          ws.getColumn(i + 1).width = width;
-        });
-
-        // Row 1: group headers (merged) - blue
-        var colOffset = 1;
-        qlGroupStruct.forEach(function(g) {
-          if (!g.columns || g.columns.length === 0) return;
-          var startCol = colOffset;
-          var endCol = colOffset + g.columns.length - 1;
-          var cell = ws.getCell(1, startCol);
-          cell.value = g.name;
-          if (endCol > startCol) ws.mergeCells(1, startCol, 1, endCol);
-          cell.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 12 };
-          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF660505' } };
-          cell.alignment = { vertical: 'middle', horizontal: 'center' };
-          colOffset = endCol + 1;
-        });
-        ws.getRow(1).height = 28;
-
-        // Row 2: per-column headers; condition tint for samples, plain for static + global
-        flatCols.forEach(function(c, i) {
-          var cell = ws.getCell(2, i + 1);
-          cell.value = flatHeaders[i];
-          var cond = colCondMap[c];
-          var fillColor = cond && qlPalette[cond] ? qlHex2Argb(qlPalette[cond]) : 'FF595959';
-          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: fillColor } };
-          cell.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 11 };
-          cell.alignment = { vertical: 'middle', horizontal: 'center' };
-        });
-        ws.getRow(2).height = 24;
-
-        // Data rows starting at 3
-        var nextRow = 3;
-        rows.forEach(function(row) {
-          var excelRow = ws.getRow(nextRow);
-          flatCols.forEach(function(c, i) {
-            var cell = excelRow.getCell(i + 1);
-            var v = row[c];
-            if (v != null && v !== '') {
-              var num = parseFloat(v);
-              cell.value = !isNaN(num) ? num : v;
-            }
-          });
-          excelRow.commit();
-          nextRow++;
-        });
-
-        // Thin borders
-        for (var r = 1; r < nextRow; r++) {
-          var row = ws.getRow(r);
-          for (var c = 1; c <= flatCols.length; c++) {
-            row.getCell(c).border = {
-              top: { style: 'thin' }, left: { style: 'thin' },
-              bottom: { style: 'thin' }, right: { style: 'thin' }
-            };
-          }
-        }
-
-        ws.views = [{ state: 'frozen', xSplit: Math.min(4, flatCols.length), ySplit: 2 }];
-
-        var buffer = await wb.xlsx.writeBuffer();
-        var blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-        var url = window.URL.createObjectURL(blob);
-        var a = document.createElement('a');
-        a.href = url;
-        a.download = 'Protein_List_QUANT_' + new Date().toISOString().split('T')[0] + '.xlsx';
-        a.click();
-        window.URL.revokeObjectURL(url);
-      } catch(e) {
-        console.error('Error while exporting:', e);
-      }
-    }
-  ", cond_struct_json, group_struct_json, palette_json,
-      element_id, element_id, element_id, element_id, element_id, element_id)))
-
-  search_actions <- div(class = "rl-search-actions",
-    tags$input(
-      type = "search",
-      placeholder = "Search proteins, genes, descriptions...",
-      class = "rl-search-input ql-search-input",
-      oninput = sprintf("Reactable.setSearch('%s', this.value)", element_id)
-    ),
-    div(class = "rl-action-buttons",
-      tags$button(
-        class = "rl-btn-action ql-btn-toggle-filters filters-hidden",
-        onclick = "qlToggleFilters()",
-        title = "Show/Hide filters",
-        HTML('<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>')
-      ),
-      tags$button(
-        class = "rl-btn-action",
-        onclick = "qlClearFilters()",
-        title = "Clear filters",
-        HTML('<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path><path d="M19 6l-1 14c0 1-1 2-2 2H8c-1 0-2-1-2-2L5 6"></path><line x1="1" y1="1" x2="23" y2="23" stroke="#E63946" stroke-width="2"></line></svg>')
-      ),
-      tags$button(
-        class = "rl-btn-action",
-        onclick = "qlExportExcel()",
-        title = "Export to Excel",
-        HTML('<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>')
-      )
-    )
-  )
-
-  cond_chips <- lapply(conditions, function(cc) {
-    tags$span(
-      class = "pl-cond-chip ql-cond-chip",
-      `data-cond` = cc,
-      style = sprintf("background-color:%s;", palette[[cc]]),
-      onclick = sprintf("qlToggleCondition('%s')", cc),
-      cc
-    )
-  })
+  # --- Search box and buttons ---
+  search_actions <- .rl_search_actions(
+    element_id, "Search proteins, genes, descriptions...")
 
   .first_of <- function(mm) {
     cc <- sample_map$column[sample_map$metric == mm]
@@ -2778,25 +2293,14 @@ quant_list_widget <- function(
     list(label = "Norm. Imp. Log2",          anchor = .first_of("NormImp.Log2"),                                  placeholder = ">= 10 ...")
   )
   metric_filter_items <- lapply(Filter(function(f) !is.na(f$anchor), metric_filters), function(f) {
-    div(class = "rl-filter-item",
-      tags$label(class = "rl-filter-label", f$label),
-      tags$input(
-        type = "text",
-        class = "rl-numeric-input",
-        `data-column` = f$anchor,
-        placeholder = f$placeholder,
-        oninput = sprintf("qlApplyNumericFilter('%s', this.value)", f$anchor)
-      ),
-      tags$span(class = "rl-filter-hint", "OR across the samples in the block")
-    )
+    .rl_numeric_filter(element_id, f$label, f$anchor, f$placeholder,
+                       "OR across the samples in the block")
   })
 
-  filters_panel <- div(class = "rl-filters-container ql-filters-container pl-filters-container",
+  filters_panel <- div(class = "rl-filters-container",
     div(class = "rl-filters-row",
-      div(class = "rl-filter-item", style = "flex: 2 1 300px;",
-        tags$label(class = "rl-filter-label", "Conditions (click to hide/show 16 cols)"),
-        div(class = "pl-cond-chips", cond_chips)
-      ),
+      .rl_condition_chips(element_id, conditions, palette,
+                          .pl_chips_label(cond_struct)),
       metric_filter_items
     )
   )
@@ -2837,14 +2341,21 @@ quant_list_widget <- function(
     details      = .pl_detail_row()
   )
 
-  browsable(tagList(
-    css,
-    export_deps,
-    js_code,
-    search_actions,
-    filters_panel,
-    tbl
-  ))
+  # --- Settings for nadia-tables.js: condition chips and Excel export ---
+  settings <- list(
+    conditionMode = "columns",
+    conditions    = lapply(cond_struct, I),
+    excel = list(
+      layout = "grouped", sheet = "Protein-List_QUANT", file = "Protein_List_QUANT",
+      headerFill = "FF660505",
+      groups  = group_struct,
+      widths  = I(.pl_excel_widths(
+        unlist(lapply(group_struct, `[[`, "columns")), default = 9)),
+      palette = as.list(palette)
+    )
+  )
+
+  .rl_assemble(element_id, settings, search_actions, filters_panel, tbl)
 }
 
 
@@ -2906,11 +2417,7 @@ summary_list_widget <- function(
   )
 
   cols   <- .sl_build_columns(df, palette)
-  rstyle <- .sl_build_row_style()
-
-  palette_json      <- jsonlite::toJSON(as.list(palette), auto_unbox = TRUE)
-  tint_palette_json <- jsonlite::toJSON(as.list(tint_palette), auto_unbox = TRUE)
-  conditions_json   <- jsonlite::toJSON(as.list(conditions), auto_unbox = FALSE)
+  rstyle <- .sl_build_row_style(tint_palette)
 
   # Columns to export (only the ones present; LFQ/TMT do not carry the counts)
   sl_width_map <- c(FileName = 45, Condition = 14, Replicate = 12, Coding = 14,
@@ -2919,228 +2426,13 @@ summary_list_widget <- function(
   sl_export_cols    <- names(df)
   sl_export_widths  <- unname(sl_width_map[sl_export_cols])
   sl_export_widths[is.na(sl_export_widths)] <- 16
-  export_cols_json   <- jsonlite::toJSON(sl_export_cols)
-  export_widths_json <- jsonlite::toJSON(sl_export_widths)
 
-  # --- CSS + CDN scripts ---
-  css <- .rl_css()
-  # --- ExcelJS and PapaParse, shipped with the package (see .rl_export_deps) ---
-  export_deps <- .rl_export_deps()
-
-  # --- Embedded JavaScript (slToggleFilters / slToggleCondition / slClearFilters / slExportExcel) ---
-  js_code <- tags$script(HTML(sprintf("
-    var slFiltersVisible = false;
-    var slHiddenConditions = {};
-    var SL_PALETTE = %s;
-    var SL_TINT_PALETTE = %s;
-    var SL_CONDITIONS = %s;
-    var SL_EXPORT_COLS = %s;
-    var SL_EXPORT_WIDTHS = %s;
-
-    function slToggleFilters() {
-      var container = document.querySelector('.sl-filters-container');
-      var btn = document.querySelector('.sl-btn-toggle-filters');
-      if (!container) return;
-      if (slFiltersVisible) {
-        container.style.maxHeight = '0';
-        container.style.opacity = '0';
-        container.style.marginBottom = '0';
-        container.style.padding = '0';
-        container.style.borderWidth = '0';
-        container.style.boxShadow = 'none';
-        container.style.overflow = 'hidden';
-        if (btn) btn.classList.add('filters-hidden');
-      } else {
-        container.style.maxHeight = '500px';
-        container.style.opacity = '1';
-        container.style.marginBottom = '1rem';
-        container.style.padding = '1.5rem';
-        container.style.borderWidth = '1px';
-        container.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.05)';
-        container.style.overflow = 'visible';
-        if (btn) btn.classList.remove('filters-hidden');
-      }
-      slFiltersVisible = !slFiltersVisible;
-    }
-
-    function slApplyNumericFilter(columnId, value) {
-      Reactable.setFilter('%s', columnId, value || undefined);
-    }
-
-    function slApplyConditionFilter() {
-      var hidden = [];
-      Object.keys(slHiddenConditions).forEach(function(c) {
-        if (slHiddenConditions[c]) hidden.push(c);
-      });
-      Reactable.setFilter('%s', 'Condition', hidden.length > 0 ? hidden.join(',') : undefined);
-    }
-
-    function slToggleCondition(cond) {
-      slHiddenConditions[cond] = !slHiddenConditions[cond];
-      var chip = document.querySelector('.sl-cond-chip[data-cond=\"' + cond + '\"]');
-      if (chip) chip.classList.toggle('off', slHiddenConditions[cond]);
-      slApplyConditionFilter();
-    }
-
-    function slClearFilters() {
-      var numInputs = document.querySelectorAll('.sl-filters-container .rl-numeric-input');
-      numInputs.forEach(function(inp) {
-        inp.value = '';
-        var col = inp.getAttribute('data-column');
-        if (col) Reactable.setFilter('%s', col, undefined);
-      });
-      Object.keys(slHiddenConditions).forEach(function(c) {
-        slHiddenConditions[c] = false;
-        var chip = document.querySelector('.sl-cond-chip[data-cond=\"' + c + '\"]');
-        if (chip) chip.classList.remove('off');
-      });
-      Reactable.setFilter('%s', 'Condition', undefined);
-      var searchInput = document.querySelector('.sl-search-input');
-      if (searchInput) {
-        searchInput.value = '';
-        Reactable.setSearch('%s', '');
-      }
-    }
-
-    function slHex2Argb(hex) {
-      var h = (hex || '').replace('#', '');
-      if (h.length !== 6) return 'FF808080';
-      return 'FF' + h.toUpperCase();
-    }
-
-    async function slExportExcel() {
-      try {
-        var tsv = Reactable.getDataCSV('%s', { sep: '\\t' });
-        var parseResult = Papa.parse(tsv, { header: true, delimiter: '\\t', skipEmptyLines: true });
-        var rows = parseResult.data;
-
-        var wb = new ExcelJS.Workbook();
-        var ws = wb.addWorksheet('Summary');
-
-        var flatCols = SL_EXPORT_COLS;
-        var colWidths = SL_EXPORT_WIDTHS;
-        flatCols.forEach(function(c, i) { ws.getColumn(i + 1).width = colWidths[i]; });
-
-        // Row 1: header (black / white bold)
-        flatCols.forEach(function(c, i) {
-          var cell = ws.getCell(1, i + 1);
-          cell.value = c;
-          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1A1A1A' } };
-          cell.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 11 };
-          cell.alignment = { vertical: 'middle', horizontal: 'center' };
-        });
-        ws.getRow(1).height = 28;
-
-        // Data rows: per-row tint + strong chip on Condition + Coding
-        var nextRow = 2;
-        rows.forEach(function(row) {
-          var cond = String(row['Condition'] || '');
-          var tintArgb = SL_TINT_PALETTE[cond] ? slHex2Argb(SL_TINT_PALETTE[cond]) : 'FFFFFFFF';
-          var strongArgb = SL_PALETTE[cond] ? slHex2Argb(SL_PALETTE[cond]) : 'FF808080';
-
-          var excelRow = ws.getRow(nextRow);
-          flatCols.forEach(function(c, i) {
-            var cell = excelRow.getCell(i + 1);
-            var v = row[c];
-            if (v != null && v !== '') {
-              if (i >= 4) { // numeric columns (5/6/7)
-                var num = parseFloat(v);
-                cell.value = !isNaN(num) ? num : v;
-                cell.numFmt = '#,##0';
-              } else {
-                cell.value = v;
-              }
-            }
-            // tinted background across the whole row
-            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: tintArgb } };
-            cell.alignment = { vertical: 'middle',
-                               horizontal: (i === 0 ? 'left' : (i >= 4 ? 'right' : 'center')) };
-            // override on Condition + Coding (i = 1 or 3)
-            if (i === 1 || i === 3) {
-              cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: strongArgb } };
-              cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-              cell.alignment = { vertical: 'middle', horizontal: 'center' };
-            }
-          });
-          excelRow.commit();
-          nextRow++;
-        });
-
-        // Borders
-        for (var r = 1; r < nextRow; r++) {
-          var rr = ws.getRow(r);
-          for (var c = 1; c <= flatCols.length; c++) {
-            rr.getCell(c).border = {
-              top:    { style: 'thin', color: { argb: 'FFBFBFBF' } },
-              left:   { style: 'thin', color: { argb: 'FFBFBFBF' } },
-              bottom: { style: 'thin', color: { argb: 'FFBFBFBF' } },
-              right:  { style: 'thin', color: { argb: 'FFBFBFBF' } }
-            };
-          }
-        }
-        ws.views = [{ state: 'frozen', xSplit: 1, ySplit: 1 }];
-
-        var buffer = await wb.xlsx.writeBuffer();
-        var blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-        var url = window.URL.createObjectURL(blob);
-        var a = document.createElement('a');
-        a.href = url;
-        a.download = 'Summary_' + new Date().toISOString().split('T')[0] + '.xlsx';
-        a.click();
-        window.URL.revokeObjectURL(url);
-      } catch(e) {
-        console.error('Error while exporting:', e);
-      }
-    }
-  ", palette_json, tint_palette_json, conditions_json,
-      export_cols_json, export_widths_json,
-      element_id, element_id, element_id, element_id, element_id, element_id)))
-
-  # --- Search bar + buttons ---
-  search_input <- if (isTRUE(searchable)) {
-    tags$input(
-      type = "search",
-      placeholder = "Search files, codings, conditions...",
-      class = "rl-search-input sl-search-input",
-      oninput = sprintf("Reactable.setSearch('%s', this.value)", element_id)
-    )
-  } else NULL
-
-  search_actions <- div(class = "rl-search-actions",
-    search_input,
-    div(class = "rl-action-buttons",
-      tags$button(
-        class = "rl-btn-action sl-btn-toggle-filters filters-hidden",
-        onclick = "slToggleFilters()",
-        title = "Show/Hide filters",
-        HTML('<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>')
-      ),
-      tags$button(
-        class = "rl-btn-action",
-        onclick = "slClearFilters()",
-        title = "Clear filters",
-        HTML('<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path><path d="M19 6l-1 14c0 1-1 2-2 2H8c-1 0-2-1-2-2L5 6"></path><line x1="1" y1="1" x2="23" y2="23" stroke="#E63946" stroke-width="2"></line></svg>')
-      ),
-      tags$button(
-        class = "rl-btn-action",
-        onclick = "slExportExcel()",
-        title = "Export to Excel",
-        HTML('<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>')
-      )
-    )
-  )
+  # --- Search box (optional) and buttons ---
+  search_actions <- .rl_search_actions(
+    element_id,
+    if (isTRUE(searchable)) "Search files, codings, conditions..." else NULL)
 
   # --- Filter panel: condition chips + 3 numeric inputs ---
-  cond_chips <- lapply(conditions, function(cc) {
-    tags$span(
-      class = "pl-cond-chip sl-cond-chip",
-      `data-cond` = cc,
-      style = sprintf("background-color:%s;", palette[[cc]]),
-      onclick = sprintf("slToggleCondition('%s')", cc),
-      cc
-    )
-  })
-
   numeric_filters <- list(
     list(label = "# Unique PSMs",     col = "# Unique PSMs",     placeholder = ">= 120000 ..."),
     list(label = "# Unique Peptides", col = "# Unique Peptides", placeholder = ">= 90000 ..."),
@@ -3149,25 +2441,14 @@ summary_list_widget <- function(
   # Only keep filters for the count columns present (absent for LFQ/TMT)
   numeric_filters <- Filter(function(f) f$col %in% names(df), numeric_filters)
   numeric_filter_items <- lapply(numeric_filters, function(f) {
-    div(class = "rl-filter-item",
-      tags$label(class = "rl-filter-label", f$label),
-      tags$input(
-        type = "text",
-        class = "rl-numeric-input",
-        `data-column` = f$col,
-        placeholder = f$placeholder,
-        oninput = sprintf("slApplyNumericFilter('%s', this.value)", f$col)
-      ),
-      tags$span(class = "rl-filter-hint", "Operators: >=, <=, >, <, =, !=")
-    )
+    .rl_numeric_filter(element_id, f$label, f$col, f$placeholder,
+                       "Operators: >=, <=, >, <, =, !=")
   })
 
-  filters_panel <- div(class = "rl-filters-container sl-filters-container",
+  filters_panel <- div(class = "rl-filters-container",
     div(class = "rl-filters-row",
-      div(class = "rl-filter-item", style = "flex: 2 1 300px;",
-        tags$label(class = "rl-filter-label", "Conditions (click to show/hide rows)"),
-        div(class = "pl-cond-chips sl-cond-chips", cond_chips)
-      ),
+      .rl_condition_chips(element_id, conditions, palette,
+                          "Conditions (click to show/hide rows)"),
       numeric_filter_items
     )
   )
@@ -3221,12 +2502,21 @@ summary_list_widget <- function(
     language     = .rl_lang()
   )
 
-  browsable(tagList(
-    css,
-    export_deps,
-    js_code,
-    search_actions,
-    filters_panel,
-    tbl
-  ))
+  # --- Settings for nadia-tables.js: condition chips and Excel export ---
+  settings <- list(
+    conditionMode = "rows",
+    excel = list(
+      layout = "tinted", sheet = "Summary", file = "Summary",
+      headerFill = "FF1A1A1A",
+      columns = I(sl_export_cols),
+      widths  = I(sl_export_widths),
+      numeric = I(setdiff(sl_export_cols,
+                          c("FileName", "Condition", "Replicate", "Coding"))),
+      strong  = I(c("Condition", "Coding")),
+      palette = as.list(palette),
+      tint    = as.list(tint_palette)
+    )
+  )
+
+  .rl_assemble(element_id, settings, search_actions, filters_panel, tbl)
 }

@@ -52,6 +52,11 @@ Changes made in response to the Bioconductor review.
   vector of colours, which used to fail.
 * `proteomics_heatmap()` no longer changes ComplexHeatmap's `message` option
   for the rest of the session.
+* The four `*_widget()` tables share one script, shipped in `inst/js/`,
+  instead of embedding their own JavaScript. Two tables of the same kind on
+  one page no longer act on each other: a condition chip or the filter button
+  of one table used to change the other. The label above the condition chips
+  gives the number of columns a condition hides, which was fixed at 16.
 
 # NADIA 0.99.0
 
