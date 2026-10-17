@@ -36,7 +36,10 @@ volcano_highchart_list(
 
 \item{colors}{List of colours for "up", "down", "ns" (ignored when palette is used)}
 
-\item{palette}{Name of a paletteer palette (e.g. "ggsci::default_jco"). Uses 3 colours: up, down, ns}
+\item{palette}{Colour palette for up, down and non-significant proteins, in
+that order: \code{"pkg::name"} for a palette from paletteer, \code{"brewer:Name"} (or
+the bare name) for an RColorBrewer palette, or a vector of colours. Its
+first three colours are used. \code{NULL} (default) uses \code{colors}.}
 
 \item{show_top_genes}{Number of top genes to label by significance (default: 0)}
 

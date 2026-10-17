@@ -37,7 +37,10 @@ pca_highchart_list(
 
 \item{group_order}{Order of the groups/conditions (optional)}
 
-\item{palette}{Named vector of colours, or NULL for an automatic palette}
+\item{palette}{Colour palette: \code{NULL} for the default; \code{"pkg::name"} for a
+palette from paletteer; \code{"brewer:Name"}, or the bare name, for an
+RColorBrewer palette; or a vector of colours, unnamed or named after the groups. A palette with
+fewer colours than groups is interpolated.}
 
 \item{addEllipses}{Show ellipses/hulls around the groups (default: TRUE)}
 

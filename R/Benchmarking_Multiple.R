@@ -1564,7 +1564,10 @@ bm_plot_confusion_stacked <- function(confusion_combined,
 #' @param comparison Character. Single comparison to plot (e.g. "B-A")
 #' @param p_col P-value column name (default: "adj.P.Val")
 #' @param zoom Logical. If TRUE, zoom to FPR 0-10% and show pAUC in legend
-#' @param palette RColorBrewer palette name (default: "Set2")
+#' @param palette Colour palette: `"pkg::name"` for a
+#'   palette from paletteer; `"brewer:Name"`, or the bare name, for an
+#'   RColorBrewer palette; or a vector of colours. A palette with
+#'   fewer colours than curves is interpolated. Default `"Set2"`.
 #'
 #' @return ggplot2 object, or NULL (with a warning) if the comparison has no
 #'   data from which to draw a ROC curve
@@ -1689,13 +1692,8 @@ bm_plot_roc <- function(classified_combined,
       panel.grid.minor = ggplot2::element_blank()
     )
 
-  # Apply palette -- use hcl.colors to support any number of methods
-  n_methods <- length(roc_list)
-  pal_colors <- if (n_methods <= RColorBrewer::brewer.pal.info[palette, "maxcolors"]) {
-    RColorBrewer::brewer.pal(max(n_methods, 3), palette)[seq_len(n_methods)]
-  } else {
-    grDevices::hcl.colors(n_methods, palette = "Dynamic")
-  }
+  # Apply palette (interpolated when there are more methods than colours)
+  pal_colors <- .resolve_palette(palette, n = length(roc_list))
   gg <- gg + ggplot2::scale_color_manual(values = pal_colors, labels = labels)
 
   # Zoom or full view

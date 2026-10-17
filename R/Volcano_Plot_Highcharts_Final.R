@@ -12,7 +12,10 @@
 #' @param p_col Column of p-values to use
 #' @param point_size Point size (default: 4)
 #' @param colors List of colours for "up", "down", "ns" (ignored when palette is used)
-#' @param palette Name of a paletteer palette (e.g. "ggsci::default_jco"). Uses 3 colours: up, down, ns
+#' @param palette Colour palette for up, down and non-significant proteins, in
+#'   that order: `"pkg::name"` for a palette from paletteer, `"brewer:Name"` (or
+#'   the bare name) for an RColorBrewer palette, or a vector of colours. Its
+#'   first three colours are used. `NULL` (default) uses `colors`.
 #' @param show_top_genes Number of top genes to label by significance (default: 0)
 #' @param highlight_genes Vector of gene names to highlight manually (default: NULL)
 #' @param title Custom chart title (default: NULL, uses "Comparison (Assay)").
@@ -55,8 +58,7 @@ volcano_highchart_list <- function(
   
   # --- Colour handling ---
   if (!is.null(palette)) {
-    .check_suggests("paletteer", sprintf("The palette '%s'", palette))
-    pal_colors <- as.character(paletteer::paletteer_d(palette, n = 3))
+    pal_colors <- .resolve_palette(palette, n = 3)
     colors <- list(
       up   = pal_colors[1],
       down = pal_colors[2],

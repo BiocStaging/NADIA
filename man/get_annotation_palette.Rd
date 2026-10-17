@@ -9,7 +9,10 @@ get_annotation_palette(levels, palette = NULL)
 \arguments{
 \item{levels}{Vector of levels (categories)}
 
-\item{palette}{Palette specification (same format as get_heatmap_palette)}
+\item{palette}{Colour palette: \code{NULL} for the default; \code{"pkg::name"} for a
+palette from paletteer; \code{"brewer:Name"}, or the bare name, for an
+RColorBrewer palette; or a vector of colours, unnamed or named after the groups. A palette with
+fewer colours than levels is interpolated.}
 }
 \value{
 Named vector of colours

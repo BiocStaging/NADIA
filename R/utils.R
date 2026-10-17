@@ -100,6 +100,93 @@
 
 
 # =============================================================================
+# Palettes
+# =============================================================================
+#
+# Every plotting function accepts the same palette specifications and resolves
+# them here. Each module used to parse them on its own, with different results:
+# some recycled a short palette and others interpolated it, some stopped on an
+# unknown name and others fell back to the default with a warning, and the
+# volcano plot accepted paletteer names only (Bioconductor review, #186).
+
+#' Resolve a palette specification into colours
+#'
+#' @param palette `NULL`, for `default`; `"pkg::name"`, a discrete or continuous
+#'   palette from paletteer; `"brewer:Name"` or a bare RColorBrewer name; a
+#'   single colour; or a vector of colours, unnamed or named after `levels`.
+#' @param n Number of colours wanted.
+#' @param levels Optional names for the colours. A named palette must cover
+#'   all of them.
+#' @param default Colours used when `palette` is `NULL`: a vector, or a
+#'   function of `n`.
+#' @param type `"discrete"` returns exactly `n` colours, interpolating when the
+#'   palette has fewer: recycling would give two groups the same colour.
+#'   `"continuous"` returns the colours of a colour ramp as the palette gives
+#'   them (RColorBrewer: up to `n`).
+#' @param reverse Reverse the order of the colours.
+#' @return Character vector of colours, named after `levels` when given.
+#' @keywords internal
+#' @noRd
+.resolve_palette <- function(palette, n, levels = NULL, default = NULL,
+                             type = c("discrete", "continuous"),
+                             reverse = FALSE) {
+  type <- match.arg(type)
+  spec <- if (is.character(palette) && length(palette) == 1 &&
+              is.null(names(palette))) palette else NULL
+  brewer_names <- rownames(RColorBrewer::brewer.pal.info)
+  is_colour <- function(x) !inherits(tryCatch(grDevices::col2rgb(x),
+                                              error = function(e) e), "error")
+
+  if (is.null(palette)) {
+    cols <- if (is.function(default)) default(n) else default
+  } else if (!is.null(names(palette)) && !is.null(levels)) {
+    miss <- setdiff(levels, names(palette))
+    if (length(miss) > 0)
+      stop("Missing colours for levels: ", paste(miss, collapse = ", "),
+           call. = FALSE)
+    cols <- palette[levels]
+    if (reverse) cols <- stats::setNames(rev(cols), levels)
+    return(cols)
+  } else if (!is.null(spec) && grepl("::", spec, fixed = TRUE)) {
+    pkg <- sub("::.*", "", spec)
+    .check_suggests(c("paletteer", pkg), sprintf("The palette '%s'", spec))
+    cols <- tryCatch(
+      as.character(paletteer::paletteer_d(spec)),
+      error = function(e) tryCatch(
+        as.character(paletteer::paletteer_c(spec, n = n)),
+        error = function(e2) stop("Unknown palette '", spec, "': ",
+                                  conditionMessage(e2), call. = FALSE)))
+    cols <- vapply(cols, .normalize_hex, character(1), USE.NAMES = FALSE)
+  } else if (!is.null(spec) && (startsWith(spec, "brewer:") || spec %in% brewer_names)) {
+    nm <- sub("^brewer:", "", spec)
+    if (!nm %in% brewer_names)
+      stop("Unknown RColorBrewer palette '", nm, "'. See ",
+           "rownames(RColorBrewer::brewer.pal.info) for the available ones.",
+           call. = FALSE)
+    maxc <- RColorBrewer::brewer.pal.info[nm, "maxcolors"]
+    cols <- RColorBrewer::brewer.pal(max(3, min(n, maxc)), nm)
+  } else if (is.character(palette) && all(vapply(palette, is_colour, logical(1)))) {
+    cols <- unname(palette)
+  } else {
+    stop("Unknown palette ", paste(deparse(palette), collapse = ""),
+         ". Use \"pkg::name\" (paletteer), \"brewer:Name\" (RColorBrewer), ",
+         "or a vector of colours.", call. = FALSE)
+  }
+
+  if (type == "discrete") {
+    if (length(cols) > n) {
+      cols <- cols[seq_len(n)]
+    } else if (length(cols) < n) {
+      cols <- grDevices::colorRampPalette(cols)(n)
+    }
+  }
+  if (reverse) cols <- rev(cols)
+  if (!is.null(levels)) names(cols) <- levels
+  cols
+}
+
+
+# =============================================================================
 # Feature filtering helpers
 # =============================================================================
 

@@ -138,13 +138,10 @@ Example: list(Pathway = "brewer:Set1", Function = c("red", "blue", "green"))}
 
 \item{show_adjp_annotation}{Show the adjP row annotation when mode="target" (default: TRUE)}
 
-\item{palette_adjp}{Palette for the adjP annotation. It can be:
-\itemize{
-\item NULL: use the default palette (red-orange-white)
-\item A vector of 3 colours: c(color_0, color_middle, color_0.05)
-\item String "brewer:name": use an RColorBrewer palette
-\item String "package::palette": use a paletteer palette
-}}
+\item{palette_adjp}{Palette for the adjP annotation, three colours for
+adjP = 0, 0.01 and 0.05: \code{NULL} for the default (red-orange-white),
+\code{"pkg::name"} (paletteer), \code{"brewer:Name"} (RColorBrewer) or a vector of
+colours.}
 
 \item{row_names_size}{Font size of the row names (default: 7)}
 

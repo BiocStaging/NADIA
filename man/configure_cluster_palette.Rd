@@ -9,7 +9,10 @@ configure_cluster_palette(n_clusters, palette = NULL)
 \arguments{
 \item{n_clusters}{Number of clusters}
 
-\item{palette}{Palette to use (NULL, "ggsci::name", "brewer:name")}
+\item{palette}{Colour palette: \code{NULL} for the default; \code{"pkg::name"} for a
+palette from paletteer; \code{"brewer:Name"}, or the bare name, for an
+RColorBrewer palette; or a vector of colours. A palette with
+fewer colours than clusters is interpolated.}
 }
 \value{
 Vector of colours named by cluster

@@ -1614,7 +1614,10 @@ benchmark_signif_bars_gg <- function(
 #' @param comparisons Comparisons to include (NULL = all)
 #' @param title Plot title
 #' @param zoom If TRUE, zoom into the low-FPR region (x = 0 to 0.1)
-#' @param palette RColorBrewer palette name (default: "Set1")
+#' @param palette Colour palette: `"pkg::name"` for a
+#'   palette from paletteer; `"brewer:Name"`, or the bare name, for an
+#'   RColorBrewer palette; or a vector of colours. A palette with
+#'   fewer colours than curves is interpolated. Default `"Set1"`.
 #'
 #' @return ggplot2 object
 #'
@@ -1734,8 +1737,7 @@ benchmark_roc_gg <- function(
     )
 
   # Apply palette
-  n_colors <- min(length(roc_list), RColorBrewer::brewer.pal.info[palette, "maxcolors"])
-  pal_colors <- RColorBrewer::brewer.pal(max(n_colors, 3), palette)
+  pal_colors <- .resolve_palette(palette, n = length(roc_list))
   gg <- gg + ggplot2::scale_color_manual(values = pal_colors, labels = labels)
 
   # Zoom or full view

@@ -47,7 +47,10 @@ calc_boxplot_stats <- function(x, coef = 1.5) {
 #' @param assays Vector of assays to include (NULL = all of them)
 #' @param color_by Column used for colouring (default: "Condition")
 #' @param group_order Order of the groups/conditions
-#' @param palette Colour palette: "ggsci::palette", "brewer:Name", or a vector
+#' @param palette Colour palette: `NULL` for the default; `"pkg::name"` for a
+#'   palette from paletteer; `"brewer:Name"`, or the bare name, for an
+#'   RColorBrewer palette; or a vector of colours, unnamed or named after the groups. A palette with
+#'   fewer colours than groups is interpolated.
 #' @param title Chart title (optional).
 #'   Use \code{\{assay\}} as a placeholder (e.g. "Boxplot: \{assay\}" -> "Boxplot: ImpSeqRob_Min")
 #' @param subtitle Chart subtitle (optional).
@@ -149,25 +152,8 @@ boxplot_highchart_list <- function(
     "#00BBF9"
   )
 
-  if (is.null(palette)) {
-    pal <- default_palette
-  } else if (is.character(palette) && length(palette) == 1 && grepl("::", palette)) {
-    .check_suggests("paletteer", sprintf("The palette '%s'", palette))
-    pal <- as.character(paletteer::paletteer_d(palette))
-  } else if (is.character(palette) && length(palette) == 1 && startsWith(palette, "brewer:")) {
-    nm <- sub("^brewer:", "", palette)
-    maxc <- RColorBrewer::brewer.pal.info[nm, "maxcolors"]
-    pal <- RColorBrewer::brewer.pal(maxc, nm)
-  } else if (is.character(palette)) {
-    pal <- palette
-  } else {
-    pal <- default_palette
-  }
-
-  if (length(pal) < length(group_levels)) {
-    pal <- rep(pal, length.out = length(group_levels))
-  }
-  col_values <- stats::setNames(pal[seq_along(group_levels)], group_levels)
+  col_values <- .resolve_palette(palette, n = length(group_levels),
+                                 levels = group_levels, default = default_palette)
 
   # Assay labels
   assay_labels <- c(

@@ -22,7 +22,10 @@ truth, and a p-value column}
 
 \item{zoom}{Logical. If TRUE, zoom to FPR 0-10\% and show pAUC in legend}
 
-\item{palette}{RColorBrewer palette name (default: "Set2")}
+\item{palette}{Colour palette: \code{"pkg::name"} for a
+palette from paletteer; \code{"brewer:Name"}, or the bare name, for an
+RColorBrewer palette; or a vector of colours. A palette with
+fewer colours than curves is interpolated. Default \code{"Set2"}.}
 }
 \value{
 ggplot2 object, or NULL (with a warning) if the comparison has no

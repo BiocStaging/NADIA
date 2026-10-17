@@ -29,7 +29,10 @@ boxplot_highchart_list(
 
 \item{group_order}{Order of the groups/conditions}
 
-\item{palette}{Colour palette: "ggsci::palette", "brewer:Name", or a vector}
+\item{palette}{Colour palette: \code{NULL} for the default; \code{"pkg::name"} for a
+palette from paletteer; \code{"brewer:Name"}, or the bare name, for an
+RColorBrewer palette; or a vector of colours, unnamed or named after the groups. A palette with
+fewer colours than groups is interpolated.}
 
 \item{title}{Chart title (optional).
 Use \code{\{assay\}} as a placeholder (e.g. "Boxplot: \{assay\}" -> "Boxplot: ImpSeqRob_Min")}

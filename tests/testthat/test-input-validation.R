@@ -215,7 +215,8 @@ test_that("the cluster palette honours a paletteer palette", {
     skip_if_not_installed("ggsci")
     expect_identical(configure_cluster_palette(3, "ggsci::default_jco"),
                      stats::setNames(
-                         as.character(paletteer::paletteer_d("ggsci::default_jco", 3)),
+                         vapply(as.character(paletteer::paletteer_d("ggsci::default_jco", 3)),
+                                .normalize_hex, character(1), USE.NAMES = FALSE),
                          as.character(1:3)))
 })
 

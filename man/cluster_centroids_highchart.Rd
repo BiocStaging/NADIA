@@ -28,7 +28,10 @@ cluster_centroids_highchart(
 
 \item{centroid_summary}{Method: "mean" or "median"}
 
-\item{palette}{Colour palette}
+\item{palette}{Colour palette: \code{NULL} for the default; \code{"pkg::name"} for a
+palette from paletteer; \code{"brewer:Name"}, or the bare name, for an
+RColorBrewer palette; or a vector of colours. A palette with
+fewer colours than clusters is interpolated.}
 
 \item{line_width}{Line width (default: 2.5)}
 

@@ -31,7 +31,10 @@ cluster_profile_highchart_list(
 
 \item{centroid_summary}{Method for the centroid: "mean" or "median"}
 
-\item{palette}{Palette for the cluster colours}
+\item{palette}{Colour palette: \code{NULL} for the default; \code{"pkg::name"} for a
+palette from paletteer; \code{"brewer:Name"}, or the bare name, for an
+RColorBrewer palette; or a vector of colours. A palette with
+fewer colours than clusters is interpolated.}
 
 \item{line_width}{Width of the profile lines (default: 1)}
 

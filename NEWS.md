@@ -43,6 +43,13 @@ Changes made in response to the Bioconductor review.
   condition in each batch this affected over a quarter of the proteins. Those
   proteins are now corrected for the batch only, and are listed in
   `metadata(se)$batch_correction`.
+* Every plotting function resolves palettes in the same way: `"pkg::name"`
+  (paletteer), `"brewer:Name"` or the bare RColorBrewer name, or a vector of
+  colours, named after the groups or not. A palette with fewer colours than
+  groups is interpolated instead of recycled, and an unknown palette is an
+  error instead of a silent fallback to the default. `volcano_highchart_list()`
+  now accepts RColorBrewer palettes, and the Pattern Profiler charts accept a
+  vector of colours, which used to fail.
 * `proteomics_heatmap()` no longer changes ComplexHeatmap's `message` option
   for the rest of the session.
 

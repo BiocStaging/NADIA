@@ -291,7 +291,10 @@ compute_confidence_ellipse <- function(scores_df,
 #'   PC1, PC2, PC1_Perc, PC2_Perc, Subset, Condition, Replicate, SampleID
 #' @param color_by Column used to colour the points (default: "Condition")
 #' @param group_order Vector with the order of the groups/conditions (optional)
-#' @param palette Named vector of colours, or NULL for an automatic palette
+#' @param palette Colour palette: `NULL` for the default; `"pkg::name"` for a
+#'   palette from paletteer; `"brewer:Name"`, or the bare name, for an
+#'   RColorBrewer palette; or a vector of colours, unnamed or named after the groups. A palette with
+#'   fewer colours than groups is interpolated.
 #' @param title Chart title (optional, defaults to Subset)
 #' @param addEllipses Show ellipses/hulls around the groups (default: TRUE)
 #' @param ellipse_type Ellipse type: "convex" for a convex hull or "confidence"
@@ -386,61 +389,8 @@ pca_highchart <- function(scores_df,
   # ---------------------------------------------------------------------------
   # 4) Set up the colour palette
   # ---------------------------------------------------------------------------
-  default_palette <- c(
-    "#457B9D", "#E63946", "#2A9D8F", "#E9C46A",
-    "#9B5DE5", "#F4A261", "#264653", "#00BBF9"
-  )
-
-  if (is.null(palette)) {
-    # Default palette
-    pal <- grDevices::hcl.colors(length(lvls), "Dark 3")
-    palette <- stats::setNames(pal, lvls)
-  } else if (is.character(palette) && length(palette) == 1 && grepl("::", palette)) {
-    # paletteer palette (format "ggsci::category10_d3")
-    .check_suggests("paletteer", sprintf("The palette '%s'", palette))
-    pal <- tryCatch({
-      raw_pal <- as.character(paletteer::paletteer_d(palette))
-      # Normalize the colours (drop the alpha channel if present)
-      vapply(raw_pal, .normalize_hex, character(1), USE.NAMES = FALSE)
-    }, error = function(e) {
-      stop("Could not load palette '", palette, "': ", e$message)
-    })
-    if (length(pal) < length(lvls)) {
-      pal <- rep(pal, length.out = length(lvls))
-    }
-    palette <- stats::setNames(pal[seq_along(lvls)], lvls)
-  } else if (is.character(palette) && length(palette) == 1 && startsWith(palette, "brewer:")) {
-    # RColorBrewer palette (format "brewer:Set1")
-    nm <- sub("^brewer:", "", palette)
-    pal <- tryCatch({
-      maxc <- RColorBrewer::brewer.pal.info[nm, "maxcolors"]
-      raw_pal <- RColorBrewer::brewer.pal(maxc, nm)
-      # Normalize the colours for consistency
-      vapply(raw_pal, .normalize_hex, character(1), USE.NAMES = FALSE)
-    }, error = function(e) {
-      stop("Could not load brewer palette '", nm, "': ", e$message)
-    })
-    if (length(pal) < length(lvls)) {
-      pal <- rep(pal, length.out = length(lvls))
-    }
-    palette <- stats::setNames(pal[seq_along(lvls)], lvls)
-  } else if (is.character(palette) && length(palette) == 1) {
-    # Single colour string - repeat it for every level
-    palette <- stats::setNames(rep(palette, length(lvls)), lvls)
-  } else if (is.character(palette) && length(palette) > 1 && is.null(names(palette))) {
-    # Unnamed vector of colours
-    if (length(palette) < length(lvls)) {
-      palette <- rep(palette, length.out = length(lvls))
-    }
-    palette <- stats::setNames(palette[seq_along(lvls)], lvls)
-  } else if (is.character(palette) && !is.null(names(palette))) {
-    # Named vector of colours
-    miss <- setdiff(lvls, names(palette))
-    if (length(miss) > 0) {
-      stop("Missing colours for levels: ", paste(miss, collapse = ", "))
-    }
-    palette <- palette[lvls]
-  }
+  palette <- .resolve_palette(palette, n = length(lvls), levels = lvls,
+                              default = function(n) grDevices::hcl.colors(n, "Dark 3"))
 
   # ---------------------------------------------------------------------------
   # 5) Chart title
@@ -684,7 +634,10 @@ pca_highchart <- function(scores_df,
 #' @param alpha Significance threshold for DEPs (default: 0.05)
 #' @param color_by Column used to colour the points (default: "Condition")
 #' @param group_order Order of the groups/conditions (optional)
-#' @param palette Named vector of colours, or NULL for an automatic palette
+#' @param palette Colour palette: `NULL` for the default; `"pkg::name"` for a
+#'   palette from paletteer; `"brewer:Name"`, or the bare name, for an
+#'   RColorBrewer palette; or a vector of colours, unnamed or named after the groups. A palette with
+#'   fewer colours than groups is interpolated.
 #' @param addEllipses Show ellipses/hulls around the groups (default: TRUE)
 #' @param ellipse_type Ellipse type: "convex" or "confidence" (default: "convex")
 #' @param ellipse_level Confidence level for ellipse_type = "confidence"

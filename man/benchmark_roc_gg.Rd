@@ -24,7 +24,10 @@ benchmark_roc_gg(
 
 \item{zoom}{If TRUE, zoom into the low-FPR region (x = 0 to 0.1)}
 
-\item{palette}{RColorBrewer palette name (default: "Set1")}
+\item{palette}{Colour palette: \code{"pkg::name"} for a
+palette from paletteer; \code{"brewer:Name"}, or the bare name, for an
+RColorBrewer palette; or a vector of colours. A palette with
+fewer colours than curves is interpolated. Default \code{"Set1"}.}
 }
 \value{
 ggplot2 object

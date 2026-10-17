@@ -29,63 +29,23 @@
 #' Configure the colour palette for the clusters
 #'
 #' @param n_clusters Number of clusters
-#' @param palette Palette to use (NULL, "ggsci::name", "brewer:name")
+#' @param palette Colour palette: `NULL` for the default; `"pkg::name"` for a
+#'   palette from paletteer; `"brewer:Name"`, or the bare name, for an
+#'   RColorBrewer palette; or a vector of colours. A palette with
+#'   fewer colours than clusters is interpolated.
 #'
 #' @return Vector of colours named by cluster
 configure_cluster_palette <- function(n_clusters, palette = NULL) {
 
-  # Default palette: distinctive and accessible colours
+  # Default palette: distinctive and accessible colours, interpolated when
+  # there are more clusters than colours
   default_colors <- c(
     "#E63946", "#457B9D", "#2A9D8F", "#E9C46A", "#F4A261",
     "#264653", "#A8DADC", "#1D3557", "#F77F00", "#D62828",
     "#023E8A", "#0077B6", "#00B4D8", "#90E0EF", "#CAF0F8"
   )
 
-  if (is.null(palette)) {
-    # If more clusters are requested than there are base colours, interpolate
-    # instead of recycling (this avoids the length mismatch when names() is
-    # assigned further down).
-    if (n_clusters > length(default_colors)) {
-      colors <- colorRampPalette(default_colors)(n_clusters)
-    } else {
-      colors <- default_colors[seq_len(n_clusters)]
-    }
-
-  } else if (grepl("^ggsci::", palette)) {
-    # ggsci palettes via paletteer
-    .check_suggests(c("paletteer", "ggsci"), sprintf("The palette '%s'", palette))
-    pal_name <- sub("^ggsci::", "", palette)
-    colors <- tryCatch({
-      as.character(paletteer::paletteer_d(paste0("ggsci::", pal_name), n_clusters))
-    }, error = function(e) {
-      warning("ggsci palette not found, using the default one")
-      default_colors[seq_len(n_clusters)]
-    })
-
-  } else if (grepl("^brewer:", palette)) {
-    # RColorBrewer palettes
-    pal_name <- sub("^brewer:", "", palette)
-    max_colors <- RColorBrewer::brewer.pal.info[pal_name, "maxcolors"]
-    if (is.na(max_colors)) {
-      warning("brewer palette not found, using the default one")
-      colors <- default_colors[seq_len(n_clusters)]
-    } else {
-      colors <- RColorBrewer::brewer.pal(min(n_clusters, max_colors), pal_name)
-      if (n_clusters > max_colors) {
-        colors <- colorRampPalette(colors)(n_clusters)
-      }
-    }
-
-  } else {
-    # Assume a vector of colours
-    if (length(palette) >= n_clusters) {
-      colors <- palette[seq_len(n_clusters)]
-    } else {
-      colors <- colorRampPalette(palette)(n_clusters)
-    }
-  }
-
-  # Name them by cluster
+  colors <- .resolve_palette(palette, n = n_clusters, default = default_colors)
   names(colors) <- seq_len(n_clusters)
   colors
 }
@@ -492,7 +452,10 @@ cluster_profile_highchart <- function(data,
 #' @param min_membership Minimum membership filter
 #' @param show_centroid Show the centroid line (default: TRUE)
 #' @param centroid_summary Method for the centroid: "mean" or "median"
-#' @param palette Palette for the cluster colours
+#' @param palette Colour palette: `NULL` for the default; `"pkg::name"` for a
+#'   palette from paletteer; `"brewer:Name"`, or the bare name, for an
+#'   RColorBrewer palette; or a vector of colours. A palette with
+#'   fewer colours than clusters is interpolated.
 #' @param line_width Width of the profile lines (default: 1)
 #' @param line_opacity Opacity of the lines (default: 0.4)
 #' @param centroid_width Width of the centroid line (default: 3)
@@ -585,7 +548,10 @@ cluster_profile_highchart_list <- function(data,
 #' @param clusters Clusters to include (NULL = all)
 #' @param min_membership Membership filter applied before computing the centroids
 #' @param centroid_summary Method: "mean" or "median"
-#' @param palette Colour palette
+#' @param palette Colour palette: `NULL` for the default; `"pkg::name"` for a
+#'   palette from paletteer; `"brewer:Name"`, or the bare name, for an
+#'   RColorBrewer palette; or a vector of colours. A palette with
+#'   fewer colours than clusters is interpolated.
 #' @param line_width Line width (default: 2.5)
 #' @param show_markers Show markers on the points (default: TRUE)
 #' @param title Custom title

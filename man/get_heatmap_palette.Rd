@@ -7,13 +7,10 @@
 get_heatmap_palette(palette = NULL, n = 11, reverse = FALSE)
 }
 \arguments{
-\item{palette}{Palette specification:
-\itemize{
-\item NULL: use the default palette (RdBu)
-\item Vector of colours: use those colours directly
-\item String "paletteer::" (e.g. "viridis::viridis"): use paletteer
-\item String "brewer:" (e.g. "brewer:RdBu"): use RColorBrewer
-}}
+\item{palette}{Palette for the values, used as a colour ramp: \code{NULL} for
+the default (blue-white-red); \code{"pkg::name"} for a palette from paletteer;
+\code{"brewer:Name"}, or the bare name, for an RColorBrewer palette (up to \code{n}
+colours); or a vector of colours.}
 
 \item{n}{Number of colours to generate}
 

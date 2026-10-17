@@ -29,7 +29,10 @@ PC1, PC2, PC1_Perc, PC2_Perc, Subset, Condition, Replicate, SampleID}
 
 \item{group_order}{Vector with the order of the groups/conditions (optional)}
 
-\item{palette}{Named vector of colours, or NULL for an automatic palette}
+\item{palette}{Colour palette: \code{NULL} for the default; \code{"pkg::name"} for a
+palette from paletteer; \code{"brewer:Name"}, or the bare name, for an
+RColorBrewer palette; or a vector of colours, unnamed or named after the groups. A palette with
+fewer colours than groups is interpolated.}
 
 \item{title}{Chart title (optional, defaults to Subset)}
 

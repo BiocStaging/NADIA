@@ -103,11 +103,10 @@ print.proteomics_heatmap <- function(x, ...) {
 
 #' Build the Colour Palette for the Heatmap Values
 #'
-#' @param palette Palette specification:
-#'   - NULL: use the default palette (RdBu)
-#'   - Vector of colours: use those colours directly
-#'   - String "paletteer::" (e.g. "viridis::viridis"): use paletteer
-#'   - String "brewer:" (e.g. "brewer:RdBu"): use RColorBrewer
+#' @param palette Palette for the values, used as a colour ramp: `NULL` for
+#'   the default (blue-white-red); `"pkg::name"` for a palette from paletteer;
+#'   `"brewer:Name"`, or the bare name, for an RColorBrewer palette (up to `n`
+#'   colours); or a vector of colours.
 #' @param n Number of colours to generate
 #' @param reverse Reverse the palette (default: FALSE)
 #'
@@ -115,149 +114,26 @@ print.proteomics_heatmap <- function(x, ...) {
 get_heatmap_palette <- function(palette = NULL,
                                 n = 11,
                                 reverse = FALSE) {
-
-  # Default palette (diverging blue-white-red)
-  if (is.null(palette)) {
-    colors <- c("#2166AC", "#4393C3", "#92C5DE", "#D1E5F0", "#F7F7F7",
-                "#FDDBC7", "#F4A582", "#D6604D", "#B2182B")
-    if (reverse) colors <- rev(colors)
-    return(colors)
-  }
-
-  # paletteer palette
-  if (is.character(palette) && length(palette) == 1 && grepl("::", palette)) {
-    .check_suggests("paletteer", sprintf("The palette '%s'", palette))
-
-    # Try it as a discrete palette first
-    colors <- tryCatch({
-      raw_pal <- as.character(paletteer::paletteer_d(palette, n = n))
-      vapply(raw_pal, .normalize_hex, character(1), USE.NAMES = FALSE)
-    }, error = function(e) {
-      # Then try it as a continuous palette
-      tryCatch({
-        raw_pal <- as.character(paletteer::paletteer_c(palette, n = n))
-        vapply(raw_pal, .normalize_hex, character(1), USE.NAMES = FALSE)
-      }, error = function(e2) {
-        stop("Could not load palette '", palette, "': ", e2$message)
-      })
-    })
-
-    if (reverse) colors <- rev(colors)
-    return(colors)
-  }
-
-  # RColorBrewer palette
-  if (is.character(palette) && length(palette) == 1 && startsWith(palette, "brewer:")) {
-    nm <- sub("^brewer:", "", palette)
-    colors <- tryCatch({
-      maxc <- RColorBrewer::brewer.pal.info[nm, "maxcolors"]
-      RColorBrewer::brewer.pal(min(n, maxc), nm)
-    }, error = function(e) {
-      stop("Could not load brewer palette '", nm, "': ", e$message)
-    })
-
-    if (reverse) colors <- rev(colors)
-    return(colors)
-  }
-
-  # Plain vector of colours
-  if (is.character(palette) && length(palette) > 1) {
-    if (reverse) palette <- rev(palette)
-    return(palette)
-  }
-
-  # Bare palette name (try RColorBrewer)
-  if (is.character(palette) && length(palette) == 1) {
-    if (palette %in% rownames(RColorBrewer::brewer.pal.info)) {
-      maxc <- RColorBrewer::brewer.pal.info[palette, "maxcolors"]
-      colors <- RColorBrewer::brewer.pal(min(n, maxc), palette)
-      if (reverse) colors <- rev(colors)
-      return(colors)
-    }
-  }
-
-  # Fallback default
-  colors <- c("#2166AC", "#4393C3", "#92C5DE", "#D1E5F0", "#F7F7F7",
-              "#FDDBC7", "#F4A582", "#D6604D", "#B2182B")
-  if (reverse) colors <- rev(colors)
-  colors
+  # Default palette (diverging blue-white-red), used as a colour ramp
+  default <- c("#2166AC", "#4393C3", "#92C5DE", "#D1E5F0", "#F7F7F7",
+               "#FDDBC7", "#F4A582", "#D6604D", "#B2182B")
+  .resolve_palette(palette, n = n, default = default, type = "continuous",
+                   reverse = reverse)
 }
 
 
 #' Build the Colour Palette for Categorical Annotations
 #'
 #' @param levels Vector of levels (categories)
-#' @param palette Palette specification (same format as get_heatmap_palette)
+#' @param palette Colour palette: `NULL` for the default; `"pkg::name"` for a
+#'   palette from paletteer; `"brewer:Name"`, or the bare name, for an
+#'   RColorBrewer palette; or a vector of colours, unnamed or named after the groups. A palette with
+#'   fewer colours than levels is interpolated.
 #'
 #' @return Named vector of colours
 get_annotation_palette <- function(levels, palette = NULL) {
-
-  n <- length(levels)
-
-  # Default palette
-  default_palette <- c(
-    "#457B9D", "#E63946", "#2A9D8F", "#E9C46A",
-    "#9B5DE5", "#F4A261", "#264653", "#00BBF9",
-    "#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4"
-  )
-
-  if (is.null(palette)) {
-    pal <- grDevices::hcl.colors(n, "Dark 3")
-    return(stats::setNames(pal, levels))
-  }
-
-  # paletteer palette
-  if (is.character(palette) && length(palette) == 1 && grepl("::", palette)) {
-    .check_suggests("paletteer", sprintf("The palette '%s'", palette))
-    colors <- tryCatch({
-      raw_pal <- as.character(paletteer::paletteer_d(palette))
-      vapply(raw_pal, .normalize_hex, character(1), USE.NAMES = FALSE)
-    }, error = function(e) {
-      stop("Could not load palette '", palette, "': ", e$message)
-    })
-    if (length(colors) < n) {
-      colors <- rep(colors, length.out = n)
-    }
-    return(stats::setNames(colors[seq_len(n)], levels))
-  }
-
-  # RColorBrewer palette
-  if (is.character(palette) && length(palette) == 1 && startsWith(palette, "brewer:")) {
-    nm <- sub("^brewer:", "", palette)
-    colors <- tryCatch({
-      maxc <- RColorBrewer::brewer.pal.info[nm, "maxcolors"]
-      RColorBrewer::brewer.pal(max(3, min(n, maxc)), nm)
-    }, error = function(e) {
-      stop("Could not load brewer palette '", nm, "': ", e$message)
-    })
-    if (length(colors) < n) {
-      colors <- rep(colors, length.out = n)
-    }
-    return(stats::setNames(colors[seq_len(n)], levels))
-  }
-
-  # Named vector of colours
-  if (is.character(palette) && !is.null(names(palette))) {
-    miss <- setdiff(levels, names(palette))
-    if (length(miss) > 0) {
-      stop("Missing colours for levels: ", paste(miss, collapse = ", "))
-    }
-    return(palette[levels])
-  }
-
-  # Unnamed vector of colours
-  if (is.character(palette) && length(palette) >= 1) {
-    if (length(palette) < n) {
-      palette <- rep(palette, length.out = n)
-    }
-    return(stats::setNames(palette[seq_len(n)], levels))
-  }
-
-  # Fallback default
-  if (length(default_palette) < n) {
-    default_palette <- rep(default_palette, length.out = n)
-  }
-  stats::setNames(default_palette[seq_len(n)], levels)
+  .resolve_palette(palette, n = length(levels), levels = levels,
+                   default = function(n) grDevices::hcl.colors(n, "Dark 3"))
 }
 
 
@@ -535,11 +411,10 @@ prepare_heatmap_data <- function(data,
 #' @param show_annotation Show the Condition annotation (default: TRUE)
 #' @param split_by_condition Split the heatmap by condition (default: FALSE)
 #' @param show_adjp_annotation Show the adjP row annotation when mode="target" (default: TRUE)
-#' @param palette_adjp Palette for the adjP annotation. It can be:
-#'   - NULL: use the default palette (red-orange-white)
-#'   - A vector of 3 colours: c(color_0, color_middle, color_0.05)
-#'   - String "brewer:name": use an RColorBrewer palette
-#'   - String "package::palette": use a paletteer palette
+#' @param palette_adjp Palette for the adjP annotation, three colours for
+#'   adjP = 0, 0.01 and 0.05: `NULL` for the default (red-orange-white),
+#'   `"pkg::name"` (paletteer), `"brewer:Name"` (RColorBrewer) or a vector of
+#'   colours.
 #' @param row_names_size Font size of the row names (default: 7)
 #' @param column_names_size Font size of the column names (default: 9)
 #' @param column_names_rotation Rotation of the column names in degrees (default: 45)
@@ -1098,41 +973,9 @@ proteomics_heatmap <- function(data,
   # Add the adjP annotation for mode = "target" (a row annotation)
   if (show_adjp_annotation && mode == "target" && "adjP" %in% names(hm_data)) {
     # Get the colours for the adjP palette
-    adjp_colors <- c("#67001F", "#F4A582", "#F7F7F7")  # Default: dark red -> orange -> white
-
-    if (!is.null(palette_adjp)) {
-      if (is.character(palette_adjp) && length(palette_adjp) >= 3) {
-        # Custom vector of colours
-        adjp_colors <- palette_adjp[seq_len(3)]
-      } else if (is.character(palette_adjp) && length(palette_adjp) == 1) {
-        # paletteer or RColorBrewer palette
-        if (grepl("::", palette_adjp)) {
-          # Paletteer
-          .check_suggests("paletteer",
-                          sprintf("The palette '%s'", palette_adjp))
-          raw_pal <- tryCatch({
-            as.character(paletteer::paletteer_c(palette_adjp, n = 3))
-          }, error = function(e) {
-            tryCatch({
-              as.character(paletteer::paletteer_d(palette_adjp, n = 3))
-            }, error = function(e2) NULL)
-          })
-          if (!is.null(raw_pal) && length(raw_pal) >= 3) {
-            adjp_colors <- vapply(raw_pal[seq_len(3)], .normalize_hex,
-                                  character(1), USE.NAMES = FALSE)
-          }
-        } else if (startsWith(palette_adjp, "brewer:")) {
-          # RColorBrewer
-          nm <- sub("^brewer:", "", palette_adjp)
-          raw_pal <- tryCatch({
-            RColorBrewer::brewer.pal(3, nm)
-          }, error = function(e) NULL)
-          if (!is.null(raw_pal)) {
-            adjp_colors <- raw_pal
-          }
-        }
-      }
-    }
+    # Default: dark red -> orange -> white
+    adjp_colors <- .resolve_palette(palette_adjp, n = 3,
+                                    default = c("#67001F", "#F4A582", "#F7F7F7"))
 
     # Build the palette for the p-values (low values = more significant)
     adjp_palette <- circlize::colorRamp2(
