@@ -259,6 +259,17 @@
   invisible(NULL)
 }
 
+#' Names of the files `.export_data()` writes, for the progress messages
+#' @param filepath_base Base path without extension.
+#' @param format `"tsv"`, `"parquet"` or `"both"`.
+#' @return The file name(s), comma-separated.
+#' @keywords internal
+#' @noRd
+.export_names <- function(filepath_base, format) {
+  ext <- switch(format, tsv = ".tsv", parquet = ".parquet", both = c(".tsv", ".parquet"))
+  paste(paste0(basename(filepath_base), ext), collapse = ", ")
+}
+
 #' Compute missing-value percentages per protein
 #'
 #' Four percentages, all measured on the normalized assay, that is, before
@@ -426,6 +437,7 @@
 #' @param export_normalized Export normalized matrix (default: TRUE)
 #' @param export_imputed Export imputed matrix (default: TRUE)
 #' @param export_format Export format: "tsv", "parquet", or "both" (default: "tsv").
+#'   It applies to every file written, the matrices and the plot inputs alike.
 #'   Parquet needs the suggested package arrow, which is checked before the
 #'   analysis starts.
 #' @param export_volcano Export VolcanoPlot_Input (default: TRUE)
@@ -597,12 +609,12 @@ process_proteomics <- function(
   # Export normalized matrix (skip when norm_method = "log2": no extra assay)
   if (export_normalized && norm_method != "log2") {
     x_norm <- SummarizedExperiment::assay(se, norm_method)
-    norm_file <- file.path(export_dir, paste0("matrix_log2_", norm_method, ".tsv"))
-    .write_tsv(
+    norm_file <- file.path(export_dir, paste0("matrix_log2_", norm_method))
+    .export_data(
       data.frame(ProteinGroups = rownames(x_norm), x_norm, check.names = FALSE),
-      norm_file
+      norm_file, export_format
     )
-    if (verbose) message("- Exported: ", basename(norm_file))
+    if (verbose) message("- Exported: ", .export_names(norm_file, export_format))
   }
 
   # =========================================================================
@@ -636,12 +648,12 @@ process_proteomics <- function(
     if (export_normalized) {
       x_bc <- SummarizedExperiment::assay(se, "BERT")
       bc_file <- file.path(export_dir,
-                           paste0("matrix_log2_", norm_method, "_BERT.tsv"))
-      .write_tsv(
+                           paste0("matrix_log2_", norm_method, "_BERT"))
+      .export_data(
         data.frame(ProteinGroups = rownames(x_bc), x_bc, check.names = FALSE),
-        bc_file
+        bc_file, export_format
       )
-      if (verbose) message("- Exported: ", basename(bc_file))
+      if (verbose) message("- Exported: ", .export_names(bc_file, export_format))
     }
   }
 
@@ -691,13 +703,13 @@ process_proteomics <- function(
   # Export imputed matrix (use raw matrix, matching pre-split behavior)
   if (export_imputed) {
     x_imputed_export <- imp_result$x_imputed
-    imp_file <- file.path(export_dir, paste0("matrix_log2_", norm_method, "_", assay_label, ".tsv"))
-    .write_tsv(
+    imp_file <- file.path(export_dir, paste0("matrix_log2_", norm_method, "_", assay_label))
+    .export_data(
       data.frame(ProteinGroups = rownames(x_imputed_export),
                  x_imputed_export, check.names = FALSE),
-      imp_file
+      imp_file, export_format
     )
-    if (verbose) message("- Exported: ", basename(imp_file))
+    if (verbose) message("- Exported: ", .export_names(imp_file, export_format))
   }
 
   # =========================================================================

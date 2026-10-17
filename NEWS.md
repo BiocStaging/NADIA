@@ -134,6 +134,10 @@ Changes made in response to the Bioconductor review.
 * `im_prepare_se()` accepts `norm_method = "log2"`, given directly or as the
   winner of `normalization_metrics()$pc1_rank`; it used to stop with "Unknown
   normalization method". The result then has the single `"log2"` assay.
+* `export_format` applies to the normalised, batch-corrected and imputed
+  matrices written by `process_proteomics()`, which were always TSV; with
+  `"both"` or `"parquet"` they now come in the format asked for, like the plot
+  inputs. TSV exports are unchanged.
 
 # NADIA 0.99.0
 

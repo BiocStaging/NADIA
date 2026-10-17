@@ -143,6 +143,7 @@ technical replicates or paired designs via random effect blocking. Default: NULL
 \item{export_imputed}{Export imputed matrix (default: TRUE)}
 
 \item{export_format}{Export format: "tsv", "parquet", or "both" (default: "tsv").
+It applies to every file written, the matrices and the plot inputs alike.
 Parquet needs the suggested package arrow, which is checked before the
 analysis starts.}
 

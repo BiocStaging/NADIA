@@ -79,3 +79,25 @@ test_that("imp_method = 'none' keeps the missing values, and says so", {
     expect_output(print(res), "Proteomics Processing Result")
     expect_output(print(res), "Imputation: none")
 })
+
+test_that("export_format applies to the matrices as well as the plot inputs", {
+    # The matrices were always written as TSV, whatever export_format said
+    skip_if_not_installed("arrow")
+    data(nadia_dia, package = "NADIA")
+    out <- withr::local_tempdir()
+    res <- suppressWarnings(process_proteomics(nadia_dia, export_dir = out,
+                                               export_format = "both", verbose = FALSE))
+    bases <- c("matrix_log2_cycloess", "matrix_log2_cycloess_Impseqrob_min",
+               "VolcanoPlot_Input_cycloess_Impseqrob_min",
+               "BoxPlot_Input_cycloess_Impseqrob_min",
+               "PCA_Input_cycloess_Impseqrob_min")
+    for (b in bases) {
+        expect_true(file.exists(file.path(out, paste0(b, ".tsv"))), info = b)
+        expect_true(file.exists(file.path(out, paste0(b, ".parquet"))), info = b)
+    }
+    # Both copies of a matrix hold the same values
+    m <- "matrix_log2_cycloess_Impseqrob_min"
+    expect_equal(as.data.frame(arrow::read_parquet(file.path(out, paste0(m, ".parquet")))),
+                 .read_delim_file(file.path(out, paste0(m, ".tsv"))),
+                 check.attributes = FALSE, tolerance = 1e-12)
+})
