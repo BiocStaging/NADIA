@@ -361,6 +361,396 @@ prepare_heatmap_data <- function(data,
 
 
 # -----------------------------------------------------------------------------
+# Steps of proteomics_heatmap()
+#
+# The main function prepares the data, then calls these in order: export the
+# matrix, read the row annotations, order and split the rows, build the colour
+# scale, add the annotation tiles, and export the figure. Each is kept apart so
+# it can be tested and reused on its own.
+# -----------------------------------------------------------------------------
+
+#' Write the matrix a heatmap draws, one row per protein
+#' @param hm_data Output of `prepare_heatmap_data()`.
+#' @param export_path Path of the TSV file.
+#' @return `NULL`, invisibly.
+#' @keywords internal
+#' @noRd
+.hm_export_matrix <- function(hm_data, export_path) {
+  # Build a wide matrix with FeatureID as rows and SampleID as columns
+  export_wide <- hm_data %>%
+    select(FeatureID, SampleID, Intensity) %>%
+    tidyr::pivot_wider(
+      names_from = SampleID,
+      values_from = Intensity,
+      values_fn = mean
+    )
+
+  # Add adjP when present
+  if ("adjP" %in% names(hm_data)) {
+    adjp_data <- hm_data %>%
+      select(FeatureID, adjP) %>%
+      distinct()
+    export_wide <- export_wide %>%
+      left_join(adjp_data, by = "FeatureID")
+  }
+
+  .write_tsv(export_wide, export_path)
+  message("Data exported to: ", export_path)
+  invisible(NULL)
+}
+
+#' Read, check and colour the row annotations of a heatmap
+#'
+#' Empty values become the level "NA", drawn white and placed last.
+#'
+#' @param row_annotation,row_annotation_cols,row_annotation_palette See
+#'   [proteomics_heatmap()].
+#' @param feature_ids The proteins the heatmap shows.
+#' @return `NULL` when there is no usable annotation; otherwise a list with
+#'   `data` (one factor column per annotation), `cols` and `colors` (one named
+#'   palette per annotation, in the order of the factor levels).
+#' @keywords internal
+#' @noRd
+.hm_row_annotation <- function(row_annotation, row_annotation_cols,
+                               row_annotation_palette, feature_ids) {
+  if (is.null(row_annotation)) return(NULL)
+
+  # Load the annotations when a file path is given
+  if (is.character(row_annotation) && length(row_annotation) == 1 && file.exists(row_annotation)) {
+    annot <- .read_delim_file(row_annotation)
+  } else if (is.data.frame(row_annotation)) {
+    annot <- as.data.frame(row_annotation)
+  } else {
+    warning("row_annotation must be a path to a TSV file or a data.frame",
+            call. = FALSE)
+    return(NULL)
+  }
+
+  if (!("FeatureID" %in% names(annot))) {
+    stop("The annotation file must have a 'FeatureID' column", call. = FALSE)
+  }
+
+  # Work out which columns to use
+  all_annot_cols <- setdiff(names(annot), "FeatureID")
+  if (is.null(row_annotation_cols)) {
+    row_annotation_cols <- all_annot_cols
+  } else {
+    missing_cols <- setdiff(row_annotation_cols, all_annot_cols)
+    if (length(missing_cols) > 0) {
+      warning("Annotation columns not found: ", paste(missing_cols, collapse = ", "),
+              call. = FALSE)
+      row_annotation_cols <- intersect(row_annotation_cols, all_annot_cols)
+    }
+  }
+
+  # Turn empty values into the "NA" string (not NA_character_) so they can be
+  # coloured white
+  for (col in row_annotation_cols) {
+    values <- annot[[col]]
+    if (is.character(values)) {
+      annot[[col]] <- ifelse(is.na(values) | trimws(values) == "", "NA", values)
+    }
+  }
+
+  # Keep only the FeatureIDs present in the data
+  annot <- annot[annot$FeatureID %in% feature_ids, , drop = FALSE]
+
+  # One palette per annotation, in the EXACT order of the factor levels (real
+  # levels sorted, then "NA" in white): this is what makes tidyHeatmap assign
+  # the colours correctly
+  colors <- list()
+  for (col in row_annotation_cols) {
+    all_levels <- unique(annot[[col]])
+    real_levels <- sort(all_levels[all_levels != "NA"])
+    ordered_levels <- if ("NA" %in% all_levels) c(real_levels, "NA") else real_levels
+    annot[[col]] <- factor(annot[[col]], levels = ordered_levels)
+
+    col_palette <- if (!is.null(row_annotation_palette) &&
+                       col %in% names(row_annotation_palette))
+      row_annotation_palette[[col]] else NULL
+    real_colors <- get_annotation_palette(real_levels, col_palette)
+    final_palette <- stats::setNames(character(length(ordered_levels)), ordered_levels)
+    for (lvl in ordered_levels) {
+      final_palette[lvl] <- if (lvl == "NA") "#FFFFFF" else real_colors[lvl]
+    }
+    colors[[col]] <- final_palette
+  }
+
+  list(data = annot, cols = row_annotation_cols, colors = colors)
+}
+
+#' Join the row annotations, then order and split the rows
+#' @param hm_data Output of `prepare_heatmap_data()`.
+#' @param annot Output of `.hm_row_annotation()`, or `NULL`.
+#' @param row_order_by,split_rows_by See [proteomics_heatmap()].
+#' @return List with `hm_data` (FeatureID becomes a factor in the requested
+#'   order when there is one) and `row_split` (`NULL` when not requested).
+#' @keywords internal
+#' @noRd
+.hm_arrange_rows <- function(hm_data, annot, row_order_by, split_rows_by) {
+  row_split <- NULL
+  ordering <- !is.null(row_order_by) && !identical(row_order_by, "clustering")
+  set_order <- function(hm_data, feature_order) {
+    hm_data %>%
+      mutate(FeatureID = factor(FeatureID, levels = feature_order)) %>%
+      arrange(FeatureID)
+  }
+
+  if (!is.null(annot)) {
+    annot_data <- annot$data
+    cols <- annot$cols
+
+    hm_data <- hm_data %>%
+      left_join(annot_data[, c("FeatureID", cols), drop = FALSE], by = "FeatureID")
+    # Make sure the factors survive the join
+    for (col in cols) {
+      if (col %in% names(hm_data) && col %in% names(annot_data)) {
+        hm_data[[col]] <- factor(hm_data[[col]], levels = levels(annot_data[[col]]))
+      }
+    }
+
+    # Order by annotation(s), and by adjP when it is present
+    if (ordering) {
+      valid_order_cols <- cols
+      if ("adjP" %in% names(hm_data)) valid_order_cols <- c(valid_order_cols, "adjP")
+      order_cols <- row_order_by[row_order_by %in% valid_order_cols]
+
+      if (length(order_cols) > 0) {
+        order_data <- annot_data
+        if ("adjP" %in% order_cols && "adjP" %in% names(hm_data)) {
+          adjp_data <- hm_data %>%
+            select(FeatureID, adjP) %>%
+            distinct()
+          order_data <- order_data %>%
+            left_join(adjp_data, by = "FeatureID")
+        }
+        # Sort by several columns sequentially
+        order_data_sorted <- order_data %>%
+          arrange(!!!rlang::syms(order_cols))
+        hm_data <- set_order(hm_data, unique(order_data_sorted$FeatureID))
+      }
+    }
+
+    # Split the rows (AFTER the ordering), keeping the order of the groups
+    if (!is.null(split_rows_by) && split_rows_by %in% cols) {
+      if (!is.null(row_order_by)) {
+        ordered_features <- levels(hm_data$FeatureID)
+      } else {
+        ordered_features <- unique(as.character(hm_data$FeatureID))
+      }
+      feature_to_split <- annot_data %>%
+        select(FeatureID, all_of(split_rows_by)) %>%
+        distinct()
+      feature_to_split <- stats::setNames(
+        feature_to_split[[split_rows_by]],
+        feature_to_split$FeatureID
+      )
+      split_values <- feature_to_split[ordered_features]
+      split_levels <- unique(split_values)
+      split_levels <- split_levels[!is.na(split_levels)]
+      row_split <- factor(split_values, levels = split_levels)
+    }
+  }
+
+  # Order by adjP when there are no row annotations (with annotations it is
+  # handled above)
+  if (ordering && (is.null(annot) || length(annot$cols) == 0)) {
+    if ("adjP" %in% row_order_by && "adjP" %in% names(hm_data)) {
+      adjp_order <- hm_data %>%
+        select(FeatureID, adjP) %>%
+        distinct() %>%
+        arrange(adjP)
+      hm_data <- set_order(hm_data, adjp_order$FeatureID)
+    }
+  }
+
+  list(hm_data = hm_data, row_split = row_split)
+}
+
+#' The colour scale of the heatmap values
+#'
+#' Symmetric around zero for scaled data, over the observed range otherwise.
+#'
+#' @param intensity The values drawn.
+#' @param palette_value,reverse_palette,scale_data See [proteomics_heatmap()].
+#' @return A `circlize::colorRamp2()` function.
+#' @keywords internal
+#' @noRd
+.hm_value_colours <- function(intensity, palette_value, reverse_palette, scale_data) {
+  value_colors <- get_heatmap_palette(palette = palette_value, n = 11,
+                                      reverse = reverse_palette)
+  val_range <- range(intensity, na.rm = TRUE)
+  if (scale_data != "none") {
+    abs_max <- max(abs(val_range), na.rm = TRUE)
+    val_breaks <- seq(-abs_max, abs_max, length.out = length(value_colors))
+  } else {
+    val_breaks <- seq(val_range[1], val_range[2], length.out = length(value_colors))
+  }
+  circlize::colorRamp2(val_breaks, value_colors)
+}
+
+#' The heatmap data as a tibble of plain base R columns
+#'
+#' tidyHeatmap tests `class(x) %in% ...`, which fails when a column carries
+#' several classes (as arrow/Parquet columns do).
+#'
+#' @param hm_data The heatmap data.
+#' @return A tibble.
+#' @keywords internal
+#' @noRd
+.hm_tidy_input <- function(hm_data) {
+  hm_data <- as.data.frame(lapply(hm_data, function(col) {
+    if (is.factor(col)) return(factor(as.character(col), levels = levels(col)))
+    if (is.logical(col)) return(as.logical(col))
+    if (is.numeric(col)) return(as.numeric(col))
+    if (is.character(col)) return(as.character(col))
+    col
+  }), stringsAsFactors = FALSE)
+  tibble::as_tibble(hm_data)
+}
+
+#' Split the columns by condition, in the order the samples appear
+#' @param hm_data The heatmap data.
+#' @return A factor with one value per sample.
+#' @keywords internal
+#' @noRd
+.hm_condition_split <- function(hm_data) {
+  sample_info <- hm_data %>%
+    select(SampleID, Condition) %>%
+    distinct()
+  sample_order_vec <- unique(as.character(hm_data$SampleID))
+  sample_info <- sample_info[match(sample_order_vec, as.character(sample_info$SampleID)), ]
+  factor(sample_info$Condition, levels = unique(sample_info$Condition))
+}
+
+#' Add the annotation tiles: condition, row annotations and adjusted p-value
+#' @param hm A tidyHeatmap heatmap.
+#' @param hm_data The heatmap data.
+#' @param condition_colors Palette of the conditions, or `NULL` for no tile.
+#' @param annot Output of `.hm_row_annotation()`, or `NULL`.
+#' @param adjp_colors Three colours for the adjusted p-value, or `NULL` for no
+#'   tile.
+#' @param show_legend,row_annotation_size,row_annotation_name_size See
+#'   [proteomics_heatmap()].
+#' @return The heatmap.
+#' @keywords internal
+#' @noRd
+.hm_add_annotations <- function(hm, hm_data, condition_colors, annot,
+                                adjp_colors, show_legend, row_annotation_size,
+                                row_annotation_name_size) {
+  if (!is.null(condition_colors)) {
+    hm <- hm %>%
+      tidyHeatmap::annotation_tile(Condition, palette = condition_colors,
+                                   show_legend = show_legend)
+  }
+
+  # Custom row annotations
+  if (!is.null(annot) && length(annot$cols) > 0) {
+    annot_size <- row_annotation_size
+    if (is.numeric(annot_size)) annot_size <- grid::unit(annot_size, "cm")
+    annot_name_gp <- grid::gpar(fontsize = row_annotation_name_size)
+
+    valid_cols <- annot$cols[annot$cols %in% names(hm_data)]
+    for (i in seq_along(valid_cols)) {
+      col <- valid_cols[i]
+      hm <- hm %>%
+        tidyHeatmap::annotation_tile(
+          !!rlang::sym(col),
+          palette = annot$colors[[col]],
+          # Only the last annotation takes a size (avoids a tidyHeatmap warning)
+          size = if (i == length(valid_cols)) annot_size else NULL,
+          annotation_name_gp = annot_name_gp,
+          show_legend = show_legend
+        )
+    }
+  }
+
+  # Adjusted p-value (low values = more significant)
+  if (!is.null(adjp_colors)) {
+    hm <- hm %>%
+      tidyHeatmap::annotation_tile(
+        adjP,
+        palette = circlize::colorRamp2(c(0, 0.01, 0.05), adjp_colors),
+        show_legend = show_legend
+      )
+  }
+  hm
+}
+
+#' Draw a heatmap of any of the types proteomics_heatmap() returns
+#' @param hm_obj The heatmap.
+#' @return Called for its side effect.
+#' @keywords internal
+#' @noRd
+.hm_draw <- function(hm_obj) {
+  if (inherits(hm_obj, "proteomics_heatmap")) {
+    # Object carrying a title - the print method already handles everything
+    print(hm_obj)
+  } else if (inherits(hm_obj, c("Heatmap", "HeatmapList"))) {
+    ComplexHeatmap::draw(hm_obj)
+  } else if (inherits(hm_obj, "InputHeatmap")) {
+    ComplexHeatmap::draw(tidyHeatmap::as_ComplexHeatmap(hm_obj))
+  } else {
+    print(hm_obj)
+  }
+}
+
+#' Export a heatmap to PNG, SVG or PDF, chosen by the file extension
+#'
+#' A failure is a warning, and the graphics device is closed.
+#'
+#' @param hm The heatmap.
+#' @param export_file,plot_width,plot_height,export_dpi See
+#'   [proteomics_heatmap()].
+#' @return `NULL`, invisibly.
+#' @keywords internal
+#' @noRd
+.hm_export_figure <- function(hm, export_file, plot_width, plot_height, export_dpi) {
+  file_ext <- tolower(tools::file_ext(export_file))
+
+  export_dir <- dirname(export_file)
+  if (!dir.exists(export_dir) && export_dir != ".") {
+    dir.create(export_dir, recursive = TRUE)
+  }
+
+  # Pixel size for PNG output (inches x dpi)
+  width_pixels <- round(plot_width * export_dpi)
+  height_pixels <- round(plot_height * export_dpi)
+
+  tryCatch({
+    if (file_ext == "png") {
+      grDevices::png(filename = export_file, width = width_pixels,
+                     height = height_pixels, res = export_dpi)
+      .hm_draw(hm)
+      grDevices::dev.off()
+      message("Heatmap exported to PNG: ", export_file,
+              " (", width_pixels, "x", height_pixels, "px)")
+    } else if (file_ext == "svg") {
+      grDevices::svg(filename = export_file, width = plot_width, height = plot_height)
+      .hm_draw(hm)
+      grDevices::dev.off()
+      message("Heatmap exported to SVG: ", export_file,
+              " (", plot_width, "x", plot_height, "in)")
+    } else if (file_ext == "pdf") {
+      grDevices::pdf(file = export_file, width = plot_width, height = plot_height)
+      .hm_draw(hm)
+      grDevices::dev.off()
+      message("Heatmap exported to PDF: ", export_file,
+              " (", plot_width, "x", plot_height, "in)")
+    } else {
+      warning("Unsupported format: ", file_ext, ". Use .png, .svg or .pdf",
+              call. = FALSE)
+    }
+  }, error = function(e) {
+    # Make sure the graphics device is closed even if something fails
+    try(grDevices::dev.off(), silent = TRUE)
+    warning("Could not export the heatmap: ", e$message, call. = FALSE)
+  })
+  invisible(NULL)
+}
+
+
+# -----------------------------------------------------------------------------
 # Main function: heatmap built with tidyHeatmap
 # -----------------------------------------------------------------------------
 
@@ -532,33 +922,20 @@ proteomics_heatmap <- function(data,
   # Resolve border_color
   rect_gp <- NULL
   if (!is.null(border_color) && !isFALSE(border_color)) {
-    if (isTRUE(border_color)) {
-      rect_gp <- grid::gpar(col = "black")
-    } else {
-      rect_gp <- grid::gpar(col = border_color)
-    }
+    rect_gp <- grid::gpar(col = if (isTRUE(border_color)) "black" else border_color)
   }
 
-  # Resolve the titles (hide them when show_*_title is FALSE)
-  if (!show_row_title) {
-    row_title <- NULL
-  }
-  if (!show_column_title) {
-    column_title <- NULL
-  }
+  # Hide the titles when show_*_title is FALSE
+  if (!show_row_title) row_title <- NULL
+  if (!show_column_title) column_title <- NULL
 
-  # Convert the dendrogram sizes to grid units when they are given as numbers
-  if (!is.null(column_dend_height) && is.numeric(column_dend_height)) {
-    column_dend_height <- grid::unit(column_dend_height, "mm")
-  }
-  if (!is.null(row_dend_width) && is.numeric(row_dend_width)) {
-    row_dend_width <- grid::unit(row_dend_width, "mm")
-  }
+  # Dendrogram sizes given as numbers are millimetres
+  if (is.numeric(column_dend_height)) column_dend_height <- grid::unit(column_dend_height, "mm")
+  if (is.numeric(row_dend_width)) row_dend_width <- grid::unit(row_dend_width, "mm")
 
   # ---------------------------------------------------------------------------
-  # 1) Prepare the data
+  # 1) Data: select the proteins, scale them, order the samples; export them
   # ---------------------------------------------------------------------------
-
   hm_data <- prepare_heatmap_data(
     data = data,
     mode = mode,
@@ -569,335 +946,59 @@ proteomics_heatmap <- function(data,
     sample_order = sample_order,
     condition_order = condition_order
   )
-
-  # ---------------------------------------------------------------------------
-  # 1b) Export the data to TSV if requested
-  # ---------------------------------------------------------------------------
-
   if (!is.null(export_path) && nzchar(export_path)) {
-    # Build a wide matrix with FeatureID as rows and SampleID as columns
-    export_wide <- hm_data %>%
-      select(FeatureID, SampleID, Intensity) %>%
-      tidyr::pivot_wider(
-        names_from = SampleID,
-        values_from = Intensity,
-        values_fn = mean
-      )
-
-    # Add adjP when present
-    if ("adjP" %in% names(hm_data)) {
-      adjp_data <- hm_data %>%
-        select(FeatureID, adjP) %>%
-        distinct()
-      export_wide <- export_wide %>%
-        left_join(adjp_data, by = "FeatureID")
-    }
-
-    # Write the TSV
-    .write_tsv(export_wide, export_path)
-    message("Data exported to: ", export_path)
+    .hm_export_matrix(hm_data, export_path)
   }
 
   # ---------------------------------------------------------------------------
-  # 1c) Process the row annotations
+  # 2) Rows: annotations, order and split
   # ---------------------------------------------------------------------------
+  annot <- .hm_row_annotation(row_annotation, row_annotation_cols,
+                              row_annotation_palette, unique(hm_data$FeatureID))
+  rows <- .hm_arrange_rows(hm_data, annot, row_order_by, split_rows_by)
+  hm_data <- rows$hm_data
 
-  row_annot_data <- NULL
-  row_annot_colors <- list()
-  row_split_vector <- NULL
-
-  if (!is.null(row_annotation)) {
-    # Load the annotations when a file path is given
-    if (is.character(row_annotation) && length(row_annotation) == 1 && file.exists(row_annotation)) {
-      row_annot_data <- .read_delim_file(row_annotation)
-    } else if (is.data.frame(row_annotation)) {
-      row_annot_data <- as.data.frame(row_annotation)
-    } else {
-      warning("row_annotation must be a path to a TSV file or a data.frame")
-    }
-
-    if (!is.null(row_annot_data)) {
-      # Validate the FeatureID column
-      if (!("FeatureID" %in% names(row_annot_data))) {
-        stop("The annotation file must have a 'FeatureID' column")
-      }
-
-      # Work out which columns to use
-      all_annot_cols <- setdiff(names(row_annot_data), "FeatureID")
-      if (is.null(row_annotation_cols)) {
-        row_annotation_cols <- all_annot_cols
-      } else {
-        missing_cols <- setdiff(row_annotation_cols, all_annot_cols)
-        if (length(missing_cols) > 0) {
-          warning("Annotation columns not found: ", paste(missing_cols, collapse = ", "))
-          row_annotation_cols <- intersect(row_annotation_cols, all_annot_cols)
-        }
-      }
-
-      # Turn empty values into the "NA" string (not NA_character_) so they can be coloured white
-      for (col in row_annotation_cols) {
-        values <- row_annot_data[[col]]
-        if (is.character(values)) {
-          # Convert empty strings, whitespace and real NAs into the "NA" string
-          row_annot_data[[col]] <- ifelse(
-            is.na(values) | trimws(values) == "",
-            "NA",
-            values
-          )
-        }
-      }
-
-      # Keep only the FeatureIDs present in the data
-      feature_ids_in_data <- unique(hm_data$FeatureID)
-      row_annot_data <- row_annot_data[row_annot_data$FeatureID %in% feature_ids_in_data, , drop = FALSE]
-
-      # Build a colour palette for each annotation (mapping "NA" to white)
-      for (col in row_annotation_cols) {
-        # Get the unique levels
-        all_levels <- unique(row_annot_data[[col]])
-        has_na <- "NA" %in% all_levels
-
-        # Separate the real levels from "NA" and order them: real ones first, "NA" last
-        real_levels <- sort(all_levels[all_levels != "NA"])
-        if (has_na) {
-          ordered_levels <- c(real_levels, "NA")
-        } else {
-          ordered_levels <- real_levels
-        }
-
-        # Turn the column into a factor with the ordered levels
-        row_annot_data[[col]] <- factor(row_annot_data[[col]], levels = ordered_levels)
-
-        # Get the colours for the real levels
-        if (!is.null(row_annotation_palette) && col %in% names(row_annotation_palette)) {
-          real_colors <- get_annotation_palette(real_levels, row_annotation_palette[[col]])
-        } else {
-          real_colors <- get_annotation_palette(real_levels, NULL)
-        }
-
-        # Build the final palette in the EXACT order of the factor levels;
-        # this is what makes tidyHeatmap assign the colours correctly
-        final_palette <- character(length(ordered_levels))
-        names(final_palette) <- ordered_levels
-        for (lvl in ordered_levels) {
-          if (lvl == "NA") {
-            final_palette[lvl] <- "#FFFFFF"
-          } else {
-            final_palette[lvl] <- real_colors[lvl]
-          }
-        }
-        row_annot_colors[[col]] <- final_palette
-      }
-
-      # Join the annotations onto hm_data
-      cols_to_join <- c("FeatureID", row_annotation_cols)
-      hm_data <- hm_data %>%
-        left_join(row_annot_data[, cols_to_join, drop = FALSE], by = "FeatureID")
-
-      # Make sure the factors survive the join
-      for (col in row_annotation_cols) {
-        if (col %in% names(hm_data) && col %in% names(row_annot_data)) {
-          hm_data[[col]] <- factor(hm_data[[col]], levels = levels(row_annot_data[[col]]))
-        }
-      }
-
-      # Order the rows by annotation(s) when requested (except "clustering")
-      if (!is.null(row_order_by) && !identical(row_order_by, "clustering")) {
-        # Work out which columns are valid to order by:
-        # the annotation columns plus adjP (when present in hm_data)
-        valid_order_cols <- row_annotation_cols
-        if ("adjP" %in% names(hm_data)) {
-          valid_order_cols <- c(valid_order_cols, "adjP")
-        }
-
-        # Keep only the valid columns from the row_order_by vector
-        order_cols <- row_order_by[row_order_by %in% valid_order_cols]
-
-        if (length(order_cols) > 0) {
-          # Assemble the data to sort on (annotations plus adjP where needed)
-          order_data <- row_annot_data
-
-          # Add adjP to order_data when it is needed for the ordering
-          if ("adjP" %in% order_cols && "adjP" %in% names(hm_data)) {
-            adjp_data <- hm_data %>%
-              select(FeatureID, adjP) %>%
-              distinct()
-            order_data <- order_data %>%
-              left_join(adjp_data, by = "FeatureID")
-          }
-
-          # Sort by several columns sequentially
-          order_syms <- rlang::syms(order_cols)
-          order_data_sorted <- order_data %>%
-            arrange(!!!order_syms)
-
-          # Get the FeatureID order
-          feature_order <- unique(order_data_sorted$FeatureID)
-
-          # Turn FeatureID into a factor carrying the right order
-          hm_data <- hm_data %>%
-            mutate(FeatureID = factor(FeatureID, levels = feature_order)) %>%
-            arrange(FeatureID)  # Sort the data explicitly
-        }
-      }
-
-      # Build row_split when requested (AFTER the ordering)
-      if (!is.null(split_rows_by) && split_rows_by %in% row_annotation_cols) {
-        # Get the unique FeatureIDs in the current order of hm_data
-        if (!is.null(row_order_by)) {
-          # When an order was applied, use the factor levels
-          ordered_features <- levels(hm_data$FeatureID)
-        } else {
-          ordered_features <- unique(as.character(hm_data$FeatureID))
-        }
-
-        # Build the FeatureID -> split value mapping
-        feature_to_split <- row_annot_data %>%
-          select(FeatureID, all_of(split_rows_by)) %>%
-          distinct()
-        feature_to_split <- stats::setNames(
-          feature_to_split[[split_rows_by]],
-          feature_to_split$FeatureID
-        )
-
-        # Build the split vector in the right order
-        split_values <- feature_to_split[ordered_features]
-
-        # Determine the order of the split levels (as they appear in the sorted data)
-        split_levels <- unique(split_values)
-        split_levels <- split_levels[!is.na(split_levels)]
-
-        row_split_vector <- factor(split_values, levels = split_levels)
-      }
-    }
-  }
-
-  # Order by adjP when requested and there are no row annotations
-  # (when there are annotations, the ordering is already handled above)
-  if (!is.null(row_order_by) && !identical(row_order_by, "clustering") &&
-      (is.null(row_annot_data) || length(row_annotation_cols) == 0)) {
-    # Check whether ordering by adjP was requested
-    if ("adjP" %in% row_order_by && "adjP" %in% names(hm_data)) {
-      # Get the FeatureID order by adjP
-      adjp_order <- hm_data %>%
-        select(FeatureID, adjP) %>%
-        distinct() %>%
-        arrange(adjP)
-      feature_order <- adjp_order$FeatureID
-
-      # Turn FeatureID into a factor carrying the right order
-      hm_data <- hm_data %>%
-        mutate(FeatureID = factor(FeatureID, levels = feature_order)) %>%
-        arrange(FeatureID)
-    }
-  }
-
-  # Count the proteins, used for the auto-configuration below
-  n_proteins <- length(unique(hm_data$FeatureID))
-  n_samples <- length(unique(hm_data$SampleID))
-
-  # Decide automatically whether to show the row names
+  # Show the row names only when they can be read
   if (is.null(show_row_names)) {
-    show_row_names <- n_proteins <= 50
+    show_row_names <- length(unique(hm_data$FeatureID)) <= 50
   }
 
   # ---------------------------------------------------------------------------
-  # 2) Build the colour palettes
+  # 3) Colours and clustering
   # ---------------------------------------------------------------------------
-
-  # Palette for the values
-  value_colors <- get_heatmap_palette(
-    palette = palette_value,
-    n = 11,
-    reverse = reverse_palette
-  )
-
-  # Build a colorRamp2 function for the values
-  val_range <- range(hm_data$Intensity, na.rm = TRUE)
-  if (scale_data != "none") {
-    # For scaled data, use a symmetric range
-    abs_max <- max(abs(val_range), na.rm = TRUE)
-    val_breaks <- seq(-abs_max, abs_max, length.out = length(value_colors))
-  } else {
-    val_breaks <- seq(val_range[1], val_range[2], length.out = length(value_colors))
-  }
-  palette_func <- circlize::colorRamp2(val_breaks, value_colors)
-
-  # Palette for the Condition annotation
+  palette_func <- .hm_value_colours(hm_data$Intensity, palette_value,
+                                    reverse_palette, scale_data)
   condition_levels <- unique(hm_data$Condition)
   if (!is.null(condition_order)) {
     condition_levels <- condition_order[condition_order %in% condition_levels]
   }
   annotation_colors <- get_annotation_palette(condition_levels, palette_annotation)
 
-  # ---------------------------------------------------------------------------
-  # 3) Configure the clustering
-  # ---------------------------------------------------------------------------
-
-  # Decide whether to cluster the columns
+  # A sample order other than "clustering" turns column clustering off
   cluster_cols_final <- cluster_columns
   if (is.character(sample_order) && (length(sample_order) > 1 || sample_order != "clustering")) {
     cluster_cols_final <- FALSE
   }
-
-  # Decide whether to cluster the rows
+  # row_order_by = "clustering" turns row clustering on, any other order off;
+  # split_rows_by is compatible with clustering (it clusters within each split)
   cluster_rows_final <- cluster_rows
   if (!is.null(row_order_by)) {
-    if (identical(row_order_by, "clustering")) {
-      # row_order_by = "clustering" turns on row clustering
-      cluster_rows_final <- TRUE
-    } else {
-      # Ordering by specific columns turns clustering off
-      cluster_rows_final <- FALSE
-    }
+    cluster_rows_final <- identical(row_order_by, "clustering")
   }
-  # split_rows_by is compatible with clustering (it clusters within each split)
 
   # ---------------------------------------------------------------------------
-  # 4) Build the heatmap with tidyHeatmap
+  # 4) The heatmap and its annotations
   # ---------------------------------------------------------------------------
+  hm_data <- .hm_tidy_input(hm_data)
 
-  # Convert to a tibble holding base R types (avoids trouble with arrow/parquet classes):
-  # tidyHeatmap uses `class(x) %in% ...`, which fails when class() returns several values
-  hm_data <- as.data.frame(lapply(hm_data, function(col) {
-    if (is.factor(col)) return(factor(as.character(col), levels = levels(col)))
-    if (is.logical(col)) return(as.logical(col))
-    if (is.numeric(col)) return(as.numeric(col))
-    if (is.character(col)) return(as.character(col))
-    col
-  }), stringsAsFactors = FALSE)
-  hm_data <- tibble::as_tibble(hm_data)
+  extra_args <- list(
+    column_dend_height = column_dend_height,
+    row_dend_width     = row_dend_width,
+    rect_gp            = rect_gp,
+    row_split          = rows$row_split
+  )
+  extra_args <- extra_args[!vapply(extra_args, is.null, logical(1))]
 
-  # Build column_split when requested (to visually separate the conditions)
-  col_split_vector <- NULL
-  if (split_by_condition) {
-    # Get the unique samples in the order in which they appear in the data
-    sample_info <- hm_data %>%
-      select(SampleID, Condition) %>%
-      distinct()
-
-    # Preserve the original SampleID order of the data
-    sample_order_vec <- unique(as.character(hm_data$SampleID))
-    sample_info <- sample_info[match(sample_order_vec, as.character(sample_info$SampleID)), ]
-    col_split_vector <- factor(sample_info$Condition, levels = unique(sample_info$Condition))
-  }
-
-  # Assemble the optional arguments
-  extra_args <- list()
-  if (!is.null(column_dend_height)) {
-    extra_args$column_dend_height <- column_dend_height
-  }
-  if (!is.null(row_dend_width)) {
-    extra_args$row_dend_width <- row_dend_width
-  }
-  if (!is.null(rect_gp)) {
-    extra_args$rect_gp <- rect_gp
-  }
-  if (!is.null(row_split_vector)) {
-    extra_args$row_split <- row_split_vector
-  }
-
-  # Build the base heatmap
   hm_args <- c(
     list(
       .data = hm_data,
@@ -917,84 +1018,31 @@ proteomics_heatmap <- function(data,
       column_title = column_title,
       row_title_gp = grid::gpar(fontsize = row_title_size),
       column_title_gp = grid::gpar(fontsize = column_title_size),
-      column_split = col_split_vector,
+      column_split = if (split_by_condition) .hm_condition_split(hm_data),
       show_heatmap_legend = show_heatmap_legend
     ),
     extra_args
   )
-
   hm <- do.call(tidyHeatmap::heatmap, hm_args)
 
-  # Add the Condition annotation as a colour bar when requested
-  if (show_annotation) {
-    hm <- hm %>%
-      tidyHeatmap::annotation_tile(
-        Condition,
-        palette = annotation_colors,
-        show_legend = show_annotation_legend
-      )
-  }
-
-  # Add the custom row annotations (suppressWarnings so NAs are handled quietly)
-  if (!is.null(row_annot_data) && length(row_annotation_cols) > 0) {
-    # Turn size into a unit when given as a number
-    annot_size <- NULL
-    if (!is.null(row_annotation_size)) {
-      if (is.numeric(row_annotation_size)) {
-        annot_size <- grid::unit(row_annotation_size, "cm")
-      } else {
-        annot_size <- row_annotation_size
-      }
-    }
-
-    # Assemble annotation_name_gp
-    annot_name_gp <- grid::gpar(fontsize = row_annotation_name_size)
-
-    # Identify the valid columns
-    valid_cols <- row_annotation_cols[row_annotation_cols %in% names(hm_data)]
-    n_cols <- length(valid_cols)
-
-    for (i in seq_along(valid_cols)) {
-      col <- valid_cols[i]
-      # Only set size on the last annotation (avoids a tidyHeatmap warning)
-      use_size <- if (i == n_cols) annot_size else NULL
-
-      hm <- hm %>%
-        tidyHeatmap::annotation_tile(
-          !!rlang::sym(col),
-          palette = row_annot_colors[[col]],
-          size = use_size,
-          annotation_name_gp = annot_name_gp,
-          show_legend = show_annotation_legend
-        )
-    }
-  }
-
-  # Add the adjP annotation for mode = "target" (a row annotation)
-  if (show_adjp_annotation && mode == "target" && "adjP" %in% names(hm_data)) {
-    # Get the colours for the adjP palette
-    # Default: dark red -> orange -> white
-    adjp_colors <- .resolve_palette(palette_adjp, n = 3,
-                                    default = c("#67001F", "#F4A582", "#F7F7F7"))
-
-    # Build the palette for the p-values (low values = more significant)
-    adjp_palette <- circlize::colorRamp2(
-      c(0, 0.01, 0.05),
-      adjp_colors
-    )
-
-    hm <- hm %>%
-      tidyHeatmap::annotation_tile(
-        adjP,
-        palette = adjp_palette,
-        show_legend = show_annotation_legend
-      )
-  }
+  show_adjp <- show_adjp_annotation && mode == "target" && "adjP" %in% names(hm_data)
+  hm <- .hm_add_annotations(
+    hm, hm_data,
+    condition_colors = if (show_annotation) annotation_colors,
+    annot = annot,
+    adjp_colors = if (show_adjp) {
+      # Default: dark red -> orange -> white
+      .resolve_palette(palette_adjp, n = 3,
+                       default = c("#67001F", "#F4A582", "#F7F7F7"))
+    },
+    show_legend = show_annotation_legend,
+    row_annotation_size = row_annotation_size,
+    row_annotation_name_size = row_annotation_name_size
+  )
 
   # ---------------------------------------------------------------------------
-  # 5) Add the main title when one was given
+  # 5) Title and export
   # ---------------------------------------------------------------------------
-
   if (!is.null(heatmap_title) && nzchar(heatmap_title)) {
     hm <- wrap_heatmap_with_title(
       hm = hm,
@@ -1003,86 +1051,8 @@ proteomics_heatmap <- function(data,
       title_face = heatmap_title_face
     )
   }
-
-  # ---------------------------------------------------------------------------
-  # 6) Export the plot when a path was given
-  # ---------------------------------------------------------------------------
-
   if (!is.null(export_file) && nzchar(export_file)) {
-    # Take the format from the extension
-    file_ext <- tolower(tools::file_ext(export_file))
-
-    # Create the directory if it does not exist
-    export_dir <- dirname(export_file)
-    if (!dir.exists(export_dir) && export_dir != ".") {
-      dir.create(export_dir, recursive = TRUE)
-    }
-
-    # Compute the pixel size for PNG output (inches x dpi)
-    width_pixels <- round(plot_width * export_dpi)
-    height_pixels <- round(plot_height * export_dpi)
-
-    # Helper that draws the heatmap according to its type
-    draw_heatmap <- function(hm_obj) {
-      if (inherits(hm_obj, "proteomics_heatmap")) {
-        # Object carrying a title - the print method already handles everything
-        print(hm_obj)
-      } else if (inherits(hm_obj, c("Heatmap", "HeatmapList"))) {
-        # Native ComplexHeatmap
-        ComplexHeatmap::draw(hm_obj)
-      } else if (inherits(hm_obj, "InputHeatmap")) {
-        # tidyHeatmap - convert to ComplexHeatmap and draw
-        ht <- tidyHeatmap::as_ComplexHeatmap(hm_obj)
-        ComplexHeatmap::draw(ht)
-      } else {
-        # Fallback for any other type
-        print(hm_obj)
-      }
-    }
-
-    tryCatch({
-      if (file_ext == "png") {
-        grDevices::png(
-          filename = export_file,
-          width = width_pixels,
-          height = height_pixels,
-          res = export_dpi
-        )
-        draw_heatmap(hm)
-        grDevices::dev.off()
-        message("Heatmap exported to PNG: ", export_file,
-                " (", width_pixels, "x", height_pixels, "px)")
-
-      } else if (file_ext == "svg") {
-        grDevices::svg(
-          filename = export_file,
-          width = plot_width,
-          height = plot_height
-        )
-        draw_heatmap(hm)
-        grDevices::dev.off()
-        message("Heatmap exported to SVG: ", export_file,
-                " (", plot_width, "x", plot_height, "in)")
-
-      } else if (file_ext == "pdf") {
-        grDevices::pdf(
-          file = export_file,
-          width = plot_width,
-          height = plot_height
-        )
-        draw_heatmap(hm)
-        grDevices::dev.off()
-        message("Heatmap exported to PDF: ", export_file,
-                " (", plot_width, "x", plot_height, "in)")
-
-      } else {
-        warning("Unsupported format: ", file_ext, ". Use .png, .svg or .pdf")
-      }
-    }, error = function(e) {
-      # Make sure the graphics device is closed even if something fails
-      try(grDevices::dev.off(), silent = TRUE)
-      warning("Could not export the heatmap: ", e$message)
-    })
+    .hm_export_figure(hm, export_file, plot_width, plot_height, export_dpi)
   }
 
   hm
