@@ -44,7 +44,7 @@ imputation may attenuate real differences or introduce artificial ones.
 
 For this reason, NADIA treats normalisation and imputation as decisions that
 should be evaluated rather than accepted as fixed preprocessing steps. The
-package includes 13 normalisation methods and 20 imputation strategies, together
+package includes 13 normalisation methods and 19 imputation strategies, together
 with functions for comparing their performance on the data themselves or against
 a known reference.
 
@@ -65,7 +65,7 @@ workflow:
 | 1 | Import Spectronaut, DIA-NN, TMT and LFQ data into a common `proteomics_data` object: `vignette("input-formats")` | How do I import DIA, TMT or label-free (DDA) data? |
 | 2 | Filter, transform to log2 and select among 13 normalisation options: *Filtering, log2 transformation and normalisation* in this vignette | How are proteins filtered, log2-transformed and normalised? |
 | 3 | Optionally diagnose and correct batch effects using PVCA/BERT: `vignette("batch-correction")` | How do I diagnose, correct and verify a batch effect? |
-| 4 | Select among 20 imputation options, including `combo`, `softHybrid` and `limpa`: `vignette("missing-values")` | What do the missing values mean and how should I impute them? |
+| 4 | Select among 19 imputation options, including `combo`, `softHybrid` and `limpa`: `vignette("missing-values")` | What do the missing values mean and how should I impute them? |
 | 5 | Perform differential abundance analysis with `limma` or `limpa`: *Differential abundance results* in this vignette and `vignette("missing-values")` | How do I obtain and interpret differential abundance results? |
 | 6 | Assess normalisation and imputation methods: `vignette("choosing-methods")` | How do I compare methods when no known reference is available? |
 | 7 | Benchmark complete pipelines against known references or spike-in experiments: `vignette("benchmarking")` | How do I evaluate pipelines using a spike-in experiment? |

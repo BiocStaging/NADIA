@@ -306,7 +306,8 @@
 
 .norm_vsn <- function(x_raw) {
   .check_suggests("vsn", "norm_method = 'vsn'")
-  vsn::justvsn(x_raw)
+  # Delegated to MsCoreUtils, which gives identical results (review, #186)
+  MsCoreUtils::normalize_matrix(x_raw, "vsn")
 }
 
 # --- Group B: x_log2 -> log2 ---

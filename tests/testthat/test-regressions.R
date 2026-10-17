@@ -752,3 +752,13 @@ test_that("missForest learns from the proteins by default, and from the samples 
     expect_false(isTRUE(all.equal(feat, samp)))
     expect_error(.imp_missForest(m, list(observations = "proteins")), "features")
 })
+
+
+test_that("nbavg is gone, with an error that says why", {
+    data(nadia_dia, package = "NADIA")
+    expect_false("nbavg" %in% .IMP_METHODS_ALL)
+    expect_false("nbavg" %in% .IM_BENCH_METHODS)
+    expect_error(suppressMessages(process_proteomics(nadia_dia, imp_method = "nbavg",
+                                                     verbose = FALSE)),
+                 "removed in NADIA 0.99.2")
+})

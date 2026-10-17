@@ -31,7 +31,7 @@ Default `cycloess`. Notes that matter:
 - `vsn`, `Rlr` need `Suggests` packages (`vsn`, `MASS`).
 - `quantile` uses `limma::normalizeQuantiles` for consistent NA handling.
 
-## Imputation: 20 methods, three kinds
+## Imputation: 19 methods, three kinds
 
 **Hybrid (2), the interesting ones:**
 
@@ -47,9 +47,9 @@ Default `cycloess`. Notes that matter:
 **MNAR stage candidates:** `QRILC MinDet MinProb PI min halfmin zero with none`
 
 **Single methods**, applied to every missing value alike: any of the above plus
-`nbavg`, `limpa`, and `none`.
+`limpa` and `none`.
 
-No extra dependency: `none zero min halfmin MinDet PI nbavg with`.
+No extra dependency: `none zero min halfmin MinDet PI with`.
 Needs a `Suggests` package: `bpca knn mice missForest Impseq Impseqrob QRILC
 MLE MinProb limpa`.
 
@@ -95,7 +95,7 @@ im$metrics_table     # Rank_Mean over NRMSE, SOR, PSS, ACC_OI
 and it ranks the assays already in the object instead**, which is not a method
 comparison at all — `reference/validation.md` explains why that matters.
 `imputation_metrics()` simulates missingness on complete rows and measures
-recovery for 16 methods.
+recovery for 15 methods.
 
 **3. Only then fall back to the defaults**, and say that is what you did.
 

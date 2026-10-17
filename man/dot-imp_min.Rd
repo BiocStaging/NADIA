@@ -2,11 +2,15 @@
 % Please edit documentation in R/Imputation.R
 \name{.imp_min}
 \alias{.imp_min}
-\title{Minimum value imputation (global minimum)}
+\title{Minimum value imputation (global minimum)
+Delegated to \code{MsCoreUtils}, which gives identical results (Bioconductor
+review, #186); this wrapper keeps NADIA's argument names.}
 \usage{
 .imp_min(x, args = list())
 }
 \description{
 Minimum value imputation (global minimum)
+Delegated to \code{MsCoreUtils}, which gives identical results (Bioconductor
+review, #186); this wrapper keeps NADIA's argument names.
 }
 \keyword{internal}

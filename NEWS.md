@@ -87,6 +87,18 @@ Changes made in response to the Bioconductor review.
   0.203 to 0.110 (NRMSE, `imputation_metrics()`), and the spike-in MCC of the
   whole pipeline rises from 0.58 to 0.67. NAguideR's orientation remains
   available as `method_args = list(missForest = list(observations = "samples"))`.
+* The methods that give identical results in `MsCoreUtils` are now computed
+  by it: imputation `zero`, `min`, `with`, `MinDet`, `MinProb`, `QRILC`,
+  `bpca` and `missForest`, and normalisation `vsn`. `MsCoreUtils` moves into
+  `Imports`. Every result is unchanged (checked on the four example datasets).
+  `bpca` no longer accepts `nPcs`, which `MsCoreUtils` fixes at the number of
+  samples minus one, NADIA's default. Where NADIA differs from `MsCoreUtils`
+  (`knn`, `MLE`, `quantile.robust`) it keeps its own implementation; see the
+  Bioconductor review (#186) for the reasons.
+* `imp_method = "nbavg"` is removed. Neighbour averaging comes from MSnbase,
+  where it is meant for fractions ordered along a separation gradient and is
+  invalid otherwise; NADIA's variant averaged the nearest columns, which
+  mixes replicates of different conditions at the edges of each block.
 
 # NADIA 0.99.0
 

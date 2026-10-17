@@ -7,7 +7,9 @@
 .imp_QRILC(x, args = list())
 }
 \arguments{
-\item{args}{list with optional \code{tune.sigma} (default 1)}
+\item{args}{list with optional \code{tune.sigma} (default 1)
+Delegated to \code{MsCoreUtils}, which gives identical results (Bioconductor
+review, #186); this wrapper keeps NADIA's argument names.}
 }
 \description{
 QRILC: Quantile Regression Imputation of Left-Censored data (imputeLCMD)

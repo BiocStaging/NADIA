@@ -41,6 +41,7 @@ Imports:
     limma,
     magrittr,
     methods,
+    MsCoreUtils,
     pROC,
     RColorBrewer,
     rlang,

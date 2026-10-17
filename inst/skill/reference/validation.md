@@ -75,7 +75,7 @@ values, re-imputes, and compares. Metrics:
 - **ACC_OI** — agreement on the masked cells only.
 - **Rank_Mean** — the summary column of `im$metrics_table`.
 
-16 methods by default.
+15 methods by default.
 
 **Read this ranking as a choice of MAR method, and nothing else.** The masking
 hides values that were *observed*, so the artificial gaps are missing at random

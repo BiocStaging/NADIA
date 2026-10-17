@@ -29,12 +29,12 @@
 
 
 
-# --- Benchmark methods (16 individual methods, excludes combo/softHybrid/none) ---
+# --- Benchmark methods (15 individual methods, excludes combo/softHybrid/none) ---
 # "with" is excluded by default: it requires `with_value` and fails without it.
 .IM_BENCH_METHODS <- c(
   "bpca", "knn", "mice", "missForest", "Impseq", "Impseqrob",
   "QRILC", "MLE", "MinDet", "MinProb", "PI", "min", "halfmin", "zero",
-  "nbavg", "limpa"
+  "limpa"
 )
 
 # =============================================================================
@@ -670,7 +670,7 @@ im_prepare_se <- function(preprocessing,
 #' @param assay_name Character. Name of the assay to use as starting point
 #'   (typically the normalized assay, pre-imputation, with real NAs).
 #' @param methods Character vector of individual imputation methods to benchmark.
-#'   Default: `.IM_BENCH_METHODS` (16 methods). Use `character(0)` or `NULL`
+#'   Default: `.IM_BENCH_METHODS` (15 methods). Use `character(0)` or `NULL`
 #'   to skip individual methods.
 #' @param combo_methods Named list of combo/softHybrid configurations. Each
 #'   element is a list with: `mode` ("combo" or "softHybrid", default "combo"),
@@ -1167,7 +1167,7 @@ im_plot_metrics <- function(metrics_df, ...) {
 #' @param assay_name Character. Assay name to use as starting point.
 #'   NULL (default) = first assay.
 #' @param methods Character vector of individual methods to benchmark.
-#'   Default: `.IM_BENCH_METHODS` (16 methods). Use `NULL` or `character(0)`
+#'   Default: `.IM_BENCH_METHODS` (15 methods). Use `NULL` or `character(0)`
 #'   to skip individual methods when only using combo_methods.
 #' @param combo_methods Named list of combo/softHybrid configurations.
 #'   Each element is a list with: `mode` ("combo" or "softHybrid", default
@@ -1208,7 +1208,7 @@ im_plot_metrics <- function(metrics_df, ...) {
 #' data(nadia_dia)
 #' se <- im_prepare_se(nadia_dia, norm_method = "cycloess", verbose = FALSE)
 #'
-#' # The default sweeps 16 methods; a handful is enough to illustrate it
+#' # The default sweeps 15 methods; a handful is enough to illustrate it
 #' set.seed(42)
 #' res <- imputation_metrics(se, methods = c("min", "zero", "knn"),
 #'                           plots = "ranking", verbose = FALSE)

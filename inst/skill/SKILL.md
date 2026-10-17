@@ -75,7 +75,7 @@ Each stage has a reference file. Read the one you need; do not load them all.
    Four readers, one output contract. How the experimental design is declared,
    and what to check before going further.
 2. **Choosing the methods** — `reference/method-choice.md`
-   13 normalisation and 20 imputation methods. How to choose on evidence
+   13 normalisation and 19 imputation methods. How to choose on evidence
    instead of by habit. **Read this one; it is where analyses go wrong.**
 3. **Processing** — `reference/processing.md`
    `process_proteomics()` argument by argument, batch correction, limma vs

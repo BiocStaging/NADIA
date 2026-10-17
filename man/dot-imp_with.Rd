@@ -7,7 +7,9 @@
 .imp_with(x, args = list())
 }
 \arguments{
-\item{args}{list with \code{with_value}}
+\item{args}{list with \code{with_value}
+Delegated to \code{MsCoreUtils}, which gives identical results (Bioconductor
+review, #186); this wrapper keeps NADIA's argument names.}
 }
 \description{
 with: replace NAs with user-specified constant

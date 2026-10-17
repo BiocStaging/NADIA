@@ -3,7 +3,7 @@
 # =============================================================================
 #
 # Functions for proteomics data imputation:
-#   - 20 imputation methods (combo + softHybrid + 18 individual)
+#   - 19 imputation methods (combo + softHybrid + 17 individual)
 #   - MNAR mask by condition (for combo mode)
 #   - Pre-filtering by MNAR rules (combo) or NA proportion (single/softHybrid)
 #   - Mixed combo imputation (configurable MAR + MNAR methods)
@@ -12,6 +12,9 @@
 #
 # Dependencies:
 #   - SummarizedExperiment, S4Vectors
+#
+# Delegated to MsCoreUtils, which gives identical results: zero, min, with,
+# MinDet, MinProb, QRILC, bpca and missForest (Bioconductor review, #186).
 #
 # Optional dependencies (method-specific):
 #   - rrcovNA  (Impseq, Impseqrob)
@@ -35,7 +38,7 @@
 .IMP_METHODS_ALL <- c(
   "combo", "softHybrid", "bpca", "knn", "mice", "missForest", "Impseq",
   "Impseqrob", "QRILC", "MLE",
-  "MinDet", "MinProb", "PI", "min", "halfmin", "zero", "nbavg", "with",
+  "MinDet", "MinProb", "PI", "min", "halfmin", "zero", "with",
   "limpa", "none"
 )
 
@@ -54,6 +57,26 @@
 # Each receives a numeric matrix (proteins x samples, log2) and returns
 # the same matrix with NAs imputed. Additional args via method_args list.
 
+#' Run a MsCoreUtils imputation quietly
+#'
+#' `MsCoreUtils::impute_matrix()` announces the margin of every imputation
+#' with `message()`. NADIA reports its own progress under `verbose`, so that
+#' line is muffled; any other message gets through.
+#'
+#' @param x Matrix to impute.
+#' @param method,... Passed to `MsCoreUtils::impute_matrix()`.
+#' @return The imputed matrix.
+#' @keywords internal
+#' @noRd
+.ms_impute <- function(x, method, ...) {
+  withCallingHandlers(
+    MsCoreUtils::impute_matrix(x, method, ...),
+    message = function(m) {
+      if (startsWith(conditionMessage(m), "Imputing along margin"))
+        invokeRestart("muffleMessage")
+    })
+}
+
 # --- No external dependencies (7) ---
 
 #' @keywords internal
@@ -61,18 +84,20 @@
   x
 }
 
+#' zero: replace NAs with 0
+#' Delegated to `MsCoreUtils`, which gives identical results (Bioconductor
+#' review, #186); this wrapper keeps NADIA's argument names.
 #' @keywords internal
 .imp_zero <- function(x, args = list()) {
-  x[is.na(x)] <- 0
-  x
+  .ms_impute(x, "zero")
 }
 
 #' Minimum value imputation (global minimum)
+#' Delegated to `MsCoreUtils`, which gives identical results (Bioconductor
+#' review, #186); this wrapper keeps NADIA's argument names.
 #' @keywords internal
 .imp_min <- function(x, args = list()) {
-  val <- min(x, na.rm = TRUE)
-  x[is.na(x)] <- val
-  x
+  .ms_impute(x, "min")
 }
 
 #' halfmin: half of the global observed minimum (the DIA-NN recipe)
@@ -92,45 +117,24 @@
 
 #' MinDet: per-column quantile imputation
 #' @param args list with optional `q` (default 0.01)
+#' Delegated to `MsCoreUtils`, which gives identical results (Bioconductor
+#' review, #186); this wrapper keeps NADIA's argument names.
 #' @keywords internal
 .imp_MinDet <- function(x, args = list()) {
-  q <- args$q %||% 0.01
-  for (j in seq_len(ncol(x))) {
-    na_idx <- is.na(x[, j])
-    if (any(na_idx)) {
-      x[na_idx, j] <- quantile(x[, j], probs = q, na.rm = TRUE)
-    }
-  }
-  x
-}
-
-#' nbavg: neighbor averaging within each row
-#' @keywords internal
-.imp_nbavg <- function(x, args = list()) {
-  for (i in seq_len(nrow(x))) {
-    na_idx <- which(is.na(x[i, ]))
-    if (length(na_idx) == 0) next
-    non_na <- which(!is.na(x[i, ]))
-    if (length(non_na) == 0) next
-    for (k in na_idx) {
-      dists <- abs(non_na - k)
-      nearest <- non_na[order(dists)][seq_len(min(2, length(non_na)))]
-      x[i, k] <- mean(x[i, nearest])
-    }
-  }
-  x
+  .ms_impute(x, "MinDet", q = args$q %||% 0.01)
 }
 
 #' with: replace NAs with user-specified constant
 #' @param args list with `with_value`
+#' Delegated to `MsCoreUtils`, which gives identical results (Bioconductor
+#' review, #186); this wrapper keeps NADIA's argument names.
 #' @keywords internal
 .imp_with <- function(x, args = list()) {
   val <- args$with_value
   if (is.null(val) || is.na(val)) {
     stop("imp_method='with' requires a value in 'with_value'.")
   }
-  x[is.na(x)] <- val
-  x
+  .ms_impute(x, "with", val = val)
 }
 
 #' PI: Perseus-style imputation (down-shifted normal distribution)
@@ -217,16 +221,17 @@
 # --- With optional dependencies (10) ---
 
 #' bpca: Bayesian PCA imputation (pcaMethods)
-#' @param args list with optional `nPcs` (default ncol-1), `maxSteps` (default 100)
+#' @param args list with optional `maxSteps` (default 100). The number of
+#'   principal components is `ncol(x) - 1`, which `MsCoreUtils` fixes.
+#' Delegated to `MsCoreUtils`, which gives identical results (Bioconductor
+#' review, #186); this wrapper keeps NADIA's argument names.
 #' @keywords internal
 .imp_bpca <- function(x, args = list()) {
   .check_suggests("pcaMethods", "imp_method = 'bpca'")
-  # NAguideR/MsCoreUtils: nPcs = ncol(x) - 1 (max PCs possible)
-  nPcs     <- args$nPcs     %||% (ncol(x) - 1)
-  maxSteps <- args$maxSteps %||% 100
-  nPcs <- min(nPcs, min(dim(x)) - 1)
-  res <- pcaMethods::pca(x, method = "bpca", nPcs = nPcs, maxSteps = maxSteps)
-  pcaMethods::completeObs(res)
+  if (!is.null(args$nPcs))
+    warning("method_args$bpca$nPcs is ignored: the number of components is ",
+            "ncol(x) - 1.", call. = FALSE)
+  .ms_impute(x, "bpca", maxSteps = args$maxSteps %||% 100)
 }
 
 #' knn: k-nearest neighbors imputation (impute)
@@ -237,9 +242,12 @@
   .check_suggests("impute", "imp_method = 'knn'")
   k <- args$k %||% 10
   k <- min(k, nrow(x) - 1)
-  # The impute.knn defaults for rowmax/colmax are 0.5/0.8: rows/columns that
-  # exceed them are silently filled with the mean (not actual KNN). They are
-  # raised to 0.99 so that KNN is effective up to the pre-filter threshold.
+  # The impute.knn defaults are rowmax = 0.5 and colmax = 0.8: a row with more
+  # than half its values missing is filled with the sample means instead of
+  # its neighbours, and a column above colmax stops with an error. Missing
+  # proteins tend to be the least abundant, so the mean is the worst value to
+  # give them. Both are raised to 0.99, as imputeLCMD::impute.wrapper.KNN()
+  # does (NAguideR uses 1).
   rowmax <- args$rowmax %||% 0.99
   colmax <- args$colmax %||% 0.99
   # impute.knn() reports its recursive cluster split with bare cat() calls,
@@ -296,6 +304,9 @@
 #'   (default `floor(sqrt(p))` with `"features"`, the missForest default, and
 #'   `floor(p^(1/3))` with `"samples"`, NAguideR's cube root of the number of
 #'   proteins).
+#' The fit is delegated to `MsCoreUtils::impute_RF()`, which gives identical
+#' results.
+#'
 #' @details This method is stochastic and takes no seed of its own, because
 #'   `missForest::missForest()` does not accept one. To reproduce a run, call
 #'   `set.seed()` before `impute_proteomics()`, as for every stochastic
@@ -307,18 +318,23 @@
   if (!identical(observations, "features") && !identical(observations, "samples"))
     stop("method_args$missForest$observations must be \"features\" or ",
          "\"samples\".", call. = FALSE)
-  # missForest() treats rows as observations and columns as variables
-  m <- if (observations == "samples") t(x) else x
   # Plain variable names: the forests are fitted by name, and a protein
   # identifier is not always a name they accept
-  dimnames(m) <- list(NULL, paste0("v", seq_len(ncol(m))))
+  m <- x
+  dimnames(m) <- list(paste0("r", seq_len(nrow(m))), paste0("c", seq_len(ncol(m))))
   maxiter <- args$maxiter %||% 10
   ntree   <- args$ntree   %||% 100
-  mtry    <- args$mtry    %||% if (observations == "samples")
-    floor(ncol(m)^(1/3)) else floor(sqrt(ncol(m)))
-  res <- missForest::missForest(m, maxiter = maxiter, ntree = ntree,
-                                mtry = mtry, verbose = FALSE)$ximp
-  out <- if (observations == "samples") t(res) else res
+  # MARGIN = 2 fits the forests on the proteins (MsCoreUtils' default);
+  # MARGIN = 1 transposes the matrix first, as NAguideR does
+  if (observations == "samples") {
+    out <- .ms_impute(m, "RF", MARGIN = 1L, maxiter = maxiter,
+                                      ntree = ntree, verbose = FALSE,
+                                      mtry = args$mtry %||% floor(nrow(m)^(1/3)))
+  } else {
+    out <- .ms_impute(m, "RF", MARGIN = 2L, maxiter = maxiter,
+                                      ntree = ntree, verbose = FALSE,
+                                      mtry = args$mtry %||% floor(sqrt(ncol(m))))
+  }
   out <- as.matrix(out)
   dimnames(out) <- dimnames(x)
   out
@@ -342,12 +358,12 @@
 
 #' QRILC: Quantile Regression Imputation of Left-Censored data (imputeLCMD)
 #' @param args list with optional `tune.sigma` (default 1)
+#' Delegated to `MsCoreUtils`, which gives identical results (Bioconductor
+#' review, #186); this wrapper keeps NADIA's argument names.
 #' @keywords internal
 .imp_QRILC <- function(x, args = list()) {
   .check_suggests("imputeLCMD", "imp_method = 'QRILC'")
-  tune.sigma <- args$tune.sigma %||% 1
-  res <- imputeLCMD::impute.QRILC(x, tune.sigma = tune.sigma)
-  res[[1]]
+  .ms_impute(x, "QRILC", sigma = args$tune.sigma %||% 1)
 }
 
 #' MLE: Maximum Likelihood Estimation (norm)
@@ -378,16 +394,17 @@
 
 #' MinProb: Minimum Probability imputation (imputeLCMD)
 #' @param args list with optional `q` (default 0.01), `tune.sigma` (default 1)
+#' Delegated to `MsCoreUtils`, which gives identical results (Bioconductor
+#' review, #186); this wrapper keeps NADIA's argument names.
 #' @keywords internal
 .imp_MinProb <- function(x, args = list()) {
   .check_suggests("imputeLCMD", "imp_method = 'MinProb'")
-  q          <- args$q          %||% 0.01
-  tune.sigma <- args$tune.sigma %||% 1
   # impute.MinProb() prints its estimated sigma with a bare print(). It is not
   # gated on anything, carries no information the caller asked for, and leaks
   # into every quiet run and every rendered vignette, so it is captured here.
   utils::capture.output(
-    out <- imputeLCMD::impute.MinProb(x, q = q, tune.sigma = tune.sigma))
+    out <- .ms_impute(x, "MinProb", q = args$q %||% 0.01,
+                                      sigma = args$tune.sigma %||% 1))
   out
 }
 
@@ -494,7 +511,6 @@
     "min"        = .imp_min(x, args),
     "halfmin"    = .imp_halfmin(x, args),
     "MinDet"     = .imp_MinDet(x, args),
-    "nbavg"      = .imp_nbavg(x, args),
     "with"       = .imp_with(x, args),
     "PI"         = .imp_PI(x, args),
     "bpca"       = .imp_bpca(x, args),
@@ -908,7 +924,7 @@
 
 #' Impute proteomics data
 #'
-#' Complete imputation pipeline with 20 methods. Four pathways:
+#' Complete imputation pipeline with 19 methods. Four pathways:
 #'
 #' - `imp_method = "none"`: no imputation
 #' - `imp_method = "combo"`: two-stage MAR+MNAR with binary classification
@@ -924,7 +940,7 @@
 #' @param imp_method Imputation method (default: "combo"). One of:
 #'   "combo", "softHybrid", "bpca", "knn", "mice", "missForest", "Impseq",
 #'   "Impseqrob", "QRILC", "MLE", "MinDet", "MinProb", "PI", "min", "halfmin",
-#'   "zero", "nbavg", "with", "limpa", "none". `"halfmin"` is the DIA-NN
+#'   "zero", "with", "limpa", "none". `"halfmin"` is the DIA-NN
 #'   half-minimum recipe: since the assay is on the log2 scale, halving the
 #'   intensity means one unit below the global observed minimum.
 #' @param mar_method MAR method for combo/softHybrid mode (default: "Impseqrob")
@@ -997,6 +1013,11 @@ impute_proteomics <- function(
   }
 
   # Validate imp_method
+  if (identical(imp_method, "nbavg")) {
+    stop("imp_method 'nbavg' was removed in NADIA 0.99.2: neighbour averaging ",
+         "is meant for fractions ordered along a gradient (MSnbase), not for ",
+         "replicates of conditions.", call. = FALSE)
+  }
   if (!imp_method %in% .IMP_METHODS_ALL) {
     stop("imp_method '", imp_method, "' not recognized. Options: ",
          paste(.IMP_METHODS_ALL, collapse = ", "))

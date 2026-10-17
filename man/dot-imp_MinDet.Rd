@@ -7,7 +7,9 @@
 .imp_MinDet(x, args = list())
 }
 \arguments{
-\item{args}{list with optional \code{q} (default 0.01)}
+\item{args}{list with optional \code{q} (default 0.01)
+Delegated to \code{MsCoreUtils}, which gives identical results (Bioconductor
+review, #186); this wrapper keeps NADIA's argument names.}
 }
 \description{
 MinDet: per-column quantile imputation

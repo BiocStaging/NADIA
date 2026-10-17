@@ -241,7 +241,6 @@ unambiguously.
 |  | `Impseq` | Sequential model-based imputation from `rrcovNA`. |
 |  | `Impseqrob` | Robust sequential imputation that reduces sensitivity to outlying profiles. |
 |  | `MLE` | Maximum-likelihood imputation under a multivariate normal model. |
-|  | `nbavg` | Replaces a gap with the mean of the nearest observed positions in the same protein profile. |
 | Low-value, generally used for MNAR | `QRILC` | Quantile-regression imputation for left-censored data. |
 |  | `MinDet` | Uses a low, sample-specific quantile; the default is the first percentile. |
 |  | `MinProb` | Draws low values around a sample-specific low quantile. |

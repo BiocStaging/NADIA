@@ -11,7 +11,9 @@
 or \code{"samples"}), \code{maxiter} (default 10), \code{ntree} (default 100) and \code{mtry}
 (default \code{floor(sqrt(p))} with \code{"features"}, the missForest default, and
 \code{floor(p^(1/3))} with \code{"samples"}, NAguideR's cube root of the number of
-proteins).}
+proteins).
+The fit is delegated to \code{MsCoreUtils::impute_RF()}, which gives identical
+results.}
 }
 \description{
 Which unit the forests learn from is set by \code{observations}:

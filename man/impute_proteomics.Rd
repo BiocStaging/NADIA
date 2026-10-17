@@ -34,7 +34,7 @@ its own name.}
 \item{imp_method}{Imputation method (default: "combo"). One of:
 "combo", "softHybrid", "bpca", "knn", "mice", "missForest", "Impseq",
 "Impseqrob", "QRILC", "MLE", "MinDet", "MinProb", "PI", "min", "halfmin",
-"zero", "nbavg", "with", "limpa", "none". \code{"halfmin"} is the DIA-NN
+"zero", "with", "limpa", "none". \code{"halfmin"} is the DIA-NN
 half-minimum recipe: since the assay is on the log2 scale, halving the
 intensity means one unit below the global observed minimum.}
 
@@ -75,7 +75,7 @@ List with:
 }
 }
 \description{
-Complete imputation pipeline with 20 methods. Four pathways:
+Complete imputation pipeline with 19 methods. Four pathways:
 }
 \details{
 \itemize{

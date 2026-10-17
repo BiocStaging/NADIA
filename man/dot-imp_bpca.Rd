@@ -7,7 +7,10 @@
 .imp_bpca(x, args = list())
 }
 \arguments{
-\item{args}{list with optional \code{nPcs} (default ncol-1), \code{maxSteps} (default 100)}
+\item{args}{list with optional \code{maxSteps} (default 100). The number of
+principal components is \code{ncol(x) - 1}, which \code{MsCoreUtils} fixes.
+Delegated to \code{MsCoreUtils}, which gives identical results (Bioconductor
+review, #186); this wrapper keeps NADIA's argument names.}
 }
 \description{
 bpca: Bayesian PCA imputation (pcaMethods)
