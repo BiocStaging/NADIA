@@ -111,7 +111,8 @@
       g.columns.forEach(function (c, i) {
         flatCols.push(c);
         flatHeaders.push(g.headers[i]);
-        var mm = (g.headers[i] || '').match(/^([A-Za-z0-9]+)_[0-9]+$/);
+        // <condition>_<replicate>; the condition may hold underscores (Ct_a_1)
+        var mm = (g.headers[i] || '').match(/^(.+)_[0-9]+$/);
         if (mm) colCondMap[c] = mm[1];
       });
     });

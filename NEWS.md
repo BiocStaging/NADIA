@@ -138,6 +138,9 @@ Changes made in response to the Bioconductor review.
   matrices written by `process_proteomics()`, which were always TSV; with
   `"both"` or `"parquet"` they now come in the format asked for, like the plot
   inputs. TSV exports are unchanged.
+* `quant_list_widget()` accepts conditions that contain underscores, such as
+  `Ct_a`: it refused the matrix of any experiment named that way, although the
+  readers and the analysis accept those names.
 
 # NADIA 0.99.0
 

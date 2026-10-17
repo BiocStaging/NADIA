@@ -140,13 +140,14 @@ preprocess_se <- function(
   }
   levels_found <- if (is.factor(cond)) levels(droplevels(cond)) else unique(as.character(cond))
   cond <- as.character(cond)
-  # The samples are named <condition>_<replicate> and the conditions enter
-  # limma's contrasts, so a condition must be a syntactic name without "_".
-  bad <- levels_found[make.names(levels_found) != levels_found | grepl("_", levels_found)]
+  # The conditions enter limma's contrasts, so they must be syntactic names.
+  # An underscore is fine, as for the other readers: the replicate is read
+  # from the trailing digits of <condition>_<replicate>.
+  bad <- levels_found[make.names(levels_found) != levels_found]
   if (length(bad) > 0) {
-    stop("Condition names must be syntactically valid R names without '_' ",
-         "(they become sample names <condition>_<replicate> and limma ",
-         "contrasts): ", paste(bad, collapse = ", "), call. = FALSE)
+    stop("Condition names must be syntactically valid R names (they become ",
+         "limma contrasts such as B-A): ", paste(bad, collapse = ", "),
+         call. = FALSE)
   }
 
   if (replicate_column %in% names(cd)) {

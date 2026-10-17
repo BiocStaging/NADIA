@@ -75,8 +75,8 @@ test_that("malformed objects are rejected with a reason", {
     se <- .se_from_dia()
     no_cond <- se; no_cond$Condition <- NULL
     expect_error(preprocess_se(no_cond, verbose = FALSE), "no 'Condition' column")
-    bad <- se; bad$Condition <- paste0(bad$Condition, "_x")
-    expect_error(preprocess_se(bad, verbose = FALSE), "without '_'")
+    bad <- se; bad$Condition <- paste0(bad$Condition, "-x")
+    expect_error(preprocess_se(bad, verbose = FALSE), "syntactically valid")
     dup <- se; rownames(dup)[2] <- rownames(dup)[1]
     expect_error(preprocess_se(dup, verbose = FALSE), "Duplicated row names")
     twice <- se; twice$Replicate <- 1
@@ -119,4 +119,24 @@ test_that("limpa's protein quantities enter as a SummarizedExperiment", {
     # One row per protein, not per precursor
     expect_setequal(unique(res$DEPs_results$Protein.IDs), rownames(yp))
     expect_lt(nrow(yp), nrow(y))
+})
+
+test_that("conditions with underscores work, as for the other readers", {
+    # preprocess_se() used to refuse them, while the other readers parse
+    # Ct_a_1 as condition Ct_a, replicate 1; and quant_list_widget() refused
+    # the matrix of any reader whose conditions held an underscore.
+    se <- .se_from_dia()
+    se$Condition <- c(A = "Ct_a", B = "Tr_a", D = "Tr_b")[as.character(se$Condition)]
+    pre <- preprocess_se(se, verbose = FALSE)
+    expect_true(all(grepl("^(Ct_a|Tr_a|Tr_b)_[0-9]$", pre$metadata$Coding)))
+    res <- suppressWarnings(process_proteomics(pre, verbose = FALSE))
+    expect_setequal(levels(res$comparisons), c("Tr_a-Ct_a", "Tr_b-Ct_a", "Tr_b-Tr_a"))
+
+    skip_if_not_installed("reactable")
+    m <- SummarizedExperiment::assay(res$se_proc, "Impseqrob_min")
+    mat <- data.frame(ProteinGroups = rownames(m), m, check.names = FALSE)
+    w <- quant_list_widget(pre$protein_quant, matrix_data = mat, metadata = pre$metadata)
+    expect_s3_class(w, "shiny.tag.list")
+    expect_match(as.character(htmltools::renderTags(w)$html), "NormImp.Log2_Ct_a_1",
+                 fixed = TRUE)
 })

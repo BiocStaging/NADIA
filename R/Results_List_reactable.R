@@ -38,6 +38,11 @@
 }")
 
 
+# A sample column of the matrix: <condition>_<replicate>, the condition being
+# any syntactic R name, underscores included (Ct_a_1 is condition Ct_a)
+.SAMPLE_COLUMN <- "^[A-Za-z.][A-Za-z0-9._]*_[0-9]+$"
+
+
 #' Read a table given as a data frame or as a file
 #'
 #' The reading step shared by the loaders below, which only differ in what
@@ -1392,7 +1397,7 @@ results_list_widget <- function(
   }
 
   sample_cols <- setdiff(names(df), "ProteinGroups")
-  ok <- grepl("^[A-Za-z0-9]+_\\d+$", sample_cols)
+  ok <- grepl(.SAMPLE_COLUMN, sample_cols)
   if (!any(ok)) {
     stop("The matrix has no sample columns following the <cond>_<rep> pattern.")
   }
@@ -1407,7 +1412,7 @@ results_list_widget <- function(
 #' @noRd
 .ql_join_matrix <- function(quant_df, matrix_df) {
   sample_cols <- setdiff(names(matrix_df), "ProteinGroups")
-  ok <- grepl("^[A-Za-z0-9]+_\\d+$", sample_cols)
+  ok <- grepl(.SAMPLE_COLUMN, sample_cols)
   sample_cols <- sample_cols[ok]
 
   idx <- match(quant_df$PG.ProteinGroups, matrix_df$ProteinGroups)
