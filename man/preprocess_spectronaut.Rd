@@ -37,7 +37,8 @@ Options: "max" (default), "mean", "median", "min".}
 \item{agg_mw}{Aggregation method for PG.MolecularWeight.
 Options: "max" (default), "mean", "median", "min".}
 
-\item{agg_cscore_runwise}{Aggregation method for PG.Cscore.RunWise.
+\item{agg_cscore_runwise}{Aggregation method for the run-wise C-score, stored as
+\code{PG.Score.RunWise}.
 Options: "mean" (default), "max", "median", "min".}
 
 \item{timestamp_suffix}{Logical. If \code{TRUE} (default), appends a timestamp to

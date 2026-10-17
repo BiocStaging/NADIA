@@ -124,7 +124,7 @@
 
 #' Quote an identifier for DuckDB
 #'
-#' Column names such as `PG.Cscore.RunWise_A_1` must be quoted or the dots read
+#' Column names such as `PG.Score.RunWise_A_1` must be quoted or the dots read
 #' as schema separators.
 #'
 #' @param x Character vector of identifiers.
@@ -910,7 +910,10 @@ write_nadia <- function(file,
     has_processing     = as.character(!is.null(result)),
     has_pattern_profiler = as.character(!is.null(pattern_profiler)),
     de_assay           = if (!is.null(result)) result$DEPs_results$Assay[1] else NA_character_,
-    alpha              = if (!is.null(result)) as.character(result$parameters$alpha) else NA_character_
+    alpha              = if (!is.null(result)) as.character(result$parameters$alpha) else NA_character_,
+    # Which metric of the report the score columns hold (see .score_columns())
+    labels_protein_id    = .db_labels_json(preprocessing$protein_id),
+    labels_protein_quant = .db_labels_json(preprocessing$protein_quant)
   )
   tables$nadia_meta <- data.frame(key = names(meta), value = unname(meta),
                                   stringsAsFactors = FALSE, row.names = NULL)
@@ -929,6 +932,18 @@ write_nadia <- function(file,
   if (verbose) message("- views created")
 
   invisible(file)
+}
+
+
+#' The `nadia_labels` attribute of a table, as JSON for the metadata table
+#' @param df A `protein_id` or `protein_quant` table.
+#' @return A JSON string, or `NA` when the table carries no labels.
+#' @keywords internal
+#' @noRd
+.db_labels_json <- function(df) {
+  labels <- attr(df, "nadia_labels")
+  if (is.null(labels)) return(NA_character_)
+  as.character(jsonlite::toJSON(as.list(labels), auto_unbox = TRUE))
 }
 
 

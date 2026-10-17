@@ -108,6 +108,14 @@ Changes made in response to the Bioconductor review.
   `proteomics_data` object as the other four, which `write_nadia()` stores like
   any other. The example data rebuilt as a `SummarizedExperiment` give results
   identical to those from the Spectronaut report.
+* The protein score columns are named `PG.Score` and `PG.Score.RunWise_*` in
+  every format, instead of Spectronaut's `PG.Cscore`, under which the TMT and
+  LFQ readers stored Proteome Discoverer's `Sum PEP Score` and Mascot score.
+  Each table records which metric of the report it holds (attribute
+  `nadia_labels`), and the interactive tables use it as the column label
+  instead of "Spectronaut Cscore". Tables exported and `.nadia` files written
+  before keep loading. The input-formats vignette lists, for every format,
+  which metric of the report fills each identification column.
 
 # NADIA 0.99.0
 

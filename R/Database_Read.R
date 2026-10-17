@@ -190,6 +190,27 @@ nadia_tables <- function(file) {
   out
 }
 
+#' Score columns of a table read from a `.nadia` file
+#'
+#' Restores the `nadia_labels` attribute (which metric of the report the score
+#' columns hold), and renames the `PG.Cscore` columns of files written before
+#' NADIA 0.99.2, when the score was stored under Spectronaut's names.
+#' @param df The table, or `NULL`.
+#' @param meta The metadata of the file.
+#' @param key Metadata key with the labels of this table.
+#' @return `df`, renamed and labelled.
+#' @keywords internal
+#' @noRd
+.db_score_columns <- function(df, meta, key) {
+  if (is.null(df)) return(df)
+  df <- .score_legacy_names(df)
+  json <- if (key %in% names(meta)) meta[[key]] else NA_character_
+  if (length(json) == 1 && !is.na(json) && nzchar(json)) {
+    attr(df, "nadia_labels") <- unlist(jsonlite::fromJSON(json))
+  }
+  df
+}
+
 #' Read a `.nadia` file
 #'
 #' Loads the whole analysis: the preprocessing tables, the processing results,
@@ -242,8 +263,12 @@ read_nadia <- function(file) {
   )
 
   db$metadata      <- .db_read_view(con, "v_metadata",      schema, "metadata")
-  db$protein_id    <- .db_read_view(con, "v_protein_id",    schema, "protein_id")
-  db$protein_quant <- .db_read_view(con, "v_protein_quant", schema, "protein_quant")
+  db$protein_id    <- .db_score_columns(
+    .db_read_view(con, "v_protein_id",    schema, "protein_id"),
+    meta, "labels_protein_id")
+  db$protein_quant <- .db_score_columns(
+    .db_read_view(con, "v_protein_quant", schema, "protein_quant"),
+    meta, "labels_protein_quant")
 
   # `metadata` is indexed by sample code everywhere in the package.
   if (!is.null(db$metadata)) {

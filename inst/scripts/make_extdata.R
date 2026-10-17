@@ -254,6 +254,10 @@ nadia_dia <- NADIA::preprocess_spectronaut(
   file_path       = file.path(EXTDATA, "nadia_dia_report.tsv.gz"),
   condition_order = CONDITIONS,
   verbose         = FALSE)
+# The provenance attributes record the call and the absolute path of the
+# report on the machine that built the object; they do not belong in the
+# package's data.
+attributes(nadia_dia)[c("nadia_call", "nadia_source")] <- NULL
 
 save(nadia_dia, file = "data/nadia_dia.rda",
      compress = "xz", compression_level = 9)

@@ -36,7 +36,7 @@ group per run — and the only one with aggregation arguments. They decide how t
 per-run annotation columns are collapsed, and **they do not touch the
 quantification**: switching all four from their defaults leaves `PG.Quantity_*`
 and the whole `DEPs_results` `identical()`, changing only 13 annotation columns
-(`PG.MolecularWeight`, `PG.Coverage_*`, `PG.Cscore.RunWise_*`). Treat them as a
+(`PG.MolecularWeight`, `PG.Coverage_*`, `PG.Score.RunWise_*`). Treat them as a
 reporting preference, not an analysis choice, and do not spend time tuning them.
 
 `condition_order` sets the factor level order, and the first level is the
@@ -135,6 +135,11 @@ sprintf("%d of %d cells (%.3f %%)", n_missing, length(q), 100 * n_missing / leng
 # 3. Size
 nrow(prep$protein_quant)
 ```
+
+The score is `PG.Score` / `PG.Score.RunWise_*` in every format, but it is a
+different metric in each (Spectronaut's C-score, Proteome Discoverer's Sum PEP
+Score, the Mascot score): `attr(x$protein_quant, "nadia_labels")` says which.
+Never compare scores across formats.
 
 The `PG.Quantity_*` naming is shared by all five readers, so this snippet works
 whichever one produced the object.

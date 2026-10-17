@@ -173,7 +173,8 @@
 #'   Options: "max" (default), "mean", "median", "min".
 #' @param agg_mw Aggregation method for PG.MolecularWeight.
 #'   Options: "max" (default), "mean", "median", "min".
-#' @param agg_cscore_runwise Aggregation method for PG.Cscore.RunWise.
+#' @param agg_cscore_runwise Aggregation method for the run-wise C-score, stored as
+#'   `PG.Score.RunWise`.
 #'   Options: "mean" (default), "max", "median", "min".
 #' @param timestamp_suffix Logical. If `TRUE` (default), appends a timestamp to
 #'   the names of the exported files.
@@ -481,6 +482,12 @@ preprocess_spectronaut <- function(
       "Check the input data."
     )
   }
+
+  # Spectronaut's C-score goes under NADIA's neutral score names
+  protein_ID    <- .score_columns(protein_ID, global = "Cscore",
+                                  run_wise = "Cscore (run-wise)")
+  protein_QUANT <- .score_columns(protein_QUANT, global = "Cscore",
+                                  run_wise = "Cscore (run-wise)")
 
   # ==========================================================================
   # Optional export

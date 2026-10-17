@@ -259,7 +259,7 @@ preprocess_tmt <- function(
   id_psms <- mk_wide(g_psms, "PG.NrOfPrecursorsIdentified")
   id_pept <- mk_wide(g_pept, "PG.NrOfStrippedSequencesIdentified")
   id_cov  <- mk_wide(g_cov,  "PG.Coverage")
-  id_pep  <- mk_wide(g_pep,  "PG.Cscore.RunWise")
+  id_pep  <- mk_wide(g_pep,  "PG.Score.RunWise")
 
   protein_ID <- cbind(base_info, tmt_extras, id_psms, id_pept, id_cov, id_pep)
 
@@ -269,7 +269,7 @@ preprocess_tmt <- function(
   extras_cols  <- names(tmt_extras)
   metric_order <- c("PG.NrOfPrecursorsIdentified",
                     "PG.NrOfStrippedSequencesIdentified",
-                    "PG.Coverage", "PG.Cscore.RunWise")
+                    "PG.Coverage", "PG.Score.RunWise")
   runwise_order <- unlist(lapply(metric_order,
                                  function(m) paste0(m, "_", coding_levels)))
   final_cols <- c(static_cols, extras_cols,
@@ -293,7 +293,7 @@ preprocess_tmt <- function(
     PG.NrOfPrecursorsIdentified.Global        = g_psms,
     PG.NrOfStrippedSequencesIdentified.Global = g_pept,
     PG.Coverage.Global                        = g_cov,
-    PG.Cscore                                 = g_pep,
+    PG.Score                                  = g_pep,
     stringsAsFactors = FALSE
   )
 
@@ -313,7 +313,7 @@ preprocess_tmt <- function(
                     "PG.Genes", "PG.MolecularWeight")
   global_cols  <- c("PG.NrOfPrecursorsIdentified.Global",
                     "PG.NrOfStrippedSequencesIdentified.Global",
-                    "PG.Coverage.Global", "PG.Cscore")
+                    "PG.Coverage.Global", "PG.Score")
   q_metric_order <- c("PG.NrOfPrecursorsUsedForQuantification",
                       "PG.NrOfStrippedSequencesUsedForQuantification",
                       "PG.Quantity")
@@ -334,6 +334,13 @@ preprocess_tmt <- function(
   # ==========================================================================
   # Optional export
   # ==========================================================================
+  # The Sum PEP Score is one value per protein for the whole multiplex, so the
+  # per-channel columns repeat it
+  protein_ID    <- .score_columns(protein_ID, global = "Sum PEP Score",
+                                  run_wise = "Sum PEP Score")
+  protein_QUANT <- .score_columns(protein_QUANT, global = "Sum PEP Score",
+                                  run_wise = "Sum PEP Score")
+
   if (!is.null(export_dir)) {
     if (verbose) message("Exporting files to: ", export_dir)
 

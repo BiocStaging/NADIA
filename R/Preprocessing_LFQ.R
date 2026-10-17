@@ -288,7 +288,7 @@ preprocess_lfq <- function(
                            "PG.NrOfPrecursorsUsedForQuantification")
   pept_by <- sample_matrix("^# Peptides \\(by Search Engine\\):\\s*",
                            "PG.NrOfStrippedSequencesUsedForQuantification")
-  mascot_by <- sample_matrix("^Score Mascot:\\s*", "PG.Cscore.RunWise")
+  mascot_by <- sample_matrix("^Score Mascot:\\s*", "PG.Score.RunWise")
 
   abund_mat <- df[, design$abundance_col, drop = FALSE]
   abund_mat[] <- lapply(abund_mat, function(v) suppressWarnings(as.numeric(v)))
@@ -302,7 +302,7 @@ preprocess_lfq <- function(
   id_psms <- psms_by; names(id_psms) <- paste0("PG.NrOfPrecursorsIdentified_", coding_levels)
   id_pept <- pept_by; names(id_pept) <- paste0("PG.NrOfStrippedSequencesIdentified_", coding_levels)
   id_cov  <- wide_global(g_cov, "PG.Coverage")
-  id_score <- mascot_by  # PG.Cscore.RunWise_<coding>
+  id_score <- mascot_by  # PG.Score.RunWise_<coding>
 
   protein_ID <- cbind(base_info, lfq_extras, id_psms, id_pept, id_cov, id_score)
 
@@ -310,7 +310,7 @@ preprocess_lfq <- function(
   extras_cols  <- names(lfq_extras)
   metric_order <- c("PG.NrOfPrecursorsIdentified",
                     "PG.NrOfStrippedSequencesIdentified",
-                    "PG.Coverage", "PG.Cscore.RunWise")
+                    "PG.Coverage", "PG.Score.RunWise")
   runwise_order <- unlist(lapply(metric_order,
                                  function(m) paste0(m, "_", coding_levels)))
   protein_ID <- protein_ID[, c(static_cols, extras_cols,
@@ -331,7 +331,7 @@ preprocess_lfq <- function(
     PG.NrOfPrecursorsIdentified.Global        = g_psms,
     PG.NrOfStrippedSequencesIdentified.Global = g_pept,
     PG.Coverage.Global                        = g_cov,
-    PG.Cscore                                 = g_pep,
+    PG.Score                                  = g_pep,
     stringsAsFactors = FALSE
   )
 
@@ -356,6 +356,11 @@ preprocess_lfq <- function(
   # ==========================================================================
   # Optional export
   # ==========================================================================
+  protein_ID    <- .score_columns(protein_ID, global = "Sum PEP Score",
+                                  run_wise = "Score Mascot")
+  protein_QUANT <- .score_columns(protein_QUANT, global = "Sum PEP Score",
+                                  run_wise = "Score Mascot")
+
   if (!is.null(export_dir)) {
     if (verbose) message("Exporting files to: ", export_dir)
     if (!dir.exists(export_dir)) dir.create(export_dir, recursive = TRUE)

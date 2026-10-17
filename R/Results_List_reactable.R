@@ -353,7 +353,7 @@
 #' @noRd
 .pl_excel_widths <- function(cols, default) {
   w <- rep(default, length(cols))
-  w[grepl(".Global", cols, fixed = TRUE) | cols == "PG.Cscore"] <- 12
+  w[grepl(".Global", cols, fixed = TRUE) | cols == "PG.Score"] <- 12
   w[startsWith(cols, "PG.Quantity_")] <- 14
   w[cols %in% c("PG.ProteinGroups", "PG.Genes")] <- 22
   w[cols == "PG.ProteinDescriptions"] <- 42
@@ -1036,6 +1036,7 @@ results_list_widget <- function(
 #' @noRd
 .pl_load_data <- function(input) {
   df <- .rl_read_table(input, "File")
+  df <- .score_legacy_names(df)
 
   if (!"PG.ProteinGroups" %in% names(df)) {
     stop("Required column 'PG.ProteinGroups' not found. ",
@@ -1102,7 +1103,7 @@ results_list_widget <- function(
     "PG.NrOfPrecursorsIdentified",
     "PG.NrOfStrippedSequencesIdentified",
     "PG.Coverage",
-    "PG.Cscore.RunWise"
+    "PG.Score.RunWise"
   ))
 }
 
@@ -1208,7 +1209,7 @@ results_list_widget <- function(
     fmt_js <- switch(
       metric,
       "PG.Coverage"        = "val.toFixed(1)",
-      "PG.Cscore.RunWise"  = "val.toFixed(2)",
+      "PG.Score.RunWise"   = "val.toFixed(2)",
       "Math.round(val)"
     )
 
@@ -1248,9 +1249,11 @@ results_list_widget <- function(
 #' Build the columnGroups for the Protein_ID table
 #' @param sample_map Output of .pl_parse_samples()
 #' @param static_cols Vector of the static column names that are present
+#' @param score_label Label of the per-sample score, the report's own name for
+#'   it (see `.score_label()`).
 #' @return List of colGroup
 #' @noRd
-.pl_build_column_groups <- function(sample_map, static_cols) {
+.pl_build_column_groups <- function(sample_map, static_cols, score_label = "Score") {
   groups <- list()
 
   if (length(static_cols) > 0) {
@@ -1265,7 +1268,7 @@ results_list_widget <- function(
     "PG.NrOfPrecursorsIdentified"        = "# Uniq. PSMs Identified",
     "PG.NrOfStrippedSequencesIdentified" = "# Uniq. Pepts Identified",
     "PG.Coverage"                        = "Coverage [%]",
-    "PG.Cscore.RunWise"                  = "Spectronaut Cscore"
+    "PG.Score.RunWise"                   = score_label
   )
 
   for (m in names(metric_labels)) {
@@ -1362,6 +1365,7 @@ results_list_widget <- function(
 #' @noRd
 .ql_load_quant <- function(input) {
   df <- .rl_read_table(input, "Protein_QUANT file")
+  df <- .score_legacy_names(df)
 
   if (!"PG.ProteinGroups" %in% names(df)) {
     stop("Required column 'PG.ProteinGroups' not found. ",
@@ -1432,9 +1436,11 @@ results_list_widget <- function(
 #' Build the colDefs for the Protein_QUANT table
 #' @param sample_map Output of .ql_parse_samples()
 #' @param df Final data frame (used to detect which global columns are present)
+#' @param score_label Label of the protein score, the report's own name for it
+#'   (see `.score_label()`).
 #' @return List of colDef indexed by column name
 #' @noRd
-.ql_build_columns <- function(sample_map, df) {
+.ql_build_columns <- function(sample_map, df, score_label = "Score") {
   cols <- list()
 
   cols$PG.ProteinGroups <- reactable::colDef(
@@ -1491,7 +1497,7 @@ results_list_widget <- function(
     list(id = "PG.NrOfPrecursorsIdentified.Global",        name = "# PSMs",       fmt = "Math.round(val)", width = 95),
     list(id = "PG.NrOfStrippedSequencesIdentified.Global", name = "# Uniq Pepts", fmt = "Math.round(val)", width = 115),
     list(id = "PG.Coverage.Global",                        name = "Coverage [%]", fmt = "val.toFixed(1)",  width = 115),
-    list(id = "PG.Cscore",                                 name = "Cscore",       fmt = "val.toFixed(2)",  width = 95)
+    list(id = "PG.Score",                                  name = score_label,    fmt = "val.toFixed(2)",  width = 95)
   )
   for (gs in global_specs) {
     if (!gs$id %in% names(df)) next
@@ -1855,6 +1861,7 @@ protein_list_reactable <- function(
 ) {
   .check_suggests("reactable", "protein_list_reactable()")
   df <- .pl_load_data(data)
+  score_label <- .score_label(df, "PG.Score.RunWise")
   sample_map <- .pl_parse_samples(names(df))
 
   if (nrow(sample_map) == 0) {
@@ -1868,7 +1875,7 @@ protein_list_reactable <- function(
     metric_levels <- c("PG.NrOfPrecursorsIdentified",
                        "PG.NrOfStrippedSequencesIdentified",
                        "PG.Coverage",
-                       "PG.Cscore.RunWise")
+                       "PG.Score.RunWise")
     sample_map <- sample_map[order(factor(sample_map$metric, levels = metric_levels),
                                    sample_map$.idx), ]
     sample_map$.idx <- NULL
@@ -1889,7 +1896,7 @@ protein_list_reactable <- function(
   df <- df[, ordered_cols, drop = FALSE]
 
   cols <- .pl_build_columns(sample_map, max_per_col)
-  groups <- .pl_build_column_groups(sample_map, static_cols)
+  groups <- .pl_build_column_groups(sample_map, static_cols, score_label)
 
   reactable::reactable(
     df,
@@ -1969,6 +1976,7 @@ protein_list_widget <- function(
   .check_suggests("reactable", "protein_list_widget()")
 
   df <- .pl_load_data(data)
+  score_label <- .score_label(df, "PG.Score.RunWise")
   sample_map <- .pl_parse_samples(names(df))
 
   if (nrow(sample_map) == 0) {
@@ -1981,7 +1989,7 @@ protein_list_widget <- function(
     metric_levels <- c("PG.NrOfPrecursorsIdentified",
                        "PG.NrOfStrippedSequencesIdentified",
                        "PG.Coverage",
-                       "PG.Cscore.RunWise")
+                       "PG.Score.RunWise")
     sample_map <- sample_map[order(factor(sample_map$metric, levels = metric_levels),
                                    sample_map$.idx), ]
     sample_map$.idx <- NULL
@@ -2002,7 +2010,7 @@ protein_list_widget <- function(
   df <- df[, ordered_cols, drop = FALSE]
 
   cols   <- .pl_build_columns(sample_map, max_per_col)
-  groups <- .pl_build_column_groups(sample_map, static_cols)
+  groups <- .pl_build_column_groups(sample_map, static_cols, score_label)
 
   conditions <- unique(sample_map$condition)
   palette    <- .pl_condition_palette(conditions)
@@ -2031,7 +2039,7 @@ protein_list_widget <- function(
     "PG.NrOfPrecursorsIdentified"        = "# Uniq. PSMs Identified",
     "PG.NrOfStrippedSequencesIdentified" = "# Uniq. Pepts Identified",
     "PG.Coverage"                        = "Coverage [%]",
-    "PG.Cscore.RunWise"                  = "Spectronaut Cscore"
+    "PG.Score.RunWise"                   = score_label
   )
   for (m in names(metric_labels)) {
     cc <- sample_map$column[sample_map$metric == m]
@@ -2057,7 +2065,7 @@ protein_list_widget <- function(
     list(label = "# Uniq. PSMs Identified",  anchor = .first_of("PG.NrOfPrecursorsIdentified"),        placeholder = "\u2265 2 ..."),
     list(label = "# Uniq. Pepts Identified", anchor = .first_of("PG.NrOfStrippedSequencesIdentified"), placeholder = "\u2265 2 ..."),
     list(label = "Coverage [%]",             anchor = .first_of("PG.Coverage"),                        placeholder = "\u2265 10 ..."),
-    list(label = "Spectronaut Cscore",       anchor = .first_of("PG.Cscore.RunWise"),                  placeholder = "\u2265 2 ...")
+    list(label = score_label,                anchor = .first_of("PG.Score.RunWise"),                  placeholder = "\u2265 2 ...")
   )
   metric_filter_items <- lapply(Filter(function(f) !is.na(f$anchor), metric_filters), function(f) {
     .rl_numeric_filter(element_id, f$label, f$anchor, f$placeholder,
@@ -2185,6 +2193,7 @@ quant_list_widget <- function(
          "path to a Protein_QUANT table and to a quantification matrix.")
 
   df_quant  <- .ql_load_quant(data)
+  score_label <- .score_label(df_quant, "PG.Score")
   df_matrix <- .ql_load_matrix(matrix_data)
   df <- .ql_join_matrix(df_quant, df_matrix)
 
@@ -2215,14 +2224,14 @@ quant_list_widget <- function(
     c("PG.NrOfPrecursorsIdentified.Global",
       "PG.NrOfStrippedSequencesIdentified.Global",
       "PG.Coverage.Global",
-      "PG.Cscore"),
+      "PG.Score"),
     names(df)
   )
 
   ordered_cols <- c(static_cols, global_cols, sample_map$column)
   df <- df[, ordered_cols, drop = FALSE]
 
-  cols   <- .ql_build_columns(sample_map, df)
+  cols   <- .ql_build_columns(sample_map, df, score_label)
   groups <- .ql_build_column_groups(sample_map, static_cols, global_cols)
 
   conditions <- unique(sample_map$condition)
@@ -2243,7 +2252,7 @@ quant_list_widget <- function(
     PG.NrOfPrecursorsIdentified.Global        = "# PSMs",
     PG.NrOfStrippedSequencesIdentified.Global = "# Uniq Pepts",
     PG.Coverage.Global                        = "Coverage [%]",
-    PG.Cscore                                 = "Cscore"
+    PG.Score                                  = score_label
   )
 
   group_struct <- list()

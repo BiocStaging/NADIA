@@ -177,9 +177,9 @@ test_that("the metric families are exactly the ones DIA-NN can justify", {
     # Omitted outright: nothing downstream requires them, and an all-NA column
     # would draw a filter box that empties the table.
     expect_false(any(grepl("^PG.Coverage", names(d$protein_id))))
-    expect_false(any(grepl("^PG.Cscore",   names(d$protein_id))))
+    expect_false(any(grepl("^PG.Score",    names(d$protein_id))))
     expect_false(any(grepl("^PG.Coverage", names(d$protein_quant))))
-    expect_false(any(grepl("^PG.Cscore",   names(d$protein_quant))))
+    expect_false(any(grepl("^PG.Score",    names(d$protein_quant))))
 
     # NA_real_, not NA: a logical column would come back from a .nadia file as
     # logical and break the identical() of the round trip.

@@ -651,6 +651,59 @@
   m[, 2]
 }
 
+#' Neutral names for the protein score, with the report's own name kept
+#'
+#' NADIA's tables follow Spectronaut's column names, and the readers of the
+#' other formats used to put their score under Spectronaut's `PG.Cscore`, so
+#' a Proteome Discoverer `Sum PEP Score` read as a C-score (Bioconductor
+#' review, #186). The score columns are named `PG.Score` (one value per
+#' protein) and `PG.Score.RunWise_<sample>` in every format, and the metric of
+#' the report they hold is kept in the `nadia_labels` attribute of the table,
+#' which the interactive tables use as column label.
+#'
+#' @param df `protein_id` or `protein_quant` table.
+#' @param global,run_wise Name of the metric behind `PG.Score` and behind
+#'   `PG.Score.RunWise_*` in the report, or `NULL` when there is none.
+#' @return `df` as a data frame, with the columns renamed and the attribute set.
+#' @keywords internal
+#' @noRd
+.score_columns <- function(df, global = NULL, run_wise = NULL) {
+  df <- .score_legacy_names(as.data.frame(df))
+  present <- c(PG.Score = "PG.Score" %in% names(df),
+               PG.Score.RunWise = any(startsWith(names(df), "PG.Score.RunWise_")))
+  labels <- c(PG.Score = global, PG.Score.RunWise = run_wise)
+  labels <- labels[names(labels) %in% names(present)[present]]
+  attr(df, "nadia_labels") <- if (length(labels)) labels else NULL
+  df
+}
+
+#' Rename the score columns of a table written before NADIA 0.99.2
+#'
+#' The score used to be stored under Spectronaut's `PG.Cscore` names in every
+#' format. A table exported or a `.nadia` file written before keeps loading;
+#' its label is the neutral one, since its source was not recorded.
+#' @param df A Protein_ID or Protein_QUANT table.
+#' @return `df`, renamed.
+#' @keywords internal
+#' @noRd
+.score_legacy_names <- function(df) {
+  old <- grepl("^PG\\.Cscore", names(df))
+  if (any(old)) names(df)[old] <- sub("^PG\\.Cscore", "PG.Score", names(df)[old])
+  df
+}
+
+#' Label of a score column, as the report calls it
+#' @param df A table, possibly carrying the `nadia_labels` attribute.
+#' @param column `"PG.Score"` or `"PG.Score.RunWise"`.
+#' @return The report's name for the metric, or `"Score"` when unknown (a
+#'   table read back from a TSV, for instance).
+#' @keywords internal
+#' @noRd
+.score_label <- function(df, column) {
+  lab <- attr(df, "nadia_labels")[column]
+  if (length(lab) == 1 && !is.na(lab) && nzchar(lab)) unname(lab) else "Score"
+}
+
 #' Record where an object came from
 #'
 #' Attaches the call that produced an object and a fingerprint of the files it

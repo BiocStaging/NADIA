@@ -314,7 +314,7 @@ test_that("the LFQ per-sample metric families survive the suffix route", {
         verbose = FALSE)
     both <- cbind(lfq$protein_quant, lfq$protein_id)
 
-    for (fam in c("PG.Quantity_", "PG.Cscore.RunWise_",
+    for (fam in c("PG.Quantity_", "PG.Score.RunWise_",
                   "PG.NrOfPrecursorsIdentified_",
                   "PG.NrOfStrippedSequencesIdentified_")) {
         cols <- grep(paste0("^", fam), names(both), value = TRUE)

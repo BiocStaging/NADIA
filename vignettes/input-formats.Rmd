@@ -649,6 +649,27 @@ sample. The available metadata fields consequently also differ:
 lapply(all4, function(x) colnames(x$metadata))
 ```
 
+The identification columns of `protein_id` keep one naming scheme for every
+format, filled from the closest metric each report offers. The scheme follows
+Spectronaut's names; the score, which differs the most between search engines,
+has a neutral one:
+
+| NADIA column | Spectronaut | DIA-NN | TMT (PD) | LFQ (PD) |
+|---|---|---|---|---|
+| `PG.NrOfPrecursorsIdentified_*` | precursors | empty | `# PSMs`, the protein total in every channel | `# PSMs (by Search Engine): <sample>` |
+| `PG.NrOfStrippedSequencesIdentified_*` | stripped sequences | `N.Sequences` | `# Peptides`, in every channel | `# Peptides (by Search Engine): <sample>` |
+| `PG.Coverage_*` | coverage | not created | `Coverage [%]`, in every channel | `Coverage [%]`, in every sample |
+| `PG.Score.RunWise_*` | `PG.Cscore (Run-Wise)` | not created | `Sum PEP Score`, in every channel | `Score Mascot: <sample>` |
+| `PG.Score` (in `protein_quant`) | `PG.Cscore` | not created | `Sum PEP Score` | `Sum PEP Score` |
+
+The scores of different engines are not on the same scale, so each table
+records which one it holds, and the interactive tables use that name as the
+column label:
+
+```{r score-labels}
+lapply(all4, function(x) attr(x$protein_quant, "nadia_labels"))
+```
+
 At the quantitative level, all four `protein_quant` tables follow the same
 essential contract. In particular, the abundance of every sample is stored in
 a `PG.Quantity_<Coding>` column linked to `metadata$Coding`. The numerical

@@ -312,7 +312,7 @@ preprocess_diann <- function(
   # The precursor family is all NA -- DIA-NN does not report it -- but the
   # column has to exist: protein_list_reactable() and quant_list_widget()
   # detect their sample columns by grepping for it and abort without it.
-  # PG.Coverage and PG.Cscore.RunWise are left out instead of being filled with
+  # PG.Coverage and PG.Score.RunWise are left out instead of being filled with
   # NA: nothing requires them, every column builder skips a family it does not
   # find, and an empty filter box that blanks the table is worse than a column
   # that is simply not there.
