@@ -335,6 +335,10 @@ read_nadia <- function(file) {
     db$matrices[[impn]] <- mat
   }
 
+  if (DBI::dbExistsTable(con, "masks")) {
+    db$masks <- DBI::dbGetQuery(con, "SELECT * FROM masks")
+  }
+
   class(db) <- c("nadia_db", "list")
   db
 }
@@ -430,6 +434,47 @@ nadia_preprocessing <- function(db) {
   if (nrow(db$source_files) > 0) attr(out, "nadia_source") <- db$source_files
 
   out
+}
+
+#' The metadata of the rebuilt SummarizedExperiment
+#'
+#' Besides the condition and label columns: the batch-correction diagnostics
+#' (from the `parameters` table) and the MAR/MNAR masks of the combo imputation
+#' (from the `masks` table), in the order `process_proteomics()` adds them.
+#' Files written before these were stored give the first two only.
+#'
+#' @param db A `nadia_db` object.
+#' @param keep,samples Row and column names of the rebuilt assays.
+#' @return A list.
+#' @keywords internal
+#' @noRd
+.db_result_metadata <- function(db, keep, samples) {
+  md <- list(condition = "Condition", label = "Column")
+
+  bc <- .db_deserialize_step(db$parameters, "batch_correction")
+  if (length(bc) > 0) {
+    chr <- function(x) as.character(unlist(x))
+    md$batch_correction <- list(
+      assay      = chr(bc$assay),
+      batch      = chr(bc$batch),
+      algorithm  = chr(bc$algorithm),
+      covariates = if (is.null(bc$covariates)) NULL else chr(bc$covariates),
+      unadjusted = chr(bc$unadjusted),
+      batch_only = chr(bc$batch_only))
+  }
+
+  present <- db$meta["masks"]
+  present <- if (is.na(present)) character(0) else strsplit(present, ",")[[1]]
+  for (m in present) {
+    mask <- matrix(FALSE, length(keep), length(samples),
+                   dimnames = list(keep, samples))
+    cells <- db$masks[db$masks$mask == m, , drop = FALSE]
+    if (nrow(cells) > 0) {
+      mask[cbind(match(cells$protein_id, keep), match(cells$sample, samples))] <- TRUE
+    }
+    md[[paste0(m, "_mask")]] <- mask
+  }
+  md
 }
 
 #' Rebuild the processing result from a `.nadia` file
@@ -545,14 +590,19 @@ nadia_result <- function(db) {
     assays   = assays,
     rowData  = row_data,
     colData  = S4Vectors::DataFrame(col_data),
-    metadata = list(condition = "Condition", label = "Column"))
+    metadata = .db_result_metadata(db, keep, samples))
 
   # --- Parameters ------------------------------------------------------------
-  pars <- .db_deserialize_step(db$parameters, "process")
+  # NULL parameters are kept: process_proteomics() returns them as NULL
+  # entries, and dropping them would change the object
+  pars <- .db_deserialize_step(db$parameters, "process", keep_null = TRUE)
+  # Files written before 0.99.2 stored the comparisons among the parameters
+  pars$comparisons <- NULL
   cl   <- db$calls$call[db$calls$step == "process"]
   if (length(cl) > 0) pars$call <- str2lang(cl[1])
 
-  comparisons <- unique(as.character(db$DEPs_results$Comparison))
+  comparisons <- .db_deserialize_step(db$parameters, "result")$comparisons %||%
+    unique(as.character(db$DEPs_results$Comparison))
 
   out <- list(se_proc       = se,
               DEPs_results  = db$DEPs_results,
@@ -673,10 +723,11 @@ nadia_deps_with_clusters <- function(db,
 #'
 #' @param pars A `parameters` table.
 #' @param step Which step to extract.
+#' @param keep_null Keep the parameters stored as `NULL`, as `NULL` entries.
 #' @return A named list.
 #' @keywords internal
 #' @noRd
-.db_deserialize_step <- function(pars, step) {
+.db_deserialize_step <- function(pars, step, keep_null = FALSE) {
   p <- pars[pars$step == step, , drop = FALSE]
   if (nrow(p) == 0) return(list())
 
@@ -703,7 +754,7 @@ nadia_deps_with_clusters <- function(db,
     )
   })
   names(out) <- p$name
-  out[!vapply(out, is.null, logical(1))]
+  if (keep_null) out else out[!vapply(out, is.null, logical(1))]
 }
 
 

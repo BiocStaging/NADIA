@@ -360,3 +360,54 @@ test_that("the wrong kind of object is rejected at the door", {
     expect_error(write_nadia(f, nadia_dia, result = list(a = 1)),
                  "process_proteomics")
 })
+
+
+test_that("the whole processing result comes back identical", {
+    # The SummarizedExperiment metadata used to come back with the condition
+    # and label only: the MAR/MNAR masks and the batch-correction diagnostics
+    # were lost, the comparisons came back as text and the NULL parameters
+    # disappeared.
+    skip_if_no_duckdb()
+    x    <- local_nadia()
+    back <- nadia_result(read_nadia(x$file))
+    expect_named(S4Vectors::metadata(back$se_proc),
+                 c("condition", "label", "mar_mask", "mnar_mask"))
+    expect_identical(back, x$res)
+})
+
+
+test_that("the batch-correction diagnostics survive the round trip", {
+    skip_if_no_duckdb()
+    skip_if_not_installed("BERT")
+    data(nadia_dia, package = "NADIA")
+    md  <- nadia_dia$metadata
+    cov <- data.frame(Column = md$Coding,
+                      Batch  = ifelse(md$R.Replicate <= 2, "b1", "b2"))
+    for (covariates in list("Condition", NULL)) {
+        res <- suppressWarnings(suppressMessages(process_proteomics(
+            nadia_dia, covariate_df = cov, batch_correct = TRUE,
+            batch_covariates = covariates, verbose = FALSE)))
+        f <- withr::local_tempfile(fileext = ".nadia")
+        suppressMessages(write_nadia(f, nadia_dia, res, verbose = FALSE))
+        back <- nadia_result(read_nadia(f))
+        bc <- S4Vectors::metadata(back$se_proc)$batch_correction
+        expect_identical(bc, S4Vectors::metadata(res$se_proc)$batch_correction)
+        expect_identical(back$se_proc, res$se_proc)
+        # With protected covariates, some proteins are corrected for the batch
+        # only; that list is what must not be lost
+        if (!is.null(covariates)) expect_gt(length(bc$batch_only), 0)
+    }
+})
+
+
+test_that("a file written before the masks were stored still reads", {
+    skip_if_no_duckdb()
+    x   <- local_nadia()
+    con <- DBI::dbConnect(duckdb::duckdb(), x$file)
+    DBI::dbExecute(con, "DROP TABLE masks")
+    DBI::dbExecute(con, "DELETE FROM nadia_meta WHERE key = 'masks'")
+    DBI::dbDisconnect(con, shutdown = TRUE)
+    back <- nadia_result(read_nadia(x$file))
+    expect_named(S4Vectors::metadata(back$se_proc), c("condition", "label"))
+    expect_identical(back$DEPs_results, x$res$DEPs_results)
+})

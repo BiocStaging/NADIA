@@ -451,6 +451,47 @@
   res
 }
 
+#' Names of the MAR/MNAR masks a result carries
+#' @param result Result of `process_proteomics()`.
+#' @return `"mar,mnar"`, one of them, or `""` (the single methods keep none).
+#' @keywords internal
+#' @noRd
+.db_mask_names <- function(result) {
+  md <- S4Vectors::metadata(result$se_proc)
+  paste(c("mar", "mnar")[c(!is.null(md$mar_mask), !is.null(md$mnar_mask))],
+        collapse = ",")
+}
+
+#' Build the `masks` table
+#'
+#' The cells set in the MAR and MNAR masks of the combo imputation. They cannot
+#' be derived from `imputed_values`: the MNAR mask marks whole conditions,
+#' observed cells included.
+#'
+#' @param result Result of `process_proteomics()`.
+#' @return A data frame with `protein_id`, `sample` and `mask` (`"mar"` or
+#'   `"mnar"`).
+#' @keywords internal
+#' @noRd
+.db_masks <- function(result) {
+  md <- S4Vectors::metadata(result$se_proc)
+  rows <- lapply(c("mar", "mnar"), function(m) {
+    mask <- md[[paste0(m, "_mask")]]
+    if (is.null(mask) || !any(mask)) return(NULL)
+    idx <- which(mask, arr.ind = TRUE)
+    data.frame(protein_id = rownames(mask)[idx[, 1]],
+               sample     = colnames(mask)[idx[, 2]],
+               mask       = m, stringsAsFactors = FALSE)
+  })
+  out <- do.call(rbind, rows)
+  if (is.null(out)) {
+    out <- data.frame(protein_id = character(0), sample = character(0),
+                      mask = character(0), stringsAsFactors = FALSE)
+  }
+  rownames(out) <- NULL
+  out
+}
+
 #' Build the `imputed_values` table
 #'
 #' Only the cells that were filled, with the branch that filled them. This is
@@ -616,8 +657,12 @@
 
   if (!is.null(result)) {
     rows$proc <- as_rows("process", result$parameters)
-    rows$comp <- as_rows("process",
-                         list(comparisons = as.character(result$comparisons)))
+    # Stored on their own, with their class: they are not a parameter
+    rows$comp <- as_rows("result", list(comparisons = result$comparisons))
+    # The batch-correction diagnostics: which proteins were corrected for the
+    # batch only, and which were left unadjusted
+    bc <- S4Vectors::metadata(result$se_proc)$batch_correction
+    if (!is.null(bc)) rows$batch <- as_rows("batch_correction", bc)
   }
 
   if (!is.null(pp)) {
@@ -835,6 +880,7 @@ write_nadia <- function(file,
       }
       tables$imputed_values <- .db_imputed_values(result, imp_from, imp_name)
     }
+    tables$masks <- .db_masks(result)
   }
 
   if (!is.null(pattern_profiler)) {
@@ -913,7 +959,9 @@ write_nadia <- function(file,
     alpha              = if (!is.null(result)) as.character(result$parameters$alpha) else NA_character_,
     # Which metric of the report the score columns hold (see .score_columns())
     labels_protein_id    = .db_labels_json(preprocessing$protein_id),
-    labels_protein_quant = .db_labels_json(preprocessing$protein_quant)
+    labels_protein_quant = .db_labels_json(preprocessing$protein_quant),
+    # Which MAR/MNAR masks the result had: absent is not the same as all FALSE
+    masks              = if (!is.null(result)) .db_mask_names(result) else NA_character_
   )
   tables$nadia_meta <- data.frame(key = names(meta), value = unname(meta),
                                   stringsAsFactors = FALSE, row.names = NULL)

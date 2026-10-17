@@ -792,7 +792,9 @@ how each one relates to it.
 - **A complete, restorable record of the analysis.** `write_nadia()` stores the
   imported data, every result, the parameters of the run and the provenance of
   the input files in a single `.nadia` file, and `read_nadia()` restores an
-  exact copy of the project, identical to the original object. The file is a
+  exact copy of the project: the imported data and the processing result come
+  back `identical()` to the originals, with one exception: with `limpa`, the
+  precision weights it keeps for its own analysis are not stored. The file is a
   DuckDB database, so it can also be opened by any DuckDB client outside R
   (`vignette("results-and-export")`).
 

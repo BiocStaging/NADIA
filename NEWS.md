@@ -122,6 +122,15 @@ Changes made in response to the Bioconductor review.
   descriptions of the example data). Identifiers, descriptions and genes are
   written as text, and other columns become numbers only when the whole value
   is one.
+* A `.nadia` file now restores the processing result exactly. The metadata
+  of the rebuilt `SummarizedExperiment` used to keep only the condition and
+  label columns, losing the MAR/MNAR masks of the combo imputation and the
+  batch-correction diagnostics (the proteins corrected for the batch only or
+  left unadjusted); the comparisons came back as text instead of a factor, and
+  the parameters left at `NULL` were dropped. `nadia_result()` now returns an
+  object `identical()` to the one `process_proteomics()` returned, except, with
+  `limpa`, for the precision weights it keeps for its own analysis. Files
+  written before still read, without those components.
 
 # NADIA 0.99.0
 
