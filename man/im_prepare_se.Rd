@@ -54,7 +54,7 @@ The result is ready for \code{imputation_metrics()}.
 \details{
 Internally calls \code{nm_prepare_se()} to build the baseline SE with assay
 \code{"log2"}, then applies the chosen normalization via
-\code{.nm_dispatch_normalization()}.
+\code{.norm_dispatch()}.
 }
 \examples{
 data(nadia_dia)

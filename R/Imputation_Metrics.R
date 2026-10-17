@@ -558,7 +558,7 @@ import_imp_matrices <- function(tsv_dir,
 #'
 #' Internally calls `nm_prepare_se()` to build the baseline SE with assay
 #' `"log2"`, then applies the chosen normalization via
-#' `.nm_dispatch_normalization()`.
+#' `.norm_dispatch()`.
 #'
 #' @param preprocessing A `proteomics_data` object, from any of the
 #'   `preprocess_*()` functions.
@@ -625,8 +625,8 @@ im_prepare_se <- function(preprocessing,
       message("im_prepare_se: winner from pc1_rank -> '", norm_method, "'")
   }
 
-  # nm_prepare_se() and .nm_dispatch_normalization() live in
-  # Normalization_Metrics.R, which shares its namespace with this file.
+  # nm_prepare_se() lives in Normalization_Metrics.R and .norm_dispatch() in
+  # Normalization.R, both in the same namespace as this file.
 
   # --- Build baseline SE with assay "log2" ---
   if (verbose) message("im_prepare_se: building baseline SE ...")
@@ -639,7 +639,8 @@ im_prepare_se <- function(preprocessing,
   # --- Apply winner normalization ---
   if (verbose) message("im_prepare_se: applying normalization '", norm_method, "' ...")
   x_log2 <- SummarizedExperiment::assay(se, "log2")
-  x_norm <- .nm_dispatch_normalization(x_log2, norm_method, norm_method_args)
+  x_norm <- .norm_dispatch(norm_method, x_raw = 2^x_log2, x_log2 = x_log2,
+                           loess = norm_method_args[["cycloess"]] %||% list())
 
   # --- Build final SE ---
   if (include_log2) {

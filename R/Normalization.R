@@ -405,6 +405,62 @@
 }
 
 # =============================================================================
+# DISPATCH
+# =============================================================================
+
+# Methods that normalise the linear-scale intensities (Group A); the rest work
+# on the log2 matrix (Group B).
+.NORM_RAW_METHODS <- c(
+  "log2Norm", "GlobalMedian", "GlobalMean", "eqmedians",
+  "vsn", "medianNorm", "meanNorm"
+)
+
+#' Apply one normalisation method
+#'
+#' The single dispatch shared by `normalize_proteomics()` and the
+#' normalisation benchmark (`nm_run_normalizations()`, `im_prepare_se()`).
+#'
+#' @param method Normalisation method name (any of those accepted by
+#'   `normalize_proteomics()` except `"log2"`).
+#' @param x_raw Linear-scale intensity matrix, the input of Group A methods.
+#' @param x_log2 log2 intensity matrix, the input of Group B methods; it also
+#'   gives the dimnames of the result.
+#' @param loess List with the `method`, `iterations` and `span` passed to
+#'   `limma::normalizeCyclicLoess()` for `"cycloess"`; missing entries take
+#'   the defaults `"fast"`, `3` and `0.7`.
+#' @return Normalised log2 matrix with the dimnames of `x_log2`.
+#' @keywords internal
+#' @noRd
+.norm_dispatch <- function(method, x_raw, x_log2, loess = list()) {
+  x_input <- if (method %in% .NORM_RAW_METHODS) x_raw else x_log2
+
+  x_norm <- switch(method,
+    "log2Norm"        = .norm_log2norm(x_input),
+    "GlobalMedian"    = .norm_ginorm(x_input),
+    "GlobalMean"      = .norm_globalmean(x_input),
+    "eqmedians"       = .norm_eqmedians(x_input),
+    "vsn"             = .norm_vsn(x_input),
+    "medianNorm"      = .norm_mediannorm(x_input),
+    "meanNorm"        = .norm_meannorm(x_input),
+    "quantile"        = .norm_quantile(x_input),
+    "Rlr"             = .norm_rlr(x_input),
+    "MAD"             = .norm_mad(x_input),
+    "cycloess"        = limma::normalizeCyclicLoess(
+                          x_input,
+                          method     = loess[["method"]]     %||% "fast",
+                          iterations = loess[["iterations"]] %||% 3,
+                          span       = loess[["span"]]       %||% 0.7),
+    "quantile.robust" = .norm_quantile_robust(x_input),
+    stop("Unknown normalization method: '", method, "'")
+  )
+
+  rownames(x_norm) <- rownames(x_log2)
+  colnames(x_norm) <- colnames(x_log2)
+  x_norm
+}
+
+
+# =============================================================================
 # MAIN FUNCTION
 # =============================================================================
 
@@ -563,16 +619,6 @@ normalize_proteomics <- function(
   # 4. NORMALIZATION
   # =========================================================================
 
-  # Methods that accept x_raw as input.
-  # (eqmedians applies log2 internally but still receives x_raw to stay
-  #  consistent with the other Group A methods.)
-  .raw_methods <- c(
-    "log2Norm", "GlobalMedian", "GlobalMean",
-    "eqmedians",
-    "vsn",
-    "medianNorm", "meanNorm"
-  )
-
   norm_method <- match.arg(norm_method, c(
     "log2Norm", "eqmedians", "GlobalMedian", "GlobalMean",
     "log2", "quantile", "Rlr", "MAD", "cycloess",
@@ -580,39 +626,18 @@ normalize_proteomics <- function(
     "vsn", "quantile.robust"
   ))
 
-  x_raw  <- SummarizedExperiment::assay(se, "raw")
-  x_log2 <- SummarizedExperiment::assay(se, "log2")
-
   if (verbose) message("\n=== NORMALIZING (method: ", norm_method, " ) ===")
 
   if (norm_method == "log2") {
     if (verbose) message("- Method 'log2': no additional normalization")
   } else {
-    x_input <- if (norm_method %in% .raw_methods) x_raw else x_log2
-
-    x_norm <- switch(norm_method,
-      "log2Norm"        = .norm_log2norm(x_input),
-      "GlobalMedian"    = .norm_ginorm(x_input),
-      "GlobalMean"      = .norm_globalmean(x_input),
-      "eqmedians"       = .norm_eqmedians(x_input),
-      "quantile"        = .norm_quantile(x_input),
-      "Rlr"             = .norm_rlr(x_input),
-      "MAD"             = .norm_mad(x_input),
-      "cycloess"        = {
-                            limma::normalizeCyclicLoess(
-                              x_input,
-                              method     = cyclic_loess_method,
-                              iterations = cyclic_loess_iterations,
-                              span       = cyclic_loess_span)
-                          },
-      "medianNorm"        = .norm_mediannorm(x_input),
-      "meanNorm"          = .norm_meannorm(x_input),
-      "vsn"               = .norm_vsn(x_input),
-      "quantile.robust"   = .norm_quantile_robust(x_input)
-    )
-
-    rownames(x_norm) <- rownames(x_log2)
-    colnames(x_norm) <- colnames(x_log2)
+    x_norm <- .norm_dispatch(
+      norm_method,
+      x_raw  = SummarizedExperiment::assay(se, "raw"),
+      x_log2 = SummarizedExperiment::assay(se, "log2"),
+      loess  = list(method     = cyclic_loess_method,
+                    iterations = cyclic_loess_iterations,
+                    span       = cyclic_loess_span))
     SummarizedExperiment::assay(se, norm_method) <- x_norm
   }
 

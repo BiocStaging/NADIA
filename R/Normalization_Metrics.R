@@ -39,11 +39,6 @@
   "quantile.robust"
 )
 
-# Methods that require x_raw (Group A) -- rest use x_log2 (Group B)
-.NM_RAW_METHODS <- c(
-  "log2Norm", "GlobalMedian", "GlobalMean", "eqmedians",
-  "vsn", "medianNorm", "meanNorm"
-)
 
 # =============================================================================
 # SECTION 1: INTERNAL METRIC HELPERS
@@ -420,52 +415,6 @@
 # SECTION 1b: AUTO-NORMALIZATION DISPATCH
 # =============================================================================
 
-#' Dispatch a single normalization method on a log2 matrix
-#'
-#' Internal helper that calls the appropriate `.norm_*()` function.
-#' For Group A methods, converts log2 back to raw (2^x) before calling.
-#'
-#' @param x_log2 Numeric matrix in log2 scale (proteins x samples)
-#' @param method Character scalar: normalization method name
-#' @param method_args Named list of per-method arguments
-#' @return Numeric matrix in log2 scale
-#' @keywords internal
-.nm_dispatch_normalization <- function(x_log2, method, method_args = list()) {
-  # Group A methods need raw (linear) scale input
-  if (method %in% .NM_RAW_METHODS) {
-    x_input <- 2^x_log2
-  } else {
-    x_input <- x_log2
-  }
-
-  x_norm <- switch(method,
-    "log2Norm"        = .norm_log2norm(x_input),
-    "GlobalMedian"    = .norm_ginorm(x_input),
-    "GlobalMean"      = .norm_globalmean(x_input),
-    "eqmedians"       = .norm_eqmedians(x_input),
-    "vsn"             = .norm_vsn(x_input),
-    "medianNorm"      = .norm_mediannorm(x_input),
-    "meanNorm"        = .norm_meannorm(x_input),
-    "quantile"        = .norm_quantile(x_input),
-    "Rlr"             = .norm_rlr(x_input),
-    "MAD"             = .norm_mad(x_input),
-    "cycloess"        = {
-      args <- method_args[["cycloess"]] %||% list()
-      limma::normalizeCyclicLoess(
-        x_input,
-        method     = args[["method"]]     %||% "fast",
-        iterations = args[["iterations"]] %||% 3,
-        span       = args[["span"]]       %||% 0.7
-      )
-    },
-    "quantile.robust" = .norm_quantile_robust(x_input),
-    stop("Unknown normalization method: '", method, "'")
-  )
-
-  rownames(x_norm) <- rownames(x_log2)
-  colnames(x_norm) <- colnames(x_log2)
-  x_norm
-}
 
 #' Prepare a SummarizedExperiment from a proteomics_data object
 #'
@@ -592,7 +541,8 @@ nm_run_normalizations <- function(se,
   for (m in methods) {
     if (verbose) message("  Normalizing: ", m, " ...")
     result <- tryCatch(
-      .nm_dispatch_normalization(x_log2, m, method_args),
+      .norm_dispatch(m, x_raw = 2^x_log2, x_log2 = x_log2,
+                     loess = method_args[["cycloess"]] %||% list()),
       error = function(e) {
         warning("Method '", m, "' failed: ", conditionMessage(e))
         NULL
