@@ -25,7 +25,7 @@ knitr::opts_chunk$set(collapse = TRUE, comment = "#>", crop = NULL,
 
 # Introduction
 
-Samples prepared on different days, labelled in different batches or acquired in
+Samples prepared on different days, labeled in different batches or acquired in
 different run sequences may contain systematic technical differences. Batch
 correction aims to remove this unwanted variation while retaining the biological
 signal. If the experimental design is confounded or the correction is applied
@@ -38,7 +38,7 @@ Rather than requiring a single complete matrix, it decomposes the integration
 into pairwise batch-correction steps
 arranged as a binary tree. Each step applies the selected correction method,
 such as ComBat or limma, and the corrected branches are then combined. This
-hierarchical strategy allows NADIA to correct the normalised protein-abundance
+hierarchical strategy allows NADIA to correct the normalized protein-abundance
 matrix before imputation, without first replacing its missing values.
 
 This vignette therefore follows a simple rule: **diagnose before correcting and
@@ -119,7 +119,7 @@ against a known starting point.
 The simulated effect is deliberately protein-dependent: in the second digestion
 batch, half of the proteins are multiplied by six and the remainder by one
 sixth. A uniform shift affecting every protein similarly may be largely removed
-by normalisation, whereas protein-specific technical effects can remain and may
+by normalization, whereas protein-specific technical effects can remain and may
 require explicit batch correction.
 
 The six-fold change is intentionally large. The biological conditions in this
@@ -184,7 +184,7 @@ values in a batch cannot be corrected at all and are kept unadjusted.
 # Step 2: how much variance does the batch explain?
 
 Before correcting the batch effect, we first process the modified dataset with
-batch correction disabled. This provides the normalised and imputed assay that
+batch correction disabled. This provides the normalized and imputed assay that
 will serve as the uncorrected reference. We can then use `pvca_analysis()` to
 estimate how much of its variation is associated with the biological condition
 and how much is associated with the digestion and injection factors.
@@ -257,7 +257,7 @@ Batch correction is optional and is disabled by default. To apply it within
 `process_proteomics()`, set `batch_correct = TRUE` and use `batch_column` to
 identify the technical factor that should be removed. Two related arguments,
 `covariate_column` and `bio_replicate_column`, describe variables that should be
-modelled during differential abundance analysis rather than removed from the
+modeled during differential abundance analysis rather than removed from the
 quantitative matrix. The three arguments therefore have distinct roles and
 should be defined according to the experimental design:
 
@@ -280,7 +280,7 @@ The diagram below places the three arguments in the complete workflow and shows
 typical variables that can be supplied to each one.
 
 ::: {.batch-arguments-figure .lightbox-figure}
-```{r batch-arguments-diagram, echo = FALSE, out.width = "100%", fig.cap = "The three arguments act at different stages: batch_column modifies the quantitative matrix, whereas covariate_column and bio_replicate_column act during differential abundance analysis.", fig.alt = "Workflow diagram comparing batch_column, covariate_column and bio_replicate_column. Batch_column removes a technical effect from the normalised matrix before imputation. Covariate_column adds nuisance variables to the limma model without changing the matrix. Bio_replicate_column models correlation between paired, repeated or technical replicate samples."}
+```{r batch-arguments-diagram, echo = FALSE, out.width = "100%", fig.cap = "The three arguments act at different stages: batch_column modifies the quantitative matrix, whereas covariate_column and bio_replicate_column act during differential abundance analysis.", fig.alt = "Workflow diagram comparing batch_column, covariate_column and bio_replicate_column. Batch_column removes a technical effect from the normalized matrix before imputation. Covariate_column adds nuisance variables to the limma model without changing the matrix. Bio_replicate_column models correlation between paired, repeated or technical replicate samples."}
 knitr::include_graphics("figures/Batch_Correction_Arguments.svg")
 ```
 :::
@@ -303,7 +303,7 @@ SummarizedExperiment::assayNames(res_bc$se_proc)
 ```
 
 Note where the new `BERT` assay sits: after `cycloess`, before the imputed
-matrix. Correction runs on the normalised data, and imputation then runs on its
+matrix. Correction runs on the normalized data, and imputation then runs on its
 output.
 
 ## Protecting a variable inside ComBat
@@ -332,7 +332,7 @@ protected covariate.
 :::
 
 The appropriate choice depends on both the biological question and the design.
-The following guide summarises when a protected covariate should be supplied,
+The following guide summarizes when a protected covariate should be supplied,
 when `NULL` may be reasonable, and when the design should be reconsidered rather
 than forcing an unprotected correction.
 
@@ -483,7 +483,7 @@ provide a stronger test than the number of significant calls alone.
 
 `batch_correct_proteomics()` corrects one factor per call. Because each call can
 read one assay and write the corrected values to a new assay, corrections can be
-applied sequentially. The first call below starts from the normalised
+applied sequentially. The first call below starts from the normalized
 `cycloess` assay; the second uses the first corrected assay as its input:
 
 ```{r cascade, eval = run_bc, message = FALSE, warning = FALSE, results = "hide"}
@@ -520,14 +520,14 @@ step modifies a matrix that has already been corrected. A more conservative
 option is to use `batch_column` for the dominant technical effect and include
 the remaining factor in `covariate_column`, so that limma adjusts for it without
 altering the quantitative matrix again. In this example, that means correcting
-`Digestion` and modelling `Injection`. This strategy reduces, but does not
+`Digestion` and modeling `Injection`. This strategy reduces, but does not
 eliminate, the need to check design balance and verify the results.
 :::
 
 # Inspecting the correction with PCA
 
-PVCA summarises the contributions numerically, whereas PCA shows how the samples
-are arranged. `pca_covariates_plot()` displays the same projection coloured by
+PVCA summarizes the contributions numerically, whereas PCA shows how the samples
+are arranged. `pca_covariates_plot()` displays the same projection colored by
 each selected covariate, making it easier to identify factors associated with
 sample separation:
 
@@ -544,7 +544,7 @@ pca_grid$grid +
 ```
 
 ::: {.pca-covariates-figure .lightbox-figure}
-```{r pca-cov-styled, eval = run_bc, echo = FALSE, message = FALSE, warning = FALSE, fig.width = 7, fig.height = 6.2, fig.cap = "PCA of the simulated example after correction, coloured in turn by each biological or technical variable.", fig.alt = "PCA coloured by condition, digestion, injection and subject using distinct colours and shapes"}
+```{r pca-cov-styled, eval = run_bc, echo = FALSE, message = FALSE, warning = FALSE, fig.width = 7, fig.height = 6.2, fig.cap = "PCA of the simulated example after correction, colored in turn by each biological or technical variable.", fig.alt = "PCA colored by condition, digestion, injection and subject using distinct colors and shapes"}
 pca_colors <- c(
     A  = "#0072B2", B  = "#D55E00", D  = "#009E73",
     d1 = "#CC79A7", d2 = "#E69F00",
@@ -589,15 +589,15 @@ has a justified and independently assessable technical effect.
 
 The simulated example made it possible to verify removal of an effect whose size
 and direction were known. The TMT example provides a complementary test: its two
-labelling mixes represent a real technical batch, while the three-proteome
+labeling mixes represent a real technical batch, while the three-proteome
 spike-in design provides expected biological changes against which the results
 can be evaluated.
 
 ## The batch has to be declared, not discovered
 
-`nadia_tmt_report.tsv.gz` contains samples labelled in two TMTpro mixes:
+`nadia_tmt_report.tsv.gz` contains samples labeled in two TMTpro mixes:
 replicates 1–4 of each condition belong to the first mix and replicates 5–8 to
-the second. The separate labelling reactions and acquisitions create a plausible
+the second. The separate labeling reactions and acquisitions create a plausible
 source of technical variation.
 
 The diagram below combines the biological spike-in composition with the channel
@@ -770,7 +770,7 @@ size* below shows how much of it depends on that choice.
 Protecting `Condition` produces very similar values: 97.8% rather than 97.4% for
 *E. coli*, 96.1% rather than 95.6% for yeast, and 36.6% rather than 38.2% for the
 human background. This agreement is consistent with the balanced allocation of
-every condition across both mixes. It should not be generalised: when conditions
+every condition across both mixes. It should not be generalized: when conditions
 are unevenly distributed across batches, an unprotected ComBat correction can
 remove part of the biological difference together with the batch effect. In
 that setting, **the biological condition should be protected whenever the design
@@ -779,13 +779,13 @@ allows it to be estimated**.
 ## Visual assessment with PCA
 
 The PCA projections below show the same samples before and after the unprotected
-correction, coloured separately by condition and TMT mix. This assay is shown
+correction, colored separately by condition and TMT mix. This assay is shown
 because the directional benchmark above found very similar biological
 performance for the protected and unprotected corrections in this balanced
 design:
 
 ::: {.tmt-pca-figure}
-```{r tmt-pca-before, eval = run_bc, message = FALSE, fig.width = 8.5, fig.height = 4, fig.cap = "TMT experiment before correction. The same PCA is coloured by biological condition and TMT mix.", fig.alt = "PCA of the TMT experiment before correction, coloured by condition and by TMT mix. The samples separate by mix along the first component."}
+```{r tmt-pca-before, eval = run_bc, message = FALSE, fig.width = 8.5, fig.height = 4, fig.cap = "TMT experiment before correction. The same PCA is colored by biological condition and TMT mix.", fig.alt = "PCA of the TMT experiment before correction, colored by condition and by TMT mix. The samples separate by mix along the first component."}
 tmt_pca_before <- pca_covariates_plot(
     tmt_res$se_proc,
     assay_name = "Impseqrob_min",
@@ -804,7 +804,7 @@ PC1 according to their mix, whereas condition is more clearly represented along
 PC2. The main source of separation is therefore technical rather than biological.
 
 ::: {.tmt-pca-figure}
-```{r tmt-pca-after, eval = run_bc, message = FALSE, fig.width = 8.5, fig.height = 4, fig.cap = "TMT experiment after correction. Mix-related separation is no longer visible and condition becomes the main source of structure.", fig.alt = "PCA of the TMT experiment after correction, coloured by condition and by TMT mix. The mix panel has no structure left and the conditions separate along the first component."}
+```{r tmt-pca-after, eval = run_bc, message = FALSE, fig.width = 8.5, fig.height = 4, fig.cap = "TMT experiment after correction. Mix-related separation is no longer visible and condition becomes the main source of structure.", fig.alt = "PCA of the TMT experiment after correction, colored by condition and by TMT mix. The mix panel has no structure left and the conditions separate along the first component."}
 tmt_pca_after <- pca_covariates_plot(
     tmt_bc$se_proc,
     assay_name = "BERT",
@@ -888,16 +888,16 @@ and sufficiently large to be biologically relevant, a non-zero
 
 `benchmarking_proteomics()` compares the results with the known spike-in changes.
 The expected values and the complete scoring procedure are described in
-`vignette("benchmarking")`; here, the `D-A` results are summarised across several
+`vignette("benchmarking")`; here, the `D-A` results are summarized across several
 log2 fold-change thresholds. True positives (TP) are *E. coli* and yeast
 proteins recovered with the expected direction of change, whereas false
 positives (FP) are human proteins called differential despite the constant human
-background. The Matthews correlation coefficient (MCC) summarises the complete
+background. The Matthews correlation coefficient (MCC) summarizes the complete
 confusion matrix in a single score, with values closer to 1 indicating better
 overall classification.
 
 ::: {.tmt-benchmark-table .lightbox-figure}
-```{r tmt-threshold-table, echo = FALSE, out.width = "100%", fig.cap = "Benchmarking of the D-A comparison across log2 fold-change thresholds. Sensitivity, specificity and MCC are coloured on a common scale from 0 (red) to 1 (green); the 0.3 threshold is highlighted because it provides the best overall balance in this experiment.", fig.alt = "Table comparing true positives, false positives, sensitivity, specificity and Matthews correlation coefficient for uncorrected, corrected and condition-protected analyses at log2 fold-change thresholds of zero, 0.2, 0.3, 0.5 and 1. True positives are expected E. coli and yeast changes and false positives are unchanged human proteins called differential. Sensitivity, specificity and MCC cells are coloured from red at zero to green at one. The cells for threshold 0.3 are bold and outlined."}
+```{r tmt-threshold-table, echo = FALSE, out.width = "100%", fig.cap = "Benchmarking of the D-A comparison across log2 fold-change thresholds. Sensitivity, specificity and MCC are colored on a common scale from 0 (red) to 1 (green); the 0.3 threshold is highlighted because it provides the best overall balance in this experiment.", fig.alt = "Table comparing true positives, false positives, sensitivity, specificity and Matthews correlation coefficient for uncorrected, corrected and condition-protected analyses at log2 fold-change thresholds of zero, 0.2, 0.3, 0.5 and 1. True positives are expected E. coli and yeast changes and false positives are unchanged human proteins called differential. Sensitivity, specificity and MCC cells are colored from red at zero to green at one. The cells for threshold 0.3 are bold and outlined."}
 knitr::include_graphics("figures/TMT_Benchmarking_Thresholds.svg")
 ```
 :::

@@ -490,11 +490,11 @@ img[src$="LFQ_Input_Structure.svg"] {
   overflow-wrap: anywhere;
 }
 
-.normalisation-methods-table col:nth-child(1) {
+.normalization-methods-table col:nth-child(1) {
   width: 18% !important;
 }
 
-.normalisation-methods-table col:nth-child(2) {
+.normalization-methods-table col:nth-child(2) {
   width: 82% !important;
 }
 
@@ -838,7 +838,7 @@ img[src$="LFQ_Input_Structure.svg"] {
   margin: 1em;
 }
 
-.visualisation-warning {
+.visualization-warning {
   width: calc(100% - 4.5em);
   box-sizing: border-box;
   margin: 1.15em 0 1.5em;
@@ -850,17 +850,17 @@ img[src$="LFQ_Input_Structure.svg"] {
   box-shadow: 0 1px 2px rgba(112, 78, 20, 0.08);
 }
 
-.visualisation-warning p {
+.visualization-warning p {
   margin: 0 0 0.75em;
   padding: 0 !important;
   text-align: justify;
 }
 
-.visualisation-warning p:last-child {
+.visualization-warning p:last-child {
   margin-bottom: 0;
 }
 
-.visualisation-warning strong:first-child {
+.visualization-warning strong:first-child {
   color: #7a5310;
 }
 
@@ -1013,7 +1013,7 @@ table.pca-outline-table {
     max-width: 100% !important;
     margin-left: 0;
   }
-  .visualisation-warning,
+  .visualization-warning,
   .wide-data-table,
   .interactive-chart-compact {
     width: 100%;

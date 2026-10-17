@@ -25,8 +25,8 @@ absent because a protein was present but not quantified successfully, or because
 its abundance was too low to be detected. These mechanisms call for different
 assumptions and can coexist within the same experiment.
 
-This vignette explains how to inspect that missingness, summarises the 19
-strategies available in NADIA and describes the behaviour of the hybrid and
+This vignette explains how to inspect that missingness, summarizes the 19
+strategies available in NADIA and describes the behavior of the hybrid and
 detection-aware options. It does not repeat the benchmarking metrics used to
 rank candidate methods; those are covered in `vignette("choosing-methods")`.
 
@@ -62,7 +62,7 @@ for the value being absent. NADIA uses the following practical distinction:
 - **MNAR (missing not at random):** the protein is absent or its abundance is
   below the detection limit. Missingness depends on the unobserved abundance
   being low and therefore carries biological or measurement information.
-  Replacing such a gap with a typical neighbouring value may erase that
+  Replacing such a gap with a typical neighboring value may erase that
   evidence, so a low-value or detection-aware method is generally more
   plausible.
 
@@ -84,7 +84,7 @@ as `NA`. How that `NA` is created depends on the input format. In a long
 Spectronaut report, a protein that was not quantified in a particular run is
 usually absent from the report; when NADIA constructs the wide `protein_quant`
 table, the corresponding protein–run cell becomes `NA`. Some wide reports use
-zero instead to mark an unreported intensity. Before normalisation,
+zero instead to mark an unreported intensity. Before normalization,
 `normalize_proteomics()` converts these zeros to `NA`, so downstream functions
 handle both situations consistently.
 
@@ -220,7 +220,7 @@ DIA-NN example shows more missingness, more condition-wise dropout and a
 stronger association between low abundance and missingness. This does not show
 that one search engine is better; it shows that imputation decisions should be
 based on the missing-value pattern of the matrix that will actually be
-analysed.
+analyzed.
 
 # Imputation strategies available in NADIA
 
@@ -235,7 +235,7 @@ unambiguously.
 | Group | imp_method | Principle |
 |---|---|---|
 | Structure-based, generally used for MAR | `bpca` | Bayesian principal-component imputation using `pcaMethods`. |
-|  | `knn` | Estimates a value from similar proteins using k-nearest neighbours. |
+|  | `knn` | Estimates a value from similar proteins using k-nearest neighbors. |
 |  | `mice` | Multiple imputation by chained equations; NADIA averages the completed matrices. |
 |  | `missForest` | Non-parametric random-forest imputation: each sample is predicted from the others, learned over the proteins (`observations = "samples"` in `method_args` reverses it, as NAguideR does). |
 |  | `Impseq` | Sequential model-based imputation from `rrcovNA`. |
@@ -262,13 +262,13 @@ missingness is associated with low abundance and impute values from the lower
 tail of the intensity distribution. `combo`, `softHybrid` and `limpa` address
 this distinction more explicitly, as described below. The `none` option leaves
 the missing values unchanged and therefore requires downstream methods that can
-analyse an incomplete matrix.
+analyze an incomplete matrix.
 
 `halfmin` operates on log~2~-transformed data. Halving the global minimum on the
 original intensity scale is equivalent to subtracting one from its log~2~ value,
 so the imputed value is `log2(minimum) - 1`. Both `min` and `halfmin`
 depend on the single lowest observed intensity in the matrix. Distribution-based
-methods such as `MinDet`, `QRILC` and `MinProb` instead characterise the
+methods such as `MinDet`, `QRILC` and `MinProb` instead characterize the
 low-intensity tail using more than this single value.
 
 # Why one method may not represent every gap
@@ -327,7 +327,7 @@ for the missing cells in each condition, so the protein is not assigned one
 fixed MAR or MNAR label.
 
 ::: {.lightbox-figure}
-```{r combo-classification-diagram, echo = FALSE, fig.align = "center", out.width = "100%", fig.cap = "Examples of how the four combo arguments classify missing cells. A cell is assigned to the MNAR branch only when the missingness threshold and the evidence in other conditions are both satisfied; otherwise it enters the MAR branch or the protein may be removed by the preliminary combo filter.", fig.alt = "Four coloured examples of combo classification with four replicates per condition. The first is assigned to MNAR because one condition is 75 percent missing and another is fully observed. The second is assigned to MAR because 50 percent missing is below the 51 percent threshold. The third protein is removed because no other condition has at least 50 percent observed values. The fourth uses three conditions and shows that one qualifying supporting condition is sufficient."}
+```{r combo-classification-diagram, echo = FALSE, fig.align = "center", out.width = "100%", fig.cap = "Examples of how the four combo arguments classify missing cells. A cell is assigned to the MNAR branch only when the missingness threshold and the evidence in other conditions are both satisfied; otherwise it enters the MAR branch or the protein may be removed by the preliminary combo filter.", fig.alt = "Four colored examples of combo classification with four replicates per condition. The first is assigned to MNAR because one condition is 75 percent missing and another is fully observed. The second is assigned to MAR because 50 percent missing is below the 51 percent threshold. The third protein is removed because no other condition has at least 50 percent observed values. The fourth uses three conditions and shows that one qualifying supporting condition is sufficient."}
 knitr::include_graphics("figures/Combo_Classification_Examples.svg")
 ```
 :::
@@ -382,7 +382,7 @@ two estimates rather than the result of a binary classification. NADIA uses
 
 The transition is controlled by two sigmoid functions. Parameter `a` determines
 how rapidly the weight changes with the missing-value proportion, `b` controls
-the transition along the standardised intensity axis and `lambda` balances the
+the transition along the standardized intensity axis and `lambda` balances the
 two signals. In most cases, the defaults provide the natural starting point:
 
 ```{r softhybrid}

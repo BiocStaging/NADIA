@@ -188,11 +188,11 @@ truth against which the pipeline can be scored. First,
 `process_proteomics()` runs the complete analysis and produces a
 differential-expression table. `benchmarking_proteomics()` then compares every
 protein in that table with the declared truth, assigns TP, FP, TN, or FN, and
-summarises how well the expected changes were recovered.
+summarizes how well the expected changes were recovered.
 
 `benchmarking_proteomics()` returns a named list containing numerical tables and
 their corresponding diagnostic plots. Its principal inputs and controls are
-summarised below.
+summarized below.
 
 <details class="function-parameters">
 <summary>Show the parameters of benchmarking_proteomics()</summary>
@@ -216,7 +216,7 @@ summarised below.
 <ul>
   <li><code>comparisons</code> and <code>assay</code>: optional filters selecting the results to score.</li>
   <li><code>output_dir</code>: export directory; <code>NULL</code> keeps the results in memory without writing files.</li>
-  <li><code>verbose</code> and <code>species_colors</code>: control progress messages and plot colours.</li>
+  <li><code>verbose</code> and <code>species_colors</code>: control progress messages and plot colors.</li>
 </ul>
 
 </div>
@@ -363,7 +363,7 @@ bench$gg_signif_bars
 
 # The confusion plots: the whole picture at once
 
-`metrics_table` summarises each comparison with one value per performance
+`metrics_table` summarizes each comparison with one value per performance
 indicator. A confusion plot instead displays the four underlying classification
 outcomes---TP, FP, TN, and FN---and therefore shows whether errors arise from
 missed spike-in proteins or from significant calls in the unchanged background.
@@ -447,7 +447,7 @@ all proteins in `B-A`, `D-A`, and `D-B`, respectively. These are percentages of
 the complete benchmark and should be interpreted as the composition of each
 bar; class-specific performance is reported separately in `metrics_table`.
 
-The figure emphasises relative proportions. The following table complements it
+The figure emphasizes relative proportions. The following table complements it
 with the exact TP, FP, TN, and FN counts and the resulting accuracy for each
 comparison.
 
@@ -555,7 +555,7 @@ positive rate (FPR, or `1 - Specificity`) obtained at one threshold.
 
 Curves closer to the upper-left corner indicate better separation: they recover
 more spike-in proteins while misclassifying fewer background proteins. The area
-under the curve (AUC) summarises the complete curve from 0 to 1. An AUC of 1
+under the curve (AUC) summarizes the complete curve from 0 to 1. An AUC of 1
 represents perfect ranking, 0.5 corresponds to random ranking, and values below
 0.5 indicate that the classes are ranked in the opposite order.
 
@@ -652,7 +652,7 @@ These TPRs are slightly higher than the direction-aware sensitivity values in
 `metrics_table` because ROC analysis counts a significant spike-in as positive
 even when its observed fold-change direction is incorrect. All
 three points therefore lie within both the displayed 10% zoom and the 5% region
-summarised by `pAUC_005`. This correspondence is specific to these results and
+summarized by `pAUC_005`. This correspondence is specific to these results and
 must not be interpreted as a general identity between `adj.P.Val <= 0.05` and
 `FPR <= 0.05`.
 
@@ -791,24 +791,24 @@ prepare_vignette_highchart(bench$hc_volcano_list[["B-A"]])
 ```
 :::
 
-Colouring proteins by species turns the volcano plot into a diagnostic view of
-the spike-in experiment. Human background proteins are shown in grey and
+Coloring proteins by species turns the volcano plot into a diagnostic view of
+the spike-in experiment. Human background proteins are shown in gray and
 should remain concentrated around `log2FC = 0`; yeast proteins are blue and are
 expected near `-0.58`; and *E. coli* proteins are orange and are expected near
 `1.00`. The blue and orange vertical dashed lines mark these expected spike-in
 log2 fold changes, whereas the solid vertical line at zero represents no
 change.
 
-The subtitle summarises the significant proteins for each species (restricted
+The subtitle summarizes the significant proteins for each species (restricted
 to the expected direction for spike-ins). `MED` is the median observed log2
 fold change, `MAD` is its median absolute deviation, and `RCV` is the robust
 coefficient of variation (`MAD / abs(MED) * 100`); `n` is the number of
-proteins summarised.
+proteins summarized.
 Comparing `MED` with the expected line assesses fold-change recovery, while
 lower `MAD` and `RCV` values indicate a tighter distribution.
 
 The horizontal dashed line marks `alpha = 0.05`
-(`adj.P.Val <= 0.05`). Significant proteins have stronger colours, whereas
+(`adj.P.Val <= 0.05`). Significant proteins have stronger colors, whereas
 non-significant proteins appear lighter. In `B-A`, most human proteins remain
 near zero and the spike-in species cluster around their expected values.
 Deviations flag proteins for review. Spike-ins with the correct direction but
@@ -956,7 +956,7 @@ confusion_plot
 
 `cycloess_combo` provides the best balance: it keeps FP counts low while
 recovering more TP than `cycloess_min` in every comparison. This is why it later
-ranks first even though it does not minimise every error count individually.
+ranks first even though it does not minimize every error count individually.
 `quantile_combo` recovers slightly more TP in `B-A` and `D-A`, but its FP counts
 rise to 917 and 934 in `D-A` and `D-B`, respectively, indicating poor control
 of the background. In contrast, `cycloess_min` is the most conservative
@@ -980,7 +980,7 @@ The result is unanimous: `cycloess_combo` ranks first for `nMCC`, `G_mean`, and
 all three pAUC limits. `cycloess_min` ranks second and `quantile_combo` third.
 The ordering reflects the trade-offs observed above: the first pipeline balances
 spike-in recovery and background control, the second loses sensitivity, and the
-third is strongly penalised for its false positives in `D-A` and `D-B`.
+third is strongly penalized for its false positives in `D-A` and `D-B`.
 
 The final ranks can also be displayed as horizontal bars. This view is useful
 when many pipelines are compared because the methods are ordered directly and

@@ -1,5 +1,5 @@
 ---
-title: "Input formats: Spectronaut, DIA-NN, TMT and LFQ"
+title: "Input formats: reports and SummarizedExperiment objects"
 author: "Sergio Ciordia"
 package: NADIA
 output:
@@ -19,14 +19,13 @@ knitr::opts_chunk$set(collapse = TRUE, comment = "#>", crop = NULL)
 
 # Introduction
 
-NADIA accepts four input formats through `preprocess_spectronaut()`,
-`preprocess_diann()`, `preprocess_tmt()` and `preprocess_lfq()`. Although their
-source reports have different layouts, all four functions return a
-`proteomics_data` object with the same three components. Data already imported
-with another tool enter as a `SummarizedExperiment`, through `preprocess_se()`
-(see the last section). Consequently,
-`process_proteomics()` and the downstream modules use the same interface
-regardless of how the data were acquired or searched.
+NADIA accepts five types of input: Spectronaut reports, DIA-NN protein-group
+matrices, Proteome Discoverer TMT and LFQ reports, and `SummarizedExperiment`
+objects prepared with other tools. Each has a dedicated importer:
+`preprocess_spectronaut()`, `preprocess_diann()`, `preprocess_tmt()`,
+`preprocess_lfq()` or `preprocess_se()`. All return the same `proteomics_data`
+structure, so the imported data can follow a common processing and analysis
+workflow.
 
 This vignette applies each preprocessor to an example report and explains the
 main distinction among them: **where NADIA obtains the experimental design**.
@@ -56,7 +55,7 @@ report into three coordinated tables:
   workflow.
 
 ::: {.lightbox-figure}
-```{r input-format-overview, echo = FALSE, fig.align = "center", out.width = "100%", fig.cap = "Four report formats converge on the common `proteomics_data` structure used by the NADIA workflow.", fig.alt = "Workflow diagram showing Spectronaut, DIA-NN, TMT and LFQ reports entering their corresponding preprocessing functions. Spectronaut obtains the design from R.Condition and R.Replicate in the report. DIA-NN, TMT and LFQ obtain it from Abundance column suffixes or an annotation file supplied through annot_path. All four produce a proteomics_data object containing metadata, protein_id and protein_quant, which is passed to process_proteomics."}
+```{r input-format-overview, echo = FALSE, fig.align = "center", out.width = "100%", fig.cap = "Five input sources converge on the common `proteomics_data` structure used by the NADIA workflow.", fig.alt = "Workflow diagram showing four report formats and a SummarizedExperiment entering five dedicated importers. Spectronaut supplies the design in its report; DIA-NN, TMT and LFQ use column suffixes or annot_path; SummarizedExperiment uses colData. All five produce a proteomics_data object containing metadata, protein_id and protein_quant for process_proteomics."}
 knitr::include_graphics("figures/Input_Formats_Workflow.svg")
 ```
 :::
@@ -66,7 +65,7 @@ In the Spectronaut example used below, `metadata` contains 12 samples, whereas
 
 The three tables have distinct but complementary roles. `metadata` defines the
 experimental design; `protein_quant` provides the abundance matrix used for
-normalisation, imputation and differential abundance analysis; and `protein_id`
+normalization, imputation and differential abundance analysis; and `protein_id`
 retains the more detailed identification evidence used for inspection and
 reporting.
 
@@ -113,7 +112,7 @@ knitr::include_graphics("figures/Spectronaut_Input_Structure.svg")
 ```
 :::
 
-The arguments accepted by `preprocess_spectronaut()` are summarised below. The
+The arguments accepted by `preprocess_spectronaut()` are summarized below. The
 input report and the order of the conditions are required; the remaining
 arguments control optional export and the aggregation of run-level annotations.
 
@@ -154,7 +153,7 @@ Because the design already comes from the report, `condition_order` does not
 infer or redefine the condition assigned to each run. Instead, it selects the
 conditions to retain—excluding any other conditions present in the report—and
 sets their order in the subsequent stages of the analysis, including downstream
-comparisons. It should therefore list every condition that is to be analysed.
+comparisons. It should therefore list every condition that is to be analyzed.
 
 The following output shows an example of the metadata table extracted and
 constructed from the imported Spectronaut report:
@@ -416,8 +415,8 @@ head(tmt$metadata)
 table(tmt$metadata$R.Condition)
 ```
 
-**Note on identification information.** TMT samples are digested and labelled
-individually, but they are then combined and analysed as a multiplexed mixture.
+**Note on identification information.** TMT samples are digested and labeled
+individually, but they are then combined and analyzed as a multiplexed mixture.
 Consequently, the identification evidence reported by Proteome Discoverer is
 global to the multiplex rather than specific to each original sample. To
 preserve the common structure of the `proteomics_data` object, NADIA repeats
@@ -540,32 +539,79 @@ and other covariate information should instead be supplied through
 `covariate_df` in `process_proteomics()`, as explained in
 `vignette("batch-correction")`.
 
+# Bioconductor: SummarizedExperiment
+
+Protein intensities prepared with other Bioconductor tools can be supplied in a
+`SummarizedExperiment`, for instance a protein-level assay of a `QFeatures`
+object. `preprocess_se()` converts one into the same `proteomics_data` object,
+and `process_proteomics()` can call this importer automatically when given a
+`SummarizedExperiment`. NADIA needs three things from the object:
+
+- the intensities in an assay, proteins in rows and samples in columns, linear
+  by default or on the log2 scale with `log2_input = TRUE`;
+- unique row names, which become the protein identifiers;
+- the condition of each sample in `colData()$Condition`, with the replicate in
+  `colData()$Replicate` or, without that column, numbered within each
+  condition.
+
+Use `assay_name` to select an assay when the object contains several; otherwise,
+the first assay is used.
+
+Gene names and descriptions are read from `rowData()$Genes` and
+`rowData()$Description` when present. The samples are renamed
+`<condition>_<replicate>`, as the other readers do, and the original names are
+kept in `metadata$R.FileName`.
+
+```{r from-se}
+quant_cols <- grep("^PG.Quantity_", names(dia$protein_quant))
+log2_intensities <- log2(as.matrix(dia$protein_quant[, quant_cols]))
+rownames(log2_intensities) <- dia$protein_quant$PG.ProteinGroups
+
+se <- SummarizedExperiment::SummarizedExperiment(
+    assays  = list(log2 = log2_intensities),
+    colData = data.frame(Condition = dia$metadata$R.Condition))
+
+from_se <- preprocess_se(se, log2_input = TRUE, verbose = FALSE)
+from_se
+head(from_se$metadata[, c("R.FileName", "R.Condition", "R.Replicate", "Coding")])
+```
+
+This importer does not transfer identification metrics from `rowData()`: the
+precursor counts of `protein_id` are left empty, and no peptide counts or
+scores are created, so the interactive tables show only the quantities. The
+quantitative analysis is unaffected.
+
 # Where the design comes from
 
-The four importers produce the same object, but they obtain the experimental
-design in different ways:
+All five importers produce a common object, but the location of the experimental
+design depends on the input. NADIA must know which condition and replicate
+correspond to each sample:
 
-::: {.input-format-summary}
+| Input | Where the design is stored |
+|---|---|
+| Spectronaut | `R.Condition` and `R.Replicate` in the long report |
+| DIA-NN | Run-column suffixes, or an annotation file supplied through `annot_path` |
+| TMT (PD) | Abundance-column suffixes, or `annot_path` |
+| LFQ (PD) | Abundance-column suffixes, or `annot_path` |
+| `SummarizedExperiment` | `Condition` and, optionally, `Replicate` in `colData()` |
 
-| Format | Layout | Design taken from |
-|---|---|---|
-| Spectronaut | long, run-level | the `R.Condition` / `R.Replicate` columns |
-| DIA-NN | wide | the `Abundance: <cond>_<rep>` suffixes, or `annot_path` |
-| TMT (PD) | wide | the `Abundance: <cond>_<rep>` suffixes, or `annot_path` |
-| LFQ (PD) | wide | the `Abundance: <cond>_<rep>` suffixes, or `annot_path` |
+Spectronaut carries the design within its report. For the three wide report
+formats, use the `Abundance: <condition>_<replicate>` naming convention or a
+two-column annotation file. DIA-NN matches the file's `Column` values against
+complete run headers; the Proteome Discoverer importers match them against the
+text after `Abundance: `.
 
-:::
+For a `SummarizedExperiment`, conditions come from `colData()$Condition`.
+Replicates come from `colData()$Replicate` when available; otherwise they are
+numbered within each condition. With `preprocess_se()`, `condition_column` and
+`replicate_column` allow these fields to have other names. No annotation file
+is needed.
 
-Only the long Spectronaut report carries its experimental design internally.
-The three wide formats use a common declaration strategy: either name the
-abundance columns according to the convention or provide a two-column annotation
-file. DIA-NN matches `Column` against its complete run headers, whereas the
-Proteome Discoverer importers match it against the text after `Abundance: `.
-
-`condition_order` then selects the conditions to retain and sets their order in
-the subsequent stages of the analysis. It is required for Spectronaut, DIA-NN
-and TMT. For LFQ it is optional; if omitted, NADIA uses the order in which the
-conditions are detected.
+`condition_order` selects the conditions to retain and determines their order
+in the analysis. It is required by the Spectronaut, DIA-NN and TMT importers,
+and optional for LFQ and `preprocess_se()`. LFQ defaults to order of appearance;
+`preprocess_se()` uses the condition factor's levels, or order of appearance
+when the condition is not a factor.
 
 # Naming the conditions
 
@@ -617,115 +663,96 @@ experimental conditions. A condition label can therefore be corrected in
 `design.tsv` without renaming any abundance column in the quantitative report;
 the values in `Column` must still match the corresponding report identifiers.
 
-# Four sources, one common object
+# Five sources, one common object
 
-NADIA can start from four different report formats—Spectronaut, DIA-NN, TMT or
-LFQ—but all four preprocessing functions converge on the same
-`proteomics_data` object. Each importer adds a format-specific class while
-retaining this common parent class:
+The five importers convert their inputs into a `proteomics_data` object.
+Each retains a source-specific class, while sharing the same three components:
+`metadata`, `protein_id` and `protein_quant`. The following comparison includes
+the `SummarizedExperiment` imported above:
 
 ```{r classes}
-all4 <- list(Spectronaut = dia, DIA_NN = diann, TMT = tmt, LFQ = lfq)
-
-vapply(all4, function(x) class(x)[1], character(1))
-vapply(all4, function(x) inherits(x, "proteomics_data"), logical(1))
+inputs <- list(Spectronaut = dia, DIA_NN = diann, TMT = tmt, LFQ = lfq,
+               SummarizedExperiment = from_se)
+vapply(inputs, function(x) class(x)[1], character(1))
+vapply(inputs, function(x) inherits(x, "proteomics_data"), logical(1))
 ```
-
-Every object contains the same three coordinated components: `metadata`,
-`protein_id` and `protein_quant`.
 
 ```{r elements}
-lapply(all4, names)
+lapply(inputs, names)
 ```
 
-Their structure is common, but their contents reflect the information available
-in the original report. The main differences occur in `metadata` and
-`protein_id`: Spectronaut provides detailed run-level evidence, DIA-NN contains
-limited identification information, TMT reports global identification evidence
-for the multiplex and LFQ retains several identification metrics for each
-sample. The available metadata fields consequently also differ:
+## Sample information
+
+`metadata` links each sample to its condition, replicate and quantitative
+columns. Additional fields depend on the source: Spectronaut includes detailed
+run-level identification counts, whereas the other inputs may provide fewer
+annotations. The shared structure does not imply that every source supplies
+the same evidence:
 
 ```{r md-cols}
-lapply(all4, function(x) colnames(x$metadata))
+lapply(inputs, function(x) colnames(x$metadata))
 ```
 
-The identification columns of `protein_id` keep one naming scheme for every
-format, filled from the closest metric each report offers. The scheme follows
-Spectronaut's names; the score, which differs the most between search engines,
-has a neutral one:
+## Identification evidence
 
-| NADIA column | Spectronaut | DIA-NN | TMT (PD) | LFQ (PD) |
-|---|---|---|---|---|
-| `PG.NrOfPrecursorsIdentified_*` | precursors | empty | `# PSMs`, the protein total in every channel | `# PSMs (by Search Engine): <sample>` |
-| `PG.NrOfStrippedSequencesIdentified_*` | stripped sequences | `N.Sequences` | `# Peptides`, in every channel | `# Peptides (by Search Engine): <sample>` |
-| `PG.Coverage_*` | coverage | not created | `Coverage [%]`, in every channel | `Coverage [%]`, in every sample |
-| `PG.Score.RunWise_*` | `PG.Cscore (Run-Wise)` | not created | `Sum PEP Score`, in every channel | `Score Mascot: <sample>` |
-| `PG.Score` (in `protein_quant`) | `PG.Cscore` | not created | `Sum PEP Score` | `Sum PEP Score` |
+NADIA uses common column names for identification metrics. Most follow the
+Spectronaut convention, while scores use neutral names. The suffix `*` below
+identifies a sample; the global score is stored in `protein_quant`.
 
-The scores of different engines are not on the same scale, so each table
-records which one it holds, and the interactive tables use that name as the
-column label:
+| Metric | NADIA column |
+|---|---|
+| Precursor or PSM count | `PG.NrOfPrecursorsIdentified_*` |
+| Sequence or peptide count | `PG.NrOfStrippedSequencesIdentified_*` |
+| Sequence coverage | `PG.Coverage_*` |
+| Sample-level score | `PG.Score.RunWise_*` |
+| Global score | `PG.Score` |
+
+The meaning and availability of these fields depend on the input:
+
+- **Spectronaut:** precursor and stripped-sequence counts, coverage and
+  `PG.Cscore (Run-Wise)` provide the sample-level metrics; `PG.Cscore` supplies
+  the global score.
+- **DIA-NN:** `N.Sequences` supplies the sequence count. Precursor counts are
+  empty; coverage and score columns are not created.
+- **TMT (Proteome Discoverer):** `# PSMs`, `# Peptides`, `Coverage [%]` and
+  `Sum PEP Score` supply the metrics. These are protein-level totals repeated
+  across channels, not independent identifications for each channel.
+  `Sum PEP Score` also supplies the global score.
+- **LFQ (Proteome Discoverer):** the sample-specific `# PSMs (by Search Engine)`,
+  `# Peptides (by Search Engine)` and `Score Mascot` columns provide counts and
+  scores. Protein-level `Coverage [%]` is repeated across samples, and
+  `Sum PEP Score` supplies the global score.
+- **SummarizedExperiment:** the importer does not transfer identification
+  metrics from `rowData()`. Precursor counts remain empty; peptide counts,
+  coverage and scores are not created. Gene names and descriptions are read
+  when the corresponding annotation fields are present.
+
+A common column name does not make these metrics equivalent: PSM counts are
+not precursor counts, and scores from different engines do not share a scale.
+NADIA records the original score name in `nadia_labels`, which interactive
+tables use for their column labels:
 
 ```{r score-labels}
-lapply(all4, function(x) attr(x$protein_quant, "nadia_labels"))
+lapply(inputs, function(x) attr(x$protein_quant, "nadia_labels"))
 ```
 
-At the quantitative level, all four `protein_quant` tables follow the same
-essential contract. In particular, the abundance of every sample is stored in
-a `PG.Quantity_<Coding>` column linked to `metadata$Coding`. The numerical
-values and any supporting quantitative evidence still depend on the source,
-but the common organisation allows `process_proteomics()` to use the same
-interface for all four formats:
+## Quantities and downstream analysis
+
+For every input, each sample's abundances are stored in a
+`PG.Quantity_<Coding>` column linked to `metadata$Coding`. This common mapping
+allows all five objects to enter the same processing workflow, even when their
+identification annotations differ:
 
 ```{r pipeline}
-processed <- lapply(all4, process_proteomics, verbose = FALSE)
+processed <- lapply(inputs, process_proteomics, verbose = FALSE)
 lapply(processed, function(x) x$comparisons)
 ```
 
-The resulting objects proceed through the same workflow, from normalisation and
-imputation to differential abundance analysis and visualisation. The available
-fields are handled according to the source report, while the shared object
-contract keeps the downstream interface unchanged. The presentation and export
-of the final results are described in `vignette("results-and-export")`.
-
-# A fifth source: a SummarizedExperiment
-
-Protein intensities imported with another Bioconductor tool usually arrive in a
-`SummarizedExperiment`, for instance a protein-level assay of a `QFeatures`
-object. `preprocess_se()` converts one into the same `proteomics_data` object,
-and `process_proteomics()` accepts the `SummarizedExperiment` directly by
-calling it. NADIA needs three things from the object:
-
-- the intensities in an assay, proteins in rows and samples in columns, linear
-  by default or on the log2 scale with `log2_input = TRUE`;
-- unique row names, which become the protein identifiers;
-- the condition of each sample in `colData()$Condition`, with the replicate in
-  `colData()$Replicate` or, without that column, numbered within each
-  condition.
-
-Gene names and descriptions are read from `rowData()$Genes` and
-`rowData()$Description` when present. The samples are renamed
-`<condition>_<replicate>`, as the other readers do, and the original names are
-kept in `metadata$R.FileName`.
-
-```{r from-se}
-quant_cols <- grep("^PG.Quantity_", names(dia$protein_quant))
-log2_intensities <- log2(as.matrix(dia$protein_quant[, quant_cols]))
-rownames(log2_intensities) <- dia$protein_quant$PG.ProteinGroups
-
-se <- SummarizedExperiment::SummarizedExperiment(
-    assays  = list(log2 = log2_intensities),
-    colData = data.frame(Condition = dia$metadata$R.Condition))
-
-from_se <- preprocess_se(se, log2_input = TRUE, verbose = FALSE)
-from_se
-head(from_se$metadata[, c("R.FileName", "R.Condition", "R.Replicate", "Coding")])
-```
-
-This importer does not transfer identification metrics from `rowData()`: the
-precursor counts of `protein_id` are left empty, and no peptide counts or
-scores are created, so the interactive tables show only the quantities. The
-quantitative analysis is unaffected.
+The same downstream functions perform normalization, imputation, differential
+abundance analysis and visualization. Their results depend on the supplied
+quantities and analysis settings, rather than on the availability of optional
+identification metrics. See `vignette("results-and-export")` for presentation
+and export of the results.
 
 # Session information
 

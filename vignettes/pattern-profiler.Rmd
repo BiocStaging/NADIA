@@ -84,7 +84,7 @@ quantification and are aggregated only when the condition-level profiles are
 constructed.
 
 <details class="code-details">
-<summary>Show the code used to summarise the experimental design</summary>
+<summary>Show the code used to summarize the experimental design</summary>
 
 ```{r example-design, results='hide'}
 design_table <- as.data.frame(SummarizedExperiment::colData(res$se_proc))
@@ -115,7 +115,7 @@ information than the direction of the corresponding fold change.
 
 The function first selects proteins using the differential-expression table.
 For each selected protein, it then aggregates replicates within conditions,
-standardises the resulting profile, selects or accepts a number of clusters,
+standardizes the resulting profile, selects or accepts a number of clusters,
 and performs fuzzy c-means clustering. The example below evaluates two to five
 clusters and uses the Xie--Beni index to choose among them.
 
@@ -139,7 +139,7 @@ clusters and uses the Xie--Beni index to choose among them.
 <dd>The order in which conditions appear in the profiles. If omitted, alphabetical order is used.</dd>
 
 <dt><code>aggregate</code></dt>
-<dd>How replicates are summarised within each condition: <code>"median"</code> (default) or <code>"mean"</code>.</dd>
+<dd>How replicates are summarized within each condition: <code>"median"</code> (default) or <code>"mean"</code>.</dd>
 
 <dt><code>auto_select_c</code>, <code>c_range</code>, and <code>c</code></dt>
 <dd>Automatically evaluate candidate cluster numbers in <code>c_range</code>, or set a fixed <code>c</code> when <code>auto_select_c = FALSE</code>.</dd>
@@ -183,13 +183,13 @@ pp <- pattern_profiler_analysis(
 
 The returned object contains the chosen cluster number, the estimated fuzzifier
 (`m`), selection diagnostics, the fitted `Mfuzz` object, and a long-format table
-for inspection and visualisation. The overview below confirms that all selected
+for inspection and visualization. The overview below confirms that all selected
 proteins passed the preprocessing checks. The output contains more rows than
 proteins because a protein can meet the membership threshold in more than one
 cluster.
 
 <details class="code-details">
-<summary>Show the code used to summarise the Pattern Profiler run</summary>
+<summary>Show the code used to summarize the Pattern Profiler run</summary>
 
 ```{r run-overview, eval=have_pattern_profiler, results='hide'}
 run_overview <- data.frame(
@@ -304,7 +304,7 @@ diagnostics.
 | AMM | Average maximum membership across proteins. | Higher |
 | Dmin | Minimum distance between any two cluster centroids. | Higher |
 
-The default `selection_method = "xb"` minimises the Xie--Beni (XB) index.
+The default `selection_method = "xb"` minimizes the Xie--Beni (XB) index.
 `"consensus"` combines the ranks of all four diagnostics and can be useful when
 they disagree. `"elbow"` selects the largest change in centroid separation and
 should be treated as an exploratory alternative rather than as a universal
@@ -338,7 +338,7 @@ knitr::kable(
 )
 ```
 
-All four diagnostics favour two clusters in this example: `c = 2` has the
+All four diagnostics favor two clusters in this example: `c = 2` has the
 lowest XB value and the highest FPC, AMM, and Dmin values. The selected solution
 therefore provides two well-separated expression patterns without adding
 poorly supported subdivisions. These metrics are guides rather than biological
@@ -354,16 +354,16 @@ numbers are arbitrary labels and may be swapped between runs even when the
 underlying patterns are equivalent.
 </div>
 
-Before clustering, NADIA removes profiles that cannot be standardised reliably,
+Before clustering, NADIA removes profiles that cannot be standardized reliably,
 including constant profiles and features with excessive missingness. Remaining
-isolated missing values are filled by k-nearest-neighbour imputation. Failed
+isolated missing values are filled by k-nearest-neighbor imputation. Failed
 candidate fits are stored as missing diagnostic values rather than as zeros, so
 they cannot be mistaken for exceptionally good solutions.
 
 # Understanding the soft-clustering output
 
 The main result is `long_output`. It contains the protein identifier, cluster,
-membership, and one standardised value for each condition. Because expression
+membership, and one standardized value for each condition. Because expression
 is converted to a row-wise z-score, these values describe the **relative profile
 of each protein across the ordered conditions**; they must not be interpreted as
 absolute protein abundance.
@@ -394,7 +394,7 @@ Each row represents one protein--cluster association that satisfies
 associations and reports how many proteins occur in more than one cluster.
 
 <details class="code-details">
-<summary>Show the code used to summarise soft-clustering assignments</summary>
+<summary>Show the code used to summarize soft-clustering assignments</summary>
 
 ```{r membership-summary, eval=have_pattern_profiler, results='hide'}
 pp_summary <- summarize_pattern_profiler(pp$long_output)
@@ -435,7 +435,7 @@ summary shows the size and strength of each set of assignments.
 <div class="cluster-summary-table">
 
 <details class="code-details">
-<summary>Show the code used to summarise cluster membership</summary>
+<summary>Show the code used to summarize cluster membership</summary>
 
 ```{r cluster-summary, eval=have_pattern_profiler, results='hide'}
 cluster_table <- as.data.frame(pp_summary$cluster_summary)
@@ -507,9 +507,9 @@ are retained in `long_output`. Plotting functions can apply an additional,
 stricter threshold, but they cannot recover associations that were removed
 during the analysis.
 
-# Visualising the expression patterns
+# Visualizing the expression patterns
 
-Visualisation connects the numerical memberships to their biological meaning.
+Visualization connects the numerical memberships to their biological meaning.
 NADIA provides interactive Highcharts plots for inspecting all protein profiles
 within individual clusters and for comparing cluster centroids.
 
@@ -517,8 +517,8 @@ within individual clusters and for comparing cluster centroids.
 
 `cluster_profile_highchart_list()` creates one interactive figure per cluster.
 Individual protein lines reveal within-cluster heterogeneity, while the centroid
-line, the mean or median of the proteins drawn (not the centre fitted by the
-clustering), summarises the dominant pattern. Here, a membership threshold of 0.70 is used as
+line, the mean or median of the proteins drawn (not the center fitted by the
+clustering), summarizes the dominant pattern. Here, a membership threshold of 0.70 is used as
 a conservative starting point for displaying reliable cluster profiles.
 
 ```{r individual-profile-code, eval = if (have_pp_charts) 1 else FALSE}
@@ -595,7 +595,7 @@ prepare_vignette_highchart(centroid_plot)
 ```
 :::
 
-The centroids summarise `r n_cluster[["1"]]` proteins in cluster 1 and
+The centroids summarize `r n_cluster[["1"]]` proteins in cluster 1 and
 `r n_cluster[["2"]]` in cluster 2. Cluster `r cluster_down` remains high in `A`
 and `B` before decreasing in `D`, whereas cluster `r cluster_up` rises from `A`
 to `D`. These opposing trajectories are expressed as within-protein
@@ -708,7 +708,7 @@ easier to reproduce and interpret:
 - call `set.seed()` before each run, and check that the main profiles remain
   stable across seeds and plausible cluster numbers;
 - use membership to distinguish representative proteins from ambiguous ones;
-- interpret standardised trajectories as relative shapes, not abundance
+- interpret standardized trajectories as relative shapes, not abundance
   differences; and
 - perform pathway or functional enrichment only after verifying that the
   corresponding cluster is coherent and biologically interpretable.

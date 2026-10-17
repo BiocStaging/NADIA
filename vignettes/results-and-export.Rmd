@@ -83,11 +83,11 @@ res <- process_proteomics(
 
 The returned object contains the processed experiment, differential-abundance
 results, plotting tables, comparison names, and the parameters used in the run.
-The following code summarises the size and purpose of the main components used
+The following code summarizes the size and purpose of the main components used
 throughout this vignette.
 
 <details class="code-details">
-<summary>Show the code used to summarise the returned components</summary>
+<summary>Show the code used to summarize the returned components</summary>
 
 ```{r result-components, results = "hide"}
 component_summary <- data.frame(
@@ -168,7 +168,7 @@ knitr::include_graphics("figures/results-export-formats.svg")
 
 :::
 
-The four formats address different priorities. TSV files favour immediate,
+The four formats address different priorities. TSV files favor immediate,
 human-readable inspection, whereas Parquet preserves column types for efficient
 programmatic exchange. A `.nadia` archive is the most complete option for
 restoring the analysis and its provenance, while interactive HTML is designed
@@ -283,7 +283,7 @@ copy in both formats.
 - `export_normalized` and `export_imputed` control the processed intensity
   matrices.
 - `export_volcano`, `export_boxplot`, and `export_pca` control the tables used by
-  the corresponding visualisation functions.
+  the corresponding visualization functions.
 
 </div>
 </details>
@@ -318,7 +318,7 @@ process_proteomics(
 )
 ```
 
-With the default export switches, NADIA writes five datasets: the normalised
+With the default export switches, NADIA writes five datasets: the normalized
 intensity matrix (`export_normalized`), the final imputed matrix
 (`export_imputed`), the differential-abundance results used by the volcano
 plots (`export_volcano`), the long-format intensities used by the boxplots
@@ -326,7 +326,7 @@ plots (`export_volcano`), the long-format intensities used by the boxplots
 used by PCA and heatmaps (`export_pca`). The matrix files contain one protein
 per row and one sample per intensity column, whereas the plotting inputs use
 long or results-oriented layouts suited to their downstream functions. File
-names include the normalisation and imputation methods so that outputs from
+names include the normalization and imputation methods so that outputs from
 different runs can be distinguished.
 
 The next call writes all five default outputs as TSV files to a temporary
@@ -395,7 +395,7 @@ knitr::kable(
 
 </div>
 
-The filenames record the normalisation and imputation methods, reducing the
+The filenames record the normalization and imputation methods, reducing the
 risk of mixing tables from different runs. The plotting inputs are intentionally
 long: each row represents an observation required by its corresponding plot,
 whereas the two matrix files keep one protein per row.
@@ -404,7 +404,7 @@ Exports can also be assembled *à la carte* with the five switches shown above.
 Each `export_*` argument is `TRUE` by default; set it to `FALSE` to omit that
 dataset. The value of `export_format` is applied to every dataset that remains
 enabled. The following example requests matching TSV and Parquet copies of only
-the final imputed matrix and the differential-abundance results; the normalised
+the final imputed matrix and the differential-abundance results; the normalized
 matrix and the boxplot and PCA inputs are omitted.
 
 ```{r selective-export, eval = FALSE}
@@ -449,10 +449,10 @@ Pattern Profiler result can be included when available.
 </details>
 
 The following example creates a `.nadia` archive from the bundled dataset and
-summarises selected file characteristics and metadata in the table below.
+summarizes selected file characteristics and metadata in the table below.
 
 <details class="code-details">
-<summary>Show the code used to create and summarise the .nadia archive</summary>
+<summary>Show the code used to create and summarize the .nadia archive</summary>
 
 ```{r write-nadia-code, eval = requireNamespace("duckdb", quietly = TRUE), results = "hide"}
 nadia_file <- file.path(tempdir(), "nadia_vignette_analysis.nadia")
@@ -755,9 +755,9 @@ knitr::kable(
 
 <div class="export-warning">
 <p><strong>Working location.</strong> Do not keep an open <code>.nadia</code>
-database inside a folder that is being synchronised by iCloud Drive, Dropbox,
+database inside a folder that is being synchronized by iCloud Drive, Dropbox,
 or OneDrive. Write and use the archive in a local directory, close it, and then
-copy the completed file to the synchronised location.</p>
+copy the completed file to the synchronized location.</p>
 </div>
 
 ## Combine differential abundance with clustering
@@ -957,7 +957,7 @@ knitr::kable(
 
 </details>
 
-The following table summarises the number of proteins in each
+The following table summarizes the number of proteins in each
 differential-abundance category within each dominant cluster.
 
 <div class="archive-output-table">
@@ -1064,7 +1064,7 @@ numeric cells stored as numbers.</p>
 which creates the formatted <code>.xlsx</code> workbook, and
 <strong>PapaParse</strong>, which parses tabular text during browser-side
 export.</p>
-<p>Both libraries and their licence files are shipped with NADIA rather than
+<p>Both libraries and their license files are shipped with NADIA rather than
 downloaded from a content-delivery network. The Excel button therefore remains
 available when the saved page is opened offline, provided its local dependency
 folder accompanies the HTML file.</p>
@@ -1081,7 +1081,7 @@ choice affects portability and which page controls are retained.
 Objects returned by `results_list_widget()`, `protein_list_widget()`,
 `quant_list_widget()`, and `summary_list_widget()` are complete HTML pages.
 `htmltools::save_html()` saves the page and copies its JavaScript and CSS
-dependencies into a neighbouring `lib` directory.
+dependencies into a neighboring `lib` directory.
 
 The following example creates and saves an interactive results page for
 comparison `B-A`. Replace `widget_dir` with a permanent project directory to
@@ -1174,11 +1174,11 @@ Exported values are interpretable only when the analysis settings and source
 data can be identified. NADIA returns the processing parameters in memory and
 stores them automatically in a `.nadia` archive.
 
-The following table summarises the normalisation, imputation, and
+The following table summarizes the normalization, imputation, and
 differential-abundance settings used to obtain the example results.
 
 <details class="code-details">
-<summary>Show the code used to summarise the processing parameters</summary>
+<summary>Show the code used to summarize the processing parameters</summary>
 
 ```{r processing-parameters-code, results = "hide"}
 selected_parameters <- data.frame(
