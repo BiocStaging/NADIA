@@ -209,7 +209,7 @@
 #'
 #' `nadia-tables.js` holds the filter panel, the condition chips and the Excel
 #' export shared by the four `*_widget()` functions; each widget only registers
-#' its settings with it (see [.rl_assemble()]). ExcelJS builds the workbook and
+#' its settings with it (see `.rl_assemble()`). ExcelJS builds the workbook and
 #' PapaParse parses the TSV that `Reactable.getDataCSV()` produces. All three are
 #' shipped inside the package rather than pulled from a CDN, so the buttons work
 #' without an internet connection and `htmlwidgets::saveWidget(selfcontained =

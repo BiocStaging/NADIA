@@ -254,7 +254,7 @@
 #' Shared by the four `import_*()` functions below, which only differ in the
 #' file they look for and in how they validate the result.
 #'
-#' @param results_dir,pattern,method_names,recursive See [import_opdea_results()].
+#' @param results_dir,pattern,method_names,recursive See `import_opdea_results()`.
 #' @param validate Function that validates the combined table, or `NULL`.
 #' @param label Name of the calling function, for the message.
 #' @return Combined data.frame with an `Assay` column naming the pipeline.
