@@ -178,18 +178,6 @@
   df
 }
 
-#' PRONE-style qualitative color palette
-#' @param n Number of colors
-#' @return Character vector of hex colors
-#' @keywords internal
-.im_prone_colors <- function(n) {
-  pal_info   <- RColorBrewer::brewer.pal.info
-  qual_pals  <- pal_info[pal_info$category == "qual", ]
-  col_vector <- rev(unlist(mapply(RColorBrewer::brewer.pal,
-                                  qual_pals$maxcolors,
-                                  rownames(qual_pals))))
-  rep_len(col_vector, n)
-}
 
 # =============================================================================
 # SECTION 2: INTRODUCTION OF ARTIFICIAL NAs
@@ -918,7 +906,7 @@ im_compute_metrics <- function(se,
 im_plot_nrmse <- function(metrics_df, ...) {
   df <- metrics_df[order(metrics_df$NRMSE), ]
   df$Method <- factor(df$Method, levels = df$Method)
-  col_vector <- .im_prone_colors(nrow(df))
+  col_vector <- .prone_colors(nrow(df))
 
   ggplot2::ggplot(df, ggplot2::aes(x = Method, y = NRMSE, fill = Method)) +
     ggplot2::geom_col(show.legend = FALSE, na.rm = TRUE) +
@@ -957,7 +945,7 @@ im_plot_nrmse <- function(metrics_df, ...) {
 im_plot_sor <- function(metrics_df, ...) {
   df <- metrics_df[order(metrics_df$SOR), ]
   df$Method <- factor(df$Method, levels = df$Method)
-  col_vector <- .im_prone_colors(nrow(df))
+  col_vector <- .prone_colors(nrow(df))
 
   ggplot2::ggplot(df, ggplot2::aes(x = Method, y = SOR, fill = Method)) +
     ggplot2::geom_col(show.legend = FALSE, na.rm = TRUE) +
@@ -997,7 +985,7 @@ im_plot_sor <- function(metrics_df, ...) {
 im_plot_pss <- function(metrics_df, ...) {
   df <- metrics_df[order(metrics_df$PSS), ]
   df$Method <- factor(df$Method, levels = df$Method)
-  col_vector <- .im_prone_colors(nrow(df))
+  col_vector <- .prone_colors(nrow(df))
 
   ggplot2::ggplot(df, ggplot2::aes(x = Method, y = PSS, fill = Method)) +
     ggplot2::geom_col(show.legend = FALSE, na.rm = TRUE) +
@@ -1038,7 +1026,7 @@ im_plot_pss <- function(metrics_df, ...) {
 im_plot_acc_oi <- function(metrics_df, ...) {
   df <- metrics_df[order(-metrics_df$ACC_OI), ]
   df$Method <- factor(df$Method, levels = df$Method)
-  col_vector <- .im_prone_colors(nrow(df))
+  col_vector <- .prone_colors(nrow(df))
 
   ggplot2::ggplot(df, ggplot2::aes(x = Method, y = ACC_OI, fill = Method)) +
     ggplot2::geom_col(show.legend = FALSE, na.rm = TRUE) +
@@ -1153,7 +1141,7 @@ im_plot_metrics <- function(metrics_df, ...) {
   method_order <- metrics_df$Method[order(metrics_df$Rank_Mean)]
   long_df$Method <- factor(long_df$Method, levels = method_order)
   long_df$Metric <- factor(long_df$Metric, levels = value_cols)
-  col_vector <- .im_prone_colors(length(method_order))
+  col_vector <- .prone_colors(length(method_order))
 
   ggplot2::ggplot(long_df,
     ggplot2::aes(x = Method, y = Value, fill = Method)) +

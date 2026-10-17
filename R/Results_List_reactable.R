@@ -1081,17 +1081,16 @@ results_list_widget <- function(
 }
 
 
-#' Parse Protein_ID column names into (metric, condition, replicate)
-#' @param colnames_vec Vector of data frame column names
+#' Parse sample columns named <metric>_<condition>_<replicate>
+#'
+#' Shared by the Protein_ID and Protein_QUANT tables, which only differ in the
+#' metrics their columns carry.
+#'
+#' @param colnames_vec Vector of column names.
+#' @param metrics Metric prefixes to look for, in display order.
 #' @return Sorted data frame: column, metric, condition, replicate, coding
 #' @noRd
-.pl_parse_samples <- function(colnames_vec) {
-  metrics <- c(
-    "PG.NrOfPrecursorsIdentified",
-    "PG.NrOfStrippedSequencesIdentified",
-    "PG.Coverage",
-    "PG.Cscore.RunWise"
-  )
+.rl_parse_samples <- function(colnames_vec, metrics) {
 
   rows <- list()
   for (m in metrics) {
@@ -1124,6 +1123,19 @@ results_list_widget <- function(
   df$metric <- as.character(df$metric)
   rownames(df) <- NULL
   df
+}
+
+#' Parse Protein_ID column names into (metric, condition, replicate)
+#' @param colnames_vec Vector of data frame column names
+#' @return See .rl_parse_samples()
+#' @noRd
+.pl_parse_samples <- function(colnames_vec) {
+  .rl_parse_samples(colnames_vec, c(
+    "PG.NrOfPrecursorsIdentified",
+    "PG.NrOfStrippedSequencesIdentified",
+    "PG.Coverage",
+    "PG.Cscore.RunWise"
+  ))
 }
 
 
@@ -1437,47 +1449,15 @@ results_list_widget <- function(
 
 #' Parse Protein_QUANT column names into (metric, condition, replicate)
 #' @param colnames_vec Vector of column names
-#' @return Sorted data frame: column, metric, condition, replicate, coding
+#' @return See .rl_parse_samples()
 #' @noRd
 .ql_parse_samples <- function(colnames_vec) {
-  metrics <- c(
+  .rl_parse_samples(colnames_vec, c(
     "PG.NrOfPrecursorsUsedForQuantification",
     "PG.NrOfStrippedSequencesUsedForQuantification",
     "PG.Quantity",
     "NormImp.Log2"
-  )
-
-  rows <- list()
-  for (m in metrics) {
-    pat <- paste0("^", gsub("\\.", "\\\\.", m), "_(.+?)_(\\d+)$")
-    hits <- regmatches(colnames_vec, regexec(pat, colnames_vec))
-    for (i in seq_along(hits)) {
-      h <- hits[[i]]
-      if (length(h) == 3) {
-        rows[[length(rows) + 1]] <- data.frame(
-          column = colnames_vec[i],
-          metric = m,
-          condition = h[2],
-          replicate = as.integer(h[3]),
-          coding = paste(h[2], h[3], sep = "_"),
-          stringsAsFactors = FALSE
-        )
-      }
-    }
-  }
-
-  if (length(rows) == 0) {
-    return(data.frame(column = character(0), metric = character(0),
-                      condition = character(0), replicate = integer(0),
-                      coding = character(0), stringsAsFactors = FALSE))
-  }
-
-  df <- do.call(rbind, rows)
-  df$metric <- factor(df$metric, levels = metrics)
-  df <- df[order(df$metric, df$condition, df$replicate), ]
-  df$metric <- as.character(df$metric)
-  rownames(df) <- NULL
-  df
+  ))
 }
 
 

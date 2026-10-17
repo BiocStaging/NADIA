@@ -702,15 +702,6 @@ import_norm_matrices <- function(tsv_dir,
 # SECTION 3: INDIVIDUAL PLOT FUNCTIONS
 # =============================================================================
 
-# Helper: PRONE-style qualitative color palette (RColorBrewer, reversed)
-.nm_prone_colors <- function(n) {
-  pal_info   <- RColorBrewer::brewer.pal.info
-  qual_pals  <- pal_info[pal_info$category == "qual", ]
-  col_vector <- rev(unlist(mapply(RColorBrewer::brewer.pal,
-                                  qual_pals$maxcolors,
-                                  rownames(qual_pals))))
-  rep_len(col_vector, n)
-}
 
 # Helper: resolve assay_names (NULL -> all)
 .nm_assay_names <- function(se, assay_names) {
@@ -857,7 +848,7 @@ nm_plot_pcv <- function(se, assay_names = NULL,
                         diff = FALSE, baseline = "log2", ...) {
   assay_names <- .nm_assay_names(se, assay_names)
   condition   <- .nm_condition(se, condition_col)
-  col_vector  <- .nm_prone_colors(length(assay_names))
+  col_vector  <- .prone_colors(length(assay_names))
 
   rows <- lapply(assay_names, function(nm) {
     mat <- SummarizedExperiment::assay(se, nm)
@@ -935,7 +926,7 @@ nm_plot_pmad <- function(se, assay_names = NULL,
                          diff = FALSE, baseline = "log2", ...) {
   assay_names <- .nm_assay_names(se, assay_names)
   condition   <- .nm_condition(se, condition_col)
-  col_vector  <- .nm_prone_colors(length(assay_names))
+  col_vector  <- .prone_colors(length(assay_names))
 
   rows <- lapply(assay_names, function(nm) {
     mat <- SummarizedExperiment::assay(se, nm)
@@ -1013,7 +1004,7 @@ nm_plot_pev <- function(se, assay_names = NULL,
                         diff = FALSE, baseline = "log2", ...) {
   assay_names <- .nm_assay_names(se, assay_names)
   condition   <- .nm_condition(se, condition_col)
-  col_vector  <- .nm_prone_colors(length(assay_names))
+  col_vector  <- .prone_colors(length(assay_names))
 
   rows <- lapply(assay_names, function(nm) {
     mat <- SummarizedExperiment::assay(se, nm)
@@ -1168,7 +1159,7 @@ nm_plot_correlation <- function(se, assay_names = NULL,
   stopifnot(cor_method %in% c("pearson", "spearman", "kendall"))
   assay_names <- .nm_assay_names(se, assay_names)
   condition   <- .nm_condition(se, condition_col)
-  col_vector  <- .nm_prone_colors(length(assay_names))
+  col_vector  <- .prone_colors(length(assay_names))
 
   rows <- lapply(assay_names, function(nm) {
     mat  <- SummarizedExperiment::assay(se, nm)
@@ -1519,7 +1510,7 @@ nm_plot_metrics <- function(se, assay_names = NULL,
                             condition_col = "Condition", ...) {
   assay_names <- .nm_assay_names(se, assay_names)
   metrics_df  <- nm_compute_metrics(se, assay_names, condition_col)
-  col_vector  <- .nm_prone_colors(length(assay_names))
+  col_vector  <- .prone_colors(length(assay_names))
 
   # Pivot to long format (exclude PERMANOVA_pval from plot)
   value_cols <- c("PC1_VarPct", "PC1_F_ratio", "PERMANOVA_R2",
@@ -1622,7 +1613,7 @@ nm_rank_pc1 <- function(se, assay_names = NULL, condition_col = "Condition",
 nm_plot_pc1_ranking <- function(se, assay_names = NULL,
                                 condition_col = "Condition", ...) {
   rank_df    <- nm_rank_pc1(se, assay_names, condition_col, verbose = FALSE)
-  col_vector <- .nm_prone_colors(nrow(rank_df))
+  col_vector <- .prone_colors(nrow(rank_df))
 
   # Order factor by PC1_VarPct descending (bottom-to-top in coord_flip)
   rank_df$Method <- factor(rank_df$Method,
@@ -1708,7 +1699,7 @@ nm_rank_mds1 <- function(se, assay_names = NULL, condition_col = "Condition",
 nm_plot_mds1_ranking <- function(se, assay_names = NULL,
                                  condition_col = "Condition", ...) {
   rank_df    <- nm_rank_mds1(se, assay_names, condition_col, verbose = FALSE)
-  col_vector <- .nm_prone_colors(nrow(rank_df))
+  col_vector <- .prone_colors(nrow(rank_df))
 
   # Order factor by MDS1_VarPct ascending (best at top in coord_flip)
   rank_df$Method <- factor(rank_df$Method,
@@ -1964,7 +1955,7 @@ nm_plot_final_ranking <- function(se, assay_names = NULL,
                                   cor_method = "pearson", ...) {
   rank_df    <- nm_rank_final(se, assay_names, condition_col,
                               cor_method = cor_method, verbose = FALSE)
-  col_vector <- .nm_prone_colors(nrow(rank_df))
+  col_vector <- .prone_colors(nrow(rank_df))
 
   # Order factor: best (lowest Rank_Final) at top in coord_flip
   rank_df$Method <- factor(rank_df$Method,

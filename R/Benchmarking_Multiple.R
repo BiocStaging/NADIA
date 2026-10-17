@@ -249,6 +249,57 @@
 # SECTION 2: IMPORT FUNCTION
 # =============================================================================
 
+#' Import one kind of benchmark table from every pipeline folder
+#'
+#' Shared by the four `import_*()` functions below, which only differ in the
+#' file they look for and in how they validate the result.
+#'
+#' @param results_dir,pattern,method_names,recursive See [import_opdea_results()].
+#' @param validate Function that validates the combined table, or `NULL`.
+#' @param label Name of the calling function, for the message.
+#' @return Combined data.frame with an `Assay` column naming the pipeline.
+#' @keywords internal
+#' @noRd
+.bm_import <- function(results_dir, pattern, method_names, recursive,
+                       validate, label) {
+  if (!dir.exists(results_dir))
+    stop("Directory not found: ", results_dir)
+
+  files <- list.files(results_dir, pattern = pattern,
+                      full.names = TRUE, recursive = recursive)
+  if (length(files) == 0)
+    stop("No files matching pattern '", pattern, "' found in: ", results_dir)
+
+  # --- Determine Assay names ---
+  if (is.null(method_names)) {
+    method_names <- basename(dirname(files))
+  }
+  if (length(method_names) != length(files))
+    stop("Length of method_names (", length(method_names),
+         ") must match number of files (", length(files), ").")
+
+  # --- Read and combine ---
+  df_list <- vector("list", length(files))
+  for (i in seq_along(files)) {
+    df <- .bm_read_tsv(files[i])
+    df$Assay <- method_names[i]
+    df_list[[i]] <- df
+  }
+
+  combined <- .bm_rbind_fill(df_list)
+  rownames(combined) <- NULL
+
+  if (!is.null(validate)) validate(combined)
+
+  n_methods <- length(unique(combined$Assay))
+  n_comps   <- length(unique(combined$Comparison))
+  message(label, ": loaded ", n_methods, " method(s), ",
+          n_comps, " comparison(s), ", nrow(combined), " rows.")
+
+  combined
+}
+
+
 #' Import OpDEA metrics from multiple benchmark result folders
 #'
 #' Reads \code{benchmark_opdea_metrics.tsv} files from subdirectories,
@@ -286,41 +337,8 @@ import_opdea_results <- function(results_dir,
                                  pattern      = "benchmark_opdea_metrics\\.tsv$",
                                  method_names = NULL,
                                  recursive    = TRUE) {
-  if (!dir.exists(results_dir))
-    stop("Directory not found: ", results_dir)
-
-  files <- list.files(results_dir, pattern = pattern,
-                      full.names = TRUE, recursive = recursive)
-  if (length(files) == 0)
-    stop("No files matching pattern '", pattern, "' found in: ", results_dir)
-
-  # --- Determine Assay names ---
-  if (is.null(method_names)) {
-    method_names <- basename(dirname(files))
-  }
-  if (length(method_names) != length(files))
-    stop("Length of method_names (", length(method_names),
-         ") must match number of files (", length(files), ").")
-
-  # --- Read and combine ---
-  df_list <- vector("list", length(files))
-  for (i in seq_along(files)) {
-    df <- .bm_read_tsv(files[i])
-    df$Assay <- method_names[i]
-    df_list[[i]] <- df
-  }
-
-  combined <- .bm_rbind_fill(df_list)
-  rownames(combined) <- NULL
-
-  .bm_validate_opdea(combined)
-
-  n_methods <- length(unique(combined$Assay))
-  n_comps   <- length(unique(combined$Comparison))
-  message("import_opdea_results: loaded ", n_methods, " method(s), ",
-          n_comps, " comparison(s), ", nrow(combined), " rows.")
-
-  combined
+  .bm_import(results_dir, pattern, method_names, recursive,
+             validate = .bm_validate_opdea, label = "import_opdea_results")
 }
 
 
@@ -360,39 +378,8 @@ import_confusion_results <- function(results_dir,
                                      pattern      = "benchmark_confusion_overall\\.tsv$",
                                      method_names = NULL,
                                      recursive    = TRUE) {
-  if (!dir.exists(results_dir))
-    stop("Directory not found: ", results_dir)
-
-  files <- list.files(results_dir, pattern = pattern,
-                      full.names = TRUE, recursive = recursive)
-  if (length(files) == 0)
-    stop("No files matching pattern '", pattern, "' found in: ", results_dir)
-
-  if (is.null(method_names)) {
-    method_names <- basename(dirname(files))
-  }
-  if (length(method_names) != length(files))
-    stop("Length of method_names (", length(method_names),
-         ") must match number of files (", length(files), ").")
-
-  df_list <- vector("list", length(files))
-  for (i in seq_along(files)) {
-    df <- .bm_read_tsv(files[i])
-    df$Assay <- method_names[i]
-    df_list[[i]] <- df
-  }
-
-  combined <- .bm_rbind_fill(df_list)
-  rownames(combined) <- NULL
-
-  .bm_validate_confusion(combined)
-
-  n_methods <- length(unique(combined$Assay))
-  n_comps   <- length(unique(combined$Comparison))
-  message("import_confusion_results: loaded ", n_methods, " method(s), ",
-          n_comps, " comparison(s), ", nrow(combined), " rows.")
-
-  combined
+  .bm_import(results_dir, pattern, method_names, recursive,
+             validate = .bm_validate_confusion, label = "import_confusion_results")
 }
 
 
@@ -430,37 +417,8 @@ import_classified_results <- function(results_dir,
                                       pattern      = "benchmark_classified\\.tsv$",
                                       method_names = NULL,
                                       recursive    = TRUE) {
-  if (!dir.exists(results_dir))
-    stop("Directory not found: ", results_dir)
-
-  files <- list.files(results_dir, pattern = pattern,
-                      full.names = TRUE, recursive = recursive)
-  if (length(files) == 0)
-    stop("No files matching pattern '", pattern, "' found in: ", results_dir)
-
-  if (is.null(method_names)) {
-    method_names <- basename(dirname(files))
-  }
-  if (length(method_names) != length(files))
-    stop("Length of method_names (", length(method_names),
-         ") must match number of files (", length(files), ").")
-
-  df_list <- vector("list", length(files))
-  for (i in seq_along(files)) {
-    df <- .bm_read_tsv(files[i])
-    df$Assay <- method_names[i]
-    df_list[[i]] <- df
-  }
-
-  combined <- .bm_rbind_fill(df_list)
-  rownames(combined) <- NULL
-
-  n_methods <- length(unique(combined$Assay))
-  n_comps   <- length(unique(combined$Comparison))
-  message("import_classified_results: loaded ", n_methods, " method(s), ",
-          n_comps, " comparison(s), ", nrow(combined), " rows.")
-
-  combined
+  .bm_import(results_dir, pattern, method_names, recursive,
+             validate = NULL, label = "import_classified_results")
 }
 
 
@@ -500,39 +458,8 @@ import_benchmark_metrics <- function(results_dir,
                                      pattern      = "benchmark_metrics\\.tsv$",
                                      method_names = NULL,
                                      recursive    = TRUE) {
-  if (!dir.exists(results_dir))
-    stop("Directory not found: ", results_dir)
-
-  files <- list.files(results_dir, pattern = pattern,
-                      full.names = TRUE, recursive = recursive)
-  if (length(files) == 0)
-    stop("No files matching pattern '", pattern, "' found in: ", results_dir)
-
-  if (is.null(method_names)) {
-    method_names <- basename(dirname(files))
-  }
-  if (length(method_names) != length(files))
-    stop("Length of method_names (", length(method_names),
-         ") must match number of files (", length(files), ").")
-
-  df_list <- vector("list", length(files))
-  for (i in seq_along(files)) {
-    df <- .bm_read_tsv(files[i])
-    df$Assay <- method_names[i]
-    df_list[[i]] <- df
-  }
-
-  combined <- .bm_rbind_fill(df_list)
-  rownames(combined) <- NULL
-
-  .bm_validate_bench_metrics(combined)
-
-  n_methods <- length(unique(combined$Assay))
-  n_comps   <- length(unique(combined$Comparison))
-  message("import_benchmark_metrics: loaded ", n_methods, " method(s), ",
-          n_comps, " comparison(s), ", nrow(combined), " rows.")
-
-  combined
+  .bm_import(results_dir, pattern, method_names, recursive,
+             validate = .bm_validate_bench_metrics, label = "import_benchmark_metrics")
 }
 
 

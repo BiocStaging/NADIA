@@ -186,6 +186,26 @@
 }
 
 
+#' Qualitative colours for the method comparison plots, PRONE style
+#'
+#' The colours of every RColorBrewer qualitative palette, concatenated in
+#' reverse, as the PRONE package draws its normalisation comparisons. Used by
+#' the normalisation and imputation metric plots, which each had a copy.
+#'
+#' @param n Number of colours.
+#' @return Character vector of `n` colours.
+#' @keywords internal
+#' @noRd
+.prone_colors <- function(n) {
+  pal_info   <- RColorBrewer::brewer.pal.info
+  qual_pals  <- pal_info[pal_info$category == "qual", ]
+  col_vector <- rev(unlist(mapply(RColorBrewer::brewer.pal,
+                                  qual_pals$maxcolors,
+                                  rownames(qual_pals))))
+  rep_len(col_vector, n)
+}
+
+
 # =============================================================================
 # Feature filtering helpers
 # =============================================================================
