@@ -666,17 +666,12 @@ process_proteomics <- function(
     verbose = verbose
   )
 
-  # Derive assay_label from the imputed SE
+  # The assay impute_proteomics() added. It always adds one, also for
+  # imp_method = "none", whose assay keeps the missing values.
   assay_label <- setdiff(
     SummarizedExperiment::assayNames(imp_result$se),
     SummarizedExperiment::assayNames(se)
-  )
-  if (length(assay_label) == 0) {
-    # imp_method="none" adds no new assay; fall back to normalized
-    assay_label <- norm_method
-  } else {
-    assay_label <- assay_label[1]
-  }
+  )[1]
 
   se_proc <- imp_result$se
 
