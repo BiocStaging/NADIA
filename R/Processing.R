@@ -365,11 +365,16 @@
 #'
 #' The input is a `proteomics_data` object, which every preprocessing function
 #' returns with the same three elements, so the pipeline is indifferent to the
-#' acquisition and the search engine the data came from.
+#' acquisition and the search engine the data came from. A
+#' `SummarizedExperiment` is also accepted, for data imported with other
+#' tools: it is converted by [preprocess_se()], with `assay_name` and
+#' `log2_input`.
 #'
 #' @param preprocessing A `proteomics_data` object, as returned by
-#'   [preprocess_spectronaut()], [preprocess_diann()], [preprocess_tmt()] or
-#'   [preprocess_lfq()].
+#'   [preprocess_spectronaut()], [preprocess_diann()], [preprocess_tmt()],
+#'   [preprocess_lfq()] or [preprocess_se()]; or a `SummarizedExperiment` of
+#'   protein intensities with the condition in `colData()$Condition` (see
+#'   [preprocess_se()]).
 #' @param export_dir Output directory for exported files. Defaults to `NULL`,
 #'   which writes nothing to disk; pass a path to enable the exports controlled
 #'   by `export_normalized`, `export_imputed`, `export_volcano`,
@@ -426,6 +431,10 @@
 #' @param export_volcano Export VolcanoPlot_Input (default: TRUE)
 #' @param export_boxplot Export BoxPlot_Input (default: TRUE)
 #' @param export_pca Export PCA_Input (default: TRUE)
+#' @param assay_name For a `SummarizedExperiment` input, the assay with the
+#'   intensities (default: the first). See [preprocess_se()].
+#' @param log2_input For a `SummarizedExperiment` input, `TRUE` if the
+#'   intensities are on the log2 scale (default `FALSE`, linear).
 #' @param verbose Print progress messages (default: TRUE)
 #'
 #' @return List of class proteomics_result with:
@@ -508,16 +517,28 @@ process_proteomics <- function(
     export_volcano = TRUE,
     export_boxplot = TRUE,
     export_pca = TRUE,
+    assay_name = NULL,
+    log2_input = FALSE,
     verbose = TRUE
 ) {
   # =========================================================================
   # VALIDATIONS
   # =========================================================================
 
+  # A SummarizedExperiment (data imported with another tool) is converted to
+  # the object the readers return, so everything below is unchanged.
+  if (inherits(preprocessing, c("SummarizedExperiment", "QFeatures"))) {
+    preprocessing <- preprocess_se(preprocessing, assay_name = assay_name,
+                                   log2_input = log2_input, verbose = verbose)
+  } else if (!is.null(assay_name) || !isFALSE(log2_input)) {
+    warning("`assay_name` and `log2_input` apply only to a SummarizedExperiment ",
+            "input; they are ignored.", call. = FALSE)
+  }
   if (!inherits(preprocessing, "proteomics_data")) {
     stop("The 'preprocessing' argument must be a 'proteomics_data' object, as ",
          "returned by preprocess_spectronaut(), preprocess_diann(), ",
-         "preprocess_tmt() or preprocess_lfq().")
+         "preprocess_tmt(), preprocess_lfq() or preprocess_se(), or a ",
+         "SummarizedExperiment.")
   }
 
   # Parquet needs arrow, a suggested package. Checked now rather than at export

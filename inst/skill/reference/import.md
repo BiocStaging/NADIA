@@ -1,6 +1,6 @@
 # Import: from a quantification report to `proteomics_data`
 
-Four readers, one output contract. Everything downstream consumes any of them
+Five readers, one output contract. Everything downstream consumes any of them
 unchanged, so this is the only stage that depends on the search engine.
 
 | Report | Function | Shape |
@@ -9,6 +9,7 @@ unchanged, so this is the only stage that depends on the search engine.
 | DIA-NN `report.pg_matrix.tsv` | `preprocess_diann()` | wide |
 | TMT from Proteome Discoverer | `preprocess_tmt()` | wide |
 | Label-free (DDA/DIA) from Proteome Discoverer | `preprocess_lfq()` | wide |
+| A `SummarizedExperiment` from another tool (e.g. a `QFeatures` assay) | `preprocess_se()`, or pass it to `process_proteomics()` | condition in `colData()$Condition`; `log2_input = TRUE` if already log2 |
 
 All four return an S3 object of class
 `c("<type>_data", "proteomics_data", "list")` with exactly three elements:
@@ -135,7 +136,7 @@ sprintf("%d of %d cells (%.3f %%)", n_missing, length(q), 100 * n_missing / leng
 nrow(prep$protein_quant)
 ```
 
-The `PG.Quantity_*` naming is shared by all four readers, so this snippet works
+The `PG.Quantity_*` naming is shared by all five readers, so this snippet works
 whichever one produced the object.
 
 Zeros count as missing: NADIA converts them during normalisation. A report that

@@ -99,6 +99,15 @@ Changes made in response to the Bioconductor review.
   where it is meant for fractions ordered along a separation gradient and is
   invalid otherwise; NADIA's variant averaged the nearest columns, which
   mixes replicates of different conditions at the edges of each block.
+* `process_proteomics()` accepts a `SummarizedExperiment`, so data imported
+  with other tools (a protein-level `QFeatures` assay, a `limpa` import, or a
+  matrix of intensities) enter NADIA's pipeline. The condition is read from
+  `colData()$Condition`; `log2_input = TRUE` declares intensities already on
+  the log2 scale and `assay_name` chooses the assay. The conversion is
+  available on its own as `preprocess_se()`, a fifth reader returning the same
+  `proteomics_data` object as the other four, which `write_nadia()` stores like
+  any other. The example data rebuilt as a `SummarizedExperiment` give results
+  identical to those from the Spectronaut report.
 
 # NADIA 0.99.0
 

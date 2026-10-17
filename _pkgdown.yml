@@ -67,7 +67,8 @@ articles:
 reference:
 - title: Import and preprocessing
   desc: >
-    Four readers, one output contract. Each converts a quantification report
+    Five readers, one output contract. Four convert a quantification report,
+    and `preprocess_se()` a `SummarizedExperiment` imported with another tool,
     into the same `proteomics_data` object, so everything downstream is
     independent of the search engine.
   contents:
@@ -75,6 +76,7 @@ reference:
   - preprocess_diann
   - preprocess_tmt
   - preprocess_lfq
+  - preprocess_se
 
 - title: The analysis pipeline
   desc: >
@@ -230,6 +232,7 @@ reference:
   - print.diann_data
   - print.tmt_data
   - print.lfq_data
+  - print.se_data
   - print.proteomics_result
   - print.proteomics_heatmap
   - print.nadia_db

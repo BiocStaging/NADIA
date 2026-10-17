@@ -45,13 +45,17 @@ process_proteomics(
   export_volcano = TRUE,
   export_boxplot = TRUE,
   export_pca = TRUE,
+  assay_name = NULL,
+  log2_input = FALSE,
   verbose = TRUE
 )
 }
 \arguments{
 \item{preprocessing}{A \code{proteomics_data} object, as returned by
-\code{\link[=preprocess_spectronaut]{preprocess_spectronaut()}}, \code{\link[=preprocess_diann]{preprocess_diann()}}, \code{\link[=preprocess_tmt]{preprocess_tmt()}} or
-\code{\link[=preprocess_lfq]{preprocess_lfq()}}.}
+\code{\link[=preprocess_spectronaut]{preprocess_spectronaut()}}, \code{\link[=preprocess_diann]{preprocess_diann()}}, \code{\link[=preprocess_tmt]{preprocess_tmt()}},
+\code{\link[=preprocess_lfq]{preprocess_lfq()}} or \code{\link[=preprocess_se]{preprocess_se()}}; or a \code{SummarizedExperiment} of
+protein intensities with the condition in \code{colData()$Condition} (see
+\code{\link[=preprocess_se]{preprocess_se()}}).}
 
 \item{export_dir}{Output directory for exported files. Defaults to \code{NULL},
 which writes nothing to disk; pass a path to enable the exports controlled
@@ -148,6 +152,12 @@ analysis starts.}
 
 \item{export_pca}{Export PCA_Input (default: TRUE)}
 
+\item{assay_name}{For a \code{SummarizedExperiment} input, the assay with the
+intensities (default: the first). See \code{\link[=preprocess_se]{preprocess_se()}}.}
+
+\item{log2_input}{For a \code{SummarizedExperiment} input, \code{TRUE} if the
+intensities are on the log2 scale (default \code{FALSE}, linear).}
+
 \item{verbose}{Print progress messages (default: TRUE)}
 }
 \value{
@@ -178,7 +188,10 @@ Normalization.R, Imputation.R, and DEAnalysis.R.
 \details{
 The input is a \code{proteomics_data} object, which every preprocessing function
 returns with the same three elements, so the pipeline is indifferent to the
-acquisition and the search engine the data came from.
+acquisition and the search engine the data came from. A
+\code{SummarizedExperiment} is also accepted, for data imported with other
+tools: it is converted by \code{\link[=preprocess_se]{preprocess_se()}}, with \code{assay_name} and
+\code{log2_input}.
 }
 \examples{
 data(nadia_dia)

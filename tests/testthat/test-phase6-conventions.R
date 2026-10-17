@@ -20,7 +20,7 @@
 # output IS the return value of the method, and message() would send it to
 # stderr where print() output does not go.
 .NADIA_PRINT_METHODS <- c("print.spectronaut_data", "print.diann_data",
-                          "print.tmt_data", "print.lfq_data",
+                          "print.tmt_data", "print.lfq_data", "print.se_data",
                           "print.proteomics_result", "print.nadia_db")
 
 test_that("cat() survives only inside the print.* show methods", {

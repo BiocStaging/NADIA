@@ -22,7 +22,9 @@ knitr::opts_chunk$set(collapse = TRUE, comment = "#>", crop = NULL)
 NADIA accepts four input formats through `preprocess_spectronaut()`,
 `preprocess_diann()`, `preprocess_tmt()` and `preprocess_lfq()`. Although their
 source reports have different layouts, all four functions return a
-`proteomics_data` object with the same three components. Consequently,
+`proteomics_data` object with the same three components. Data already imported
+with another tool enter as a `SummarizedExperiment`, through `preprocess_se()`
+(see the last section). Consequently,
 `process_proteomics()` and the downstream modules use the same interface
 regardless of how the data were acquired or searched.
 
@@ -664,6 +666,45 @@ imputation to differential abundance analysis and visualisation. The available
 fields are handled according to the source report, while the shared object
 contract keeps the downstream interface unchanged. The presentation and export
 of the final results are described in `vignette("results-and-export")`.
+
+# A fifth source: a SummarizedExperiment
+
+Protein intensities imported with another Bioconductor tool usually arrive in a
+`SummarizedExperiment`, for instance a protein-level assay of a `QFeatures`
+object. `preprocess_se()` converts one into the same `proteomics_data` object,
+and `process_proteomics()` accepts the `SummarizedExperiment` directly by
+calling it. NADIA needs three things from the object:
+
+- the intensities in an assay, proteins in rows and samples in columns, linear
+  by default or on the log2 scale with `log2_input = TRUE`;
+- unique row names, which become the protein identifiers;
+- the condition of each sample in `colData()$Condition`, with the replicate in
+  `colData()$Replicate` or, without that column, numbered within each
+  condition.
+
+Gene names and descriptions are read from `rowData()$Genes` and
+`rowData()$Description` when present. The samples are renamed
+`<condition>_<replicate>`, as the other readers do, and the original names are
+kept in `metadata$R.FileName`.
+
+```{r from-se}
+quant_cols <- grep("^PG.Quantity_", names(dia$protein_quant))
+log2_intensities <- log2(as.matrix(dia$protein_quant[, quant_cols]))
+rownames(log2_intensities) <- dia$protein_quant$PG.ProteinGroups
+
+se <- SummarizedExperiment::SummarizedExperiment(
+    assays  = list(log2 = log2_intensities),
+    colData = data.frame(Condition = dia$metadata$R.Condition))
+
+from_se <- preprocess_se(se, log2_input = TRUE, verbose = FALSE)
+from_se
+head(from_se$metadata[, c("R.FileName", "R.Condition", "R.Replicate", "Coding")])
+```
+
+A `SummarizedExperiment` carries no identification evidence: the precursor
+counts of `protein_id` are left empty, and there are no peptide counts or
+scores, so the interactive tables show only what the object provides. The
+quantitative analysis is unaffected.
 
 # Session information
 

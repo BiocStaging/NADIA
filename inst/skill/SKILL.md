@@ -72,7 +72,7 @@ Section *Choosing the methods* below is the part that matters.
 Each stage has a reference file. Read the one you need; do not load them all.
 
 1. **Import** — `reference/import.md`
-   Four readers, one output contract. How the experimental design is declared,
+   Five readers, one output contract. How the experimental design is declared,
    and what to check before going further.
 2. **Choosing the methods** — `reference/method-choice.md`
    13 normalisation and 19 imputation methods. How to choose on evidence

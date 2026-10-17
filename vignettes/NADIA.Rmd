@@ -836,9 +836,51 @@ qf <- hypothesisTest(qf, i = "proteins",
 rowData(qf[["proteins"]])$ConditionB
 ```
 
-In the other direction, a differential-abundance table produced with `MSstats`
-or any other tool can be adapted to NADIA's format and benchmarked together
-with NADIA's pipelines, as shown in `vignette("benchmarking")`.
+In the other direction, data imported with other tools enter NADIA as a
+`SummarizedExperiment`. `process_proteomics()` accepts one directly: the
+intensities in an assay, proteins in rows, and the condition of each sample in
+`colData()$Condition`. Here the example data are rebuilt as a
+`SummarizedExperiment`, as another tool would hand them over:
+
+```{r se-input}
+quant_cols <- grep("^PG.Quantity_", names(nadia_dia$protein_quant))
+intensities <- as.matrix(nadia_dia$protein_quant[, quant_cols])
+rownames(intensities) <- nadia_dia$protein_quant$PG.ProteinGroups
+
+se <- SummarizedExperiment::SummarizedExperiment(
+    assays  = list(intensity = intensities),
+    colData = data.frame(Condition = nadia_dia$metadata$R.Condition,
+                         Replicate = nadia_dia$metadata$R.Replicate),
+    rowData = data.frame(Genes = nadia_dia$protein_quant$PG.Genes))
+
+res_se <- process_proteomics(se, verbose = FALSE)
+identical(res_se$DEPs_results, res$DEPs_results)
+```
+
+The analysis is the same as from the Spectronaut report. Intensities already on
+the log2 scale are declared with `log2_input = TRUE`, and `assay_name` chooses
+the assay when there are several. `preprocess_se()` performs the conversion on
+its own, which keeps the imported object, for example to store it with
+`write_nadia()`. The same route takes a protein-level assay of a `QFeatures`
+object, or an `EList` from `limpa`:
+
+```{r se-from-other-tools, eval = FALSE}
+# QFeatures: the protein-level assay, with the condition added to its colData
+se <- qf[["proteins"]]
+se$Condition <- c("A", "A", "A", "B", "B", "B")
+res <- process_proteomics(se)
+
+# limpa: an EList holds log2 intensities
+y <- limpa::readDIANN("report.parquet")
+se <- SummarizedExperiment::SummarizedExperiment(
+    assays  = list(log2 = y$E),
+    colData = data.frame(Condition = c("A", "A", "A", "B", "B", "B")))
+res <- process_proteomics(se, log2_input = TRUE)
+```
+
+A differential-abundance table produced with `MSstats` or any other tool can
+also be adapted to NADIA's format and benchmarked together with NADIA's
+pipelines, as shown in `vignette("benchmarking")`.
 
 # Next steps
 

@@ -389,7 +389,7 @@ nadia_preprocessing <- function(db) {
   # would come back with the wrong class, print through the wrong method and
   # fail an identical() against the original, all without a word.
   known <- c(dia = "spectronaut_data", diann = "diann_data",
-             tmt = "tmt_data", lfq = "lfq_data")
+             tmt = "tmt_data", lfq = "lfq_data", se = "se_data")
   et   <- db$meta[["experiment_type"]]
   type <- unname(known[et])
   if (is.na(type)) {
