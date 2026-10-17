@@ -2125,6 +2125,10 @@ protein_list_widget <- function(
       layout = "grouped", sheet = "Protein-List_ID", file = "Protein_List_ID",
       headerFill = "FF1F5078",
       groups  = group_struct,
+      # Annotation columns stay text in the workbook: a description such as
+      # "60S ribosomal protein L1" must not become the number 60
+      text    = I(intersect(c("PG.ProteinGroups", "PG.ProteinDescriptions", "PG.Genes"),
+                            names(df))),
       widths  = I(.pl_excel_widths(
         unlist(lapply(group_struct, `[[`, "columns")), default = 8)),
       palette = as.list(palette)
@@ -2358,6 +2362,10 @@ quant_list_widget <- function(
       layout = "grouped", sheet = "Protein-List_QUANT", file = "Protein_List_QUANT",
       headerFill = "FF660505",
       groups  = group_struct,
+      # Annotation columns stay text in the workbook: a description such as
+      # "60S ribosomal protein L1" must not become the number 60
+      text    = I(intersect(c("PG.ProteinGroups", "PG.ProteinDescriptions", "PG.Genes"),
+                            names(df))),
       widths  = I(.pl_excel_widths(
         unlist(lapply(group_struct, `[[`, "columns")), default = 9)),
       palette = as.list(palette)

@@ -33,6 +33,15 @@
     return 'FF' + h.toUpperCase();
   }
 
+  // A number only when the whole value is one: Number("60S ribosomal protein")
+  // is NaN, where parseFloat() would keep the 60
+  function toNumber(v) {
+    var s = String(v).trim();
+    if (s === '') return null;
+    var n = Number(s);
+    return isFinite(n) ? n : null;
+  }
+
   function solid(argb) {
     return { type: 'pattern', pattern: 'solid', fgColor: { argb: argb } };
   }
@@ -90,8 +99,11 @@
   }
 
   // Merged group headers over per-sample headers tinted by condition
-  // (Protein_ID and Protein_QUANT)
+  // (Protein_ID and Protein_QUANT). The annotation columns listed in x.text
+  // (identifiers, descriptions, genes) are written as text, whatever they
+  // start with.
   function sheetGrouped(ws, rows, x) {
+    var text = x.text || [];
     var flatCols = [];
     var flatHeaders = [];
     var colCondMap = {};
@@ -139,8 +151,8 @@
       flatCols.forEach(function (c, i) {
         var v = row[c];
         if (v != null && v !== '') {
-          var num = parseFloat(v);
-          excelRow.getCell(i + 1).value = !isNaN(num) ? num : v;
+          var num = text.indexOf(c) === -1 ? toNumber(v) : null;
+          excelRow.getCell(i + 1).value = num !== null ? num : v;
         }
       });
       excelRow.commit();

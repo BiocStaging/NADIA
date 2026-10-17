@@ -116,6 +116,12 @@ Changes made in response to the Bioconductor review.
   instead of "Spectronaut Cscore". Tables exported and `.nadia` files written
   before keep loading. The input-formats vignette lists, for every format,
   which metric of the report fills each identification column.
+* The Excel export of `protein_list_widget()` and `quant_list_widget()` no
+  longer turns text that starts with digits into a number: a description such
+  as "40S ribosomal protein S26" was written as 40 (114 of the 2,000
+  descriptions of the example data). Identifiers, descriptions and genes are
+  written as text, and other columns become numbers only when the whole value
+  is one.
 
 # NADIA 0.99.0
 

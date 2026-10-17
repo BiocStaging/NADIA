@@ -67,3 +67,51 @@ test_that("two tables of one kind on a page do not share ids", {
     expect_identical(anyDuplicated(ids), 0L)
     expect_match(html, 'id="r2_filter_comparison"', fixed = TRUE)
 })
+
+test_that("the protein tables declare their annotation columns as text for Excel", {
+    skip_if_not_installed("reactable")
+    df <- data.frame(PG.ProteinGroups = c("P1", "P2"),
+                     PG.ProteinDescriptions = c("60S ribosomal protein L1", "Actin"),
+                     PG.Genes = c("RPL10A", "ACTB"),
+                     PG.NrOfPrecursorsIdentified_A_1 = c(3, 5))
+    cfg <- .registered(protein_list_widget(df, element_id = "p1"), "p1")
+    expect_setequal(unlist(cfg$excel$text),
+                    c("PG.ProteinGroups", "PG.ProteinDescriptions", "PG.Genes"))
+})
+
+test_that("the Excel export keeps text that starts with digits", {
+    # A description such as "60S ribosomal protein L1" used to be written as the
+    # number 60. The export runs in JavaScript; node runs it with stand-ins for
+    # ExcelJS and PapaParse.
+    node <- Sys.which("node")
+    skip_if(!nzchar(node), "node is not available")
+    script <- system.file("js", "nadia-tables", "nadia-tables.js", package = "NADIA")
+    harness <- test_path("excel-harness.js")
+    skip_if(!nzchar(script) || !file.exists(harness))
+
+    settings <- withr::local_tempfile(fileext = ".json")
+    table <- withr::local_tempfile(fileext = ".tsv")
+    writeLines(jsonlite::toJSON(list(conditionMode = "columns", excel = list(
+        layout = "grouped", sheet = "s", file = "f", headerFill = "FF000000",
+        groups = list(list(name = "A", columns = I(c("PG.ProteinGroups",
+                                                     "PG.ProteinDescriptions",
+                                                     "PG.NrOfPrecursorsIdentified_A_1")),
+                           headers = I(c("Protein Groups", "Descriptions", "A_1")))),
+        text = I(c("PG.ProteinGroups", "PG.ProteinDescriptions")),
+        widths = I(c(22, 42, 8)), palette = list(A = "#123456"))),
+        auto_unbox = TRUE), settings)
+    writeLines(c("PG.ProteinGroups\tPG.ProteinDescriptions\tPG.NrOfPrecursorsIdentified_A_1",
+                 "123ABC\t60S ribosomal protein L1\t3",
+                 "00042\t7SK snRNA methylphosphate capping enzyme\t1.5e2"), table)
+
+    out <- system2(node, c(shQuote(harness), shQuote(script), shQuote(settings),
+                           shQuote(table)), stdout = TRUE, stderr = TRUE)
+    rows <- jsonlite::fromJSON(paste(out, collapse = ""), simplifyVector = FALSE)
+    expect_identical(rows[["3"]][["1"]], "123ABC")
+    expect_identical(rows[["3"]][["2"]], "60S ribosomal protein L1")
+    expect_identical(rows[["4"]][["1"]], "00042")          # leading zeros kept
+    expect_identical(rows[["4"]][["2"]], "7SK snRNA methylphosphate capping enzyme")
+    # The numeric columns are still numbers
+    expect_identical(rows[["3"]][["3"]], 3L)
+    expect_identical(rows[["4"]][["3"]], 150L)
+})
