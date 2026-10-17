@@ -312,9 +312,11 @@
 # --- Group B: x_log2 -> log2 ---
 
 .norm_quantile <- function(x_log2) {
-  # limma::normalizeQuantiles handles NA consistently (it interpolates the
-  # per-column quantiles onto a common grid), unlike
-  # preprocessCore::normalize.quantiles, which propagates NaN with DIA data.
+  # limma::normalizeQuantiles interpolates the per-column quantiles onto a
+  # common grid, so it handles NA. preprocessCore::normalize.quantiles (what
+  # MsCoreUtils uses) gives the same result on nadia_dia, to 1e-13; limma is
+  # preferred because it is already imported. Its *robust* version is another
+  # matter: with NA it empties about half the proteins, hence our own below.
   res <- limma::normalizeQuantiles(x_log2)
   dimnames(res) <- dimnames(x_log2)
   res
