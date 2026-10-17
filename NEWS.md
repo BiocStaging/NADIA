@@ -131,6 +131,9 @@ Changes made in response to the Bioconductor review.
   object `identical()` to the one `process_proteomics()` returned, except, with
   `limpa`, for the precision weights it keeps for its own analysis. Files
   written before still read, without those components.
+* `im_prepare_se()` accepts `norm_method = "log2"`, given directly or as the
+  winner of `normalization_metrics()$pc1_rank`; it used to stop with "Unknown
+  normalization method". The result then has the single `"log2"` assay.
 
 # NADIA 0.99.0
 

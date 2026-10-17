@@ -39,12 +39,14 @@ filtering. If NULL, auto-computed as half the smallest group. Default \code{NULL
 Default \code{list()}.}
 
 \item{include_log2}{Logical. Include the baseline \code{"log2"} assay in the
-returned SE. Default \code{TRUE}.}
+returned SE. Default \code{TRUE}. Ignored when the method is \code{"log2"} itself,
+whose only assay is the baseline.}
 
 \item{verbose}{Logical. Print progress messages. Default \code{TRUE}.}
 }
 \value{
-SummarizedExperiment with assays \code{"log2"} (optional) + winner method.
+SummarizedExperiment with assays \code{"log2"} (optional) + winner method;
+only \code{"log2"} when that is the method.
 }
 \description{
 Convenience function that creates a SE from a \code{proteomics_data} object and

@@ -762,3 +762,27 @@ test_that("nbavg is gone, with an error that says why", {
                                                      verbose = FALSE)),
                  "removed in NADIA 0.99.2")
 })
+
+
+test_that("im_prepare_se() accepts log2, chosen directly or by the ranking", {
+    # norm_method = "log2" is in the catalogue and can win the normalisation
+    # ranking, but im_prepare_se() sent it to the normalisation dispatch,
+    # which has no such method, and stopped.
+    data(nadia_dia, package = "NADIA")
+    for (args in list(list(norm_method = "log2"),
+                      list(pc1_rank = data.frame(Method = c("log2", "cycloess"))),
+                      list(norm_method = "log2", include_log2 = FALSE))) {
+        se <- do.call(im_prepare_se, c(list(nadia_dia, verbose = FALSE), args))
+        expect_identical(SummarizedExperiment::assayNames(se), "log2")
+    }
+    # Another method keeps both assays, as before
+    se <- im_prepare_se(nadia_dia, norm_method = "medianNorm", verbose = FALSE)
+    expect_identical(SummarizedExperiment::assayNames(se), c("log2", "medianNorm"))
+    # And the result feeds the imputation benchmark
+    set.seed(1)
+    se <- im_prepare_se(nadia_dia, norm_method = "log2", verbose = FALSE)
+    im <- suppressWarnings(imputation_metrics(se, assay_name = "log2",
+                                              methods = c("min", "MinDet"),
+                                              plots = "ranking", verbose = FALSE))
+    expect_setequal(im$metrics_table$Method, c("min", "MinDet"))
+})

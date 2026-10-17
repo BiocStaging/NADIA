@@ -563,9 +563,11 @@ import_imp_matrices <- function(tsv_dir,
 #' @param norm_method_args Named list of per-method arguments for normalization.
 #'   Default `list()`.
 #' @param include_log2 Logical. Include the baseline `"log2"` assay in the
-#'   returned SE. Default `TRUE`.
+#'   returned SE. Default `TRUE`. Ignored when the method is `"log2"` itself,
+#'   whose only assay is the baseline.
 #' @param verbose Logical. Print progress messages. Default `TRUE`.
-#' @return SummarizedExperiment with assays `"log2"` (optional) + winner method.
+#' @return SummarizedExperiment with assays `"log2"` (optional) + winner method;
+#'   only `"log2"` when that is the method.
 #'
 #' @examples
 #' data(nadia_dia)
@@ -627,16 +629,22 @@ im_prepare_se <- function(preprocessing,
   # --- Apply winner normalization ---
   if (verbose) message("im_prepare_se: applying normalization '", norm_method, "' ...")
   x_log2 <- SummarizedExperiment::assay(se, "log2")
-  x_norm <- .norm_dispatch(norm_method, x_raw = 2^x_log2, x_log2 = x_log2,
-                           loess = norm_method_args[["cycloess"]] %||% list())
 
   # --- Build final SE ---
-  if (include_log2) {
-    assay_list <- list(x_log2, x_norm)
-    names(assay_list) <- c("log2", norm_method)
+  if (identical(norm_method, "log2")) {
+    # "log2" applies no normalisation: the baseline is the result, and a
+    # second assay with the same name would be ambiguous
+    assay_list <- list(log2 = x_log2)
   } else {
-    assay_list <- list(x_norm)
-    names(assay_list) <- norm_method
+    x_norm <- .norm_dispatch(norm_method, x_raw = 2^x_log2, x_log2 = x_log2,
+                             loess = norm_method_args[["cycloess"]] %||% list())
+    if (include_log2) {
+      assay_list <- list(x_log2, x_norm)
+      names(assay_list) <- c("log2", norm_method)
+    } else {
+      assay_list <- list(x_norm)
+      names(assay_list) <- norm_method
+    }
   }
 
   se_out <- SummarizedExperiment::SummarizedExperiment(
