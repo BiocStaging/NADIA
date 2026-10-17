@@ -97,6 +97,33 @@ test_that("the input is validated with informative errors", {
                  "opdea_combined or results_dir")
 })
 
+test_that("the steps of benchmarking_multiple() work on their own", {
+    df <- .bm_synthetic()
+    # An optional input that is not valid is dropped with a warning
+    expect_warning(
+        bad <- .bm_optional_input(df, NULL, NULL, .bm_validate_confusion,
+                                  "confusion", "confusion_combined", FALSE),
+        "Invalid confusion_combined")
+    expect_null(bad)
+    expect_null(.bm_optional_input(NULL, NULL, NULL, NULL, "x", "x", FALSE))
+
+    # Ranking without drawing, and drawing without exporting
+    inputs <- .bm_gather_inputs(df, NULL, NULL, NULL, NULL, NULL, NULL, TRUE,
+                                "benchmark_", "adj.P.Val", FALSE)
+    ranks <- .bm_rankings(inputs, .BM_METRICS, .BM_EXTENDED_METRICS, FALSE)
+    expect_identical(ranks$ranking$mean_ranking$Assay, c("good", "mid", "bad"))
+    expect_identical(ranks$comps, c("B-A", "D-A"))
+    expect_null(ranks$extended)
+    figs <- .bm_draw(inputs, ranks, .BM_METRICS, "ranking_bars_mean", NULL, FALSE)
+    expect_named(figs$global, "ranking_bars_mean")
+    expect_s3_class(figs$global$ranking_bars_mean, "ggplot")
+
+    # A plot that fails is a warning and a NULL, not an error
+    expect_warning(p <- .bm_try("a plot", function() stop("boom")),
+                   "a plot failed: boom")
+    expect_null(p)
+})
+
 test_that("the extended ranking converts Performance to a number", {
     # The labels are those benchmarking_proteomics() assigns from F1
     expect_equal(.bm_performance_to_numeric(

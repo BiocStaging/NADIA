@@ -1638,6 +1638,410 @@ bm_plot_roc <- function(classified_combined,
 # SECTION 5: ORCHESTRATOR
 # =============================================================================
 
+# --- Steps of benchmarking_multiple() ------------------------------------------
+# The orchestrator runs these in order: gather the inputs, rank the methods,
+# draw the plots, export, and put the result together. Each is kept apart so it
+# can be tested and reused on its own.
+
+#' Build a plot or a table, turning a failure into a warning
+#' @param label What failed, for the warning.
+#' @param f Function of no arguments that builds it.
+#' @return Its value, or `NULL` if it failed.
+#' @keywords internal
+#' @noRd
+.bm_try <- function(label, f) {
+  tryCatch(f(), error = function(e) {
+    warning(label, " failed: ", conditionMessage(e))
+    NULL
+  })
+}
+
+#' One optional input, imported from `results_dir` when not given, then checked
+#' @param df The table given by the user, or `NULL`.
+#' @param results_dir Folder to import it from, or `NULL`.
+#' @param importer Function of the folder that imports it.
+#' @param validate Function that stops when the table is not valid.
+#' @param what Name of the data, for the messages.
+#' @param arg Name of the argument, for the warning.
+#' @param verbose Print progress messages.
+#' @return The table, or `NULL` when it is absent or not valid.
+#' @keywords internal
+#' @noRd
+.bm_optional_input <- function(df, results_dir, importer, validate, what, arg,
+                               verbose) {
+  if (is.null(df) && !is.null(results_dir)) {
+    df <- tryCatch({
+      if (verbose) message("  Importing ", what, " data ...")
+      importer(results_dir)
+    }, error = function(e) {
+      if (verbose) message("  No ", what, " data found (skipping): ", e$message)
+      NULL
+    })
+  }
+  if (is.null(df)) return(NULL)
+  tryCatch({
+    validate(df)
+    df
+  }, error = function(e) {
+    warning("Invalid ", arg, " (skipping): ", e$message)
+    NULL
+  })
+}
+
+#' Step 1: gather and check the inputs of benchmarking_multiple()
+#'
+#' The OpDEA metrics are required; the confusion matrices, the classified
+#' proteins (for the ROC curves) and the benchmark metrics (for the extended
+#' ranking) are optional, and an absent or invalid one is `NULL`.
+#'
+#' @inheritParams benchmarking_multiple
+#' @return List with `opdea`, `confusion`, `classified` and `bench_metrics`.
+#' @keywords internal
+#' @noRd
+.bm_gather_inputs <- function(opdea_combined, confusion_combined,
+                              classified_combined, bench_metrics_combined,
+                              results_dir, pattern, method_names, recursive,
+                              strip_prefix, p_col, verbose) {
+  if (!is.null(opdea_combined) && !is.null(results_dir)) {
+    warning("Both opdea_combined and results_dir provided. Using opdea_combined.",
+            call. = FALSE)
+  }
+  if (is.null(opdea_combined)) {
+    if (is.null(results_dir))
+      stop("Provide either opdea_combined or results_dir.", call. = FALSE)
+    if (verbose) message("=== IMPORTING OPDEA RESULTS ===")
+    opdea_combined <- import_opdea_results(results_dir, pattern,
+                                           method_names, recursive)
+  }
+  .bm_validate_opdea(opdea_combined)
+
+  from_dir <- function(importer) {
+    function(dir) importer(dir, method_names = method_names, recursive = recursive)
+  }
+  inputs <- list(
+    opdea      = opdea_combined,
+    confusion  = .bm_optional_input(
+      confusion_combined, results_dir, from_dir(import_confusion_results),
+      .bm_validate_confusion, "confusion", "confusion_combined", verbose),
+    classified = .bm_optional_input(
+      classified_combined, results_dir, from_dir(import_classified_results),
+      function(df) .bm_validate_classified(df, p_col),
+      "classified", "classified_combined", verbose),
+    bench_metrics = .bm_optional_input(
+      bench_metrics_combined, results_dir, from_dir(import_benchmark_metrics),
+      .bm_validate_bench_metrics, "benchmark metrics", "bench_metrics_combined",
+      verbose)
+  )
+
+  # Drop the folder prefix (e.g. "benchmark_") from Assay. In results_dir mode
+  # Assay is the folder name (benchmark_<method>); this makes it match the
+  # in-memory mode, and is harmless if the Assay carries no such prefix.
+  if (!is.null(strip_prefix) && nzchar(strip_prefix)) {
+    inputs <- lapply(inputs, function(df) {
+      if (!is.null(df) && "Assay" %in% names(df))
+        df$Assay <- sub(paste0("^", strip_prefix), "", df$Assay)
+      df
+    })
+  }
+
+  if (verbose) {
+    message("=== MULTIPLE-METHOD OPDEA BENCHMARKING ===")
+    message("  Methods: ", length(unique(inputs$opdea$Assay)),
+            " | Comparisons: ", length(unique(inputs$opdea$Comparison)),
+            " | Rows: ", nrow(inputs$opdea))
+    if (!is.null(inputs$confusion)) message("  Confusion data: available")
+    if (!is.null(inputs$classified)) message("  Classified data: available (ROC curves)")
+    if (!is.null(inputs$bench_metrics)) message("  Benchmark metrics data: available (extended ranking)")
+  }
+  inputs
+}
+
+#' Step 2: rank the methods, overall, by comparison and on the 11 metrics
+#' @param inputs Output of `.bm_gather_inputs()`.
+#' @inheritParams benchmarking_multiple
+#' @return List with `ranking`, `by_comp`, `extended` (or `NULL`) and `comps`.
+#' @keywords internal
+#' @noRd
+.bm_rankings <- function(inputs, metrics, extended_metrics, verbose) {
+  if (verbose) message("  Computing ranking ...")
+  ranking <- bm_compute_ranking(inputs$opdea, metrics)
+  if (verbose) {
+    message("  Best method (mean):   ", ranking$mean_ranking$Assay[1],
+            " (rank_final = ", ranking$mean_ranking$rank_final[1], ")")
+    message("  Best method (median): ", ranking$median_ranking$Assay[1],
+            " (rank_final = ", ranking$median_ranking$rank_final[1], ")")
+  }
+
+  if (verbose) message("  Computing ranking by comparison ...")
+  by_comp <- bm_compute_ranking_by_comparison(inputs$opdea, metrics)
+  comps <- names(by_comp$by_comparison)
+  if (verbose) {
+    for (comp in comps) {
+      best <- by_comp$by_comparison[[comp]]
+      message("    ", comp, ": best = ", best$Assay[1],
+              " (rank_final = ", best$rank_final[1], ")")
+    }
+  }
+
+  extended <- NULL
+  if (!is.null(inputs$bench_metrics)) {
+    if (verbose) message("  Computing extended ranking (11 metrics) ...")
+    extended <- .bm_try("bm_compute_extended_ranking()", function()
+      bm_compute_extended_ranking(inputs$opdea, inputs$bench_metrics,
+                                  extended_metrics))
+    if (!is.null(extended) && verbose) {
+      message("  Best method (extended): ", extended$mean_ranking$Assay[1],
+              " (rank_final = ", extended$mean_ranking$rank_final[1], ")")
+    }
+  }
+
+  list(ranking = ranking, by_comp = by_comp, extended = extended, comps = comps)
+}
+
+#' Step 3: draw the plots
+#'
+#' A plot that fails is a warning and a `NULL`, never an error.
+#'
+#' @param inputs Output of `.bm_gather_inputs()`.
+#' @param ranks Output of `.bm_rankings()`.
+#' @inheritParams benchmarking_multiple
+#' @return List of the plots, plus `selected` (the global plots requested) and
+#'   the counts reported in the messages.
+#' @keywords internal
+#' @noRd
+.bm_draw <- function(inputs, ranks, metrics, plots, p_col, verbose) {
+  ranking  <- ranks$ranking
+  extended <- ranks$extended
+  plot_fns <- list(
+    ranking_heatmap_mean   = function() bm_plot_ranking_heatmap(ranking, "mean"),
+    ranking_heatmap_median = function() bm_plot_ranking_heatmap(ranking, "median"),
+    ranking_bars_mean      = function() bm_plot_ranking_bars(ranking, "mean"),
+    ranking_bars_median    = function() bm_plot_ranking_bars(ranking, "median"),
+    metrics_heatmap_mean   = function() bm_plot_metrics_heatmap(ranking, "mean"),
+    metrics_heatmap_median = function() bm_plot_metrics_heatmap(ranking, "median"),
+    metrics_comparison     = function() bm_plot_metrics_comparison(inputs$opdea, metrics)
+  )
+  if (!is.null(extended)) {
+    plot_fns$extended_ranking_bars    <- function() bm_plot_extended_ranking_bars(extended)
+    plot_fns$extended_ranking_heatmap <- function() bm_plot_extended_ranking_heatmap(extended)
+  }
+
+  if (identical(plots, "all")) {
+    selected <- names(plot_fns)
+  } else {
+    unknown <- setdiff(plots, names(plot_fns))
+    if (length(unknown) > 0)
+      warning("Unknown plot name(s) ignored: ", paste(unknown, collapse = ", "),
+              call. = FALSE)
+    selected <- intersect(plots, names(plot_fns))
+    if (length(selected) == 0)
+      stop("No valid plot names provided.", call. = FALSE)
+  }
+
+  n_drawn <- function(x) sum(!vapply(x, is.null, logical(1)))
+  out <- list(selected = selected)
+
+  # --- Global plots ---
+  out$global <- lapply(stats::setNames(nm = selected), function(nm) {
+    if (verbose) message("  Generating plot: ", nm, " ...")
+    .bm_try(paste0("bm_plot_", nm, "()"), plot_fns[[nm]])
+  })
+  out$n_ok <- n_drawn(out$global)
+  if (verbose) {
+    n_fail <- length(selected) - out$n_ok
+    if (n_fail > 0)
+      message("  ", out$n_ok, " global plot(s) generated, ", n_fail, " failed")
+    else
+      message("  ", out$n_ok, " global plot(s) generated.")
+  }
+
+  # --- Per-comparison ranking plots ---
+  per_comp <- lapply(stats::setNames(nm = ranks$comps), function(comp) {
+    if (verbose) message("  Generating plots for comparison: ", comp, " ...")
+    list(
+      heatmap = .bm_try(paste0("bm_plot_ranking_heatmap_by_comp(", comp, ")"),
+                        function() bm_plot_ranking_heatmap_by_comp(ranks$by_comp, comp)),
+      bars    = .bm_try(paste0("bm_plot_ranking_bars_by_comp(", comp, ")"),
+                        function() bm_plot_ranking_bars_by_comp(ranks$by_comp, comp)))
+  })
+  out$heatmap_by_comp <- lapply(per_comp, `[[`, "heatmap")
+  out$bars_by_comp    <- lapply(per_comp, `[[`, "bars")
+  out$n_comp_plots <- n_drawn(out$heatmap_by_comp) + n_drawn(out$bars_by_comp)
+  if (verbose) message("  ", out$n_comp_plots, " per-comparison plot(s) generated.")
+
+  # --- Confusion stacked bars: all comparisons, then one per comparison ---
+  confusion <- inputs$confusion
+  if (!is.null(confusion)) {
+    if (verbose) message("  Generating confusion stacked bar plots ...")
+    out$confusion_stacked <- .bm_try("bm_plot_confusion_stacked()",
+                                     function() bm_plot_confusion_stacked(confusion))
+    out$confusion_by_comp <- lapply(
+      stats::setNames(nm = unique(confusion$Comparison)), function(comp)
+        .bm_try(paste0("bm_plot_confusion_stacked(", comp, ")"),
+                function() bm_plot_confusion_stacked(confusion, comparison = comp)))
+    if (verbose)
+      message("  ", (!is.null(out$confusion_stacked)) + n_drawn(out$confusion_by_comp),
+              " confusion plot(s) generated.")
+  }
+
+  # --- ROC curves per comparison, one curve per method ---
+  classified <- inputs$classified
+  if (!is.null(classified)) {
+    if (verbose) message("  Generating ROC curves per comparison ...")
+    roc <- lapply(stats::setNames(nm = unique(classified$Comparison)), function(comp)
+      list(
+        full = .bm_try(paste0("bm_plot_roc(", comp, ")"), function()
+          bm_plot_roc(classified, comp, p_col = p_col, zoom = FALSE)),
+        zoom = .bm_try(paste0("bm_plot_roc(", comp, ", zoom)"), function()
+          bm_plot_roc(classified, comp, p_col = p_col, zoom = TRUE))))
+    out$roc_by_comp      <- lapply(roc, `[[`, "full")
+    out$roc_zoom_by_comp <- lapply(roc, `[[`, "zoom")
+    if (verbose)
+      message("  ", n_drawn(out$roc_by_comp) + n_drawn(out$roc_zoom_by_comp),
+              " ROC plot(s) generated.")
+  }
+  out
+}
+
+#' Step 4: write the tables and plots to `output_dir`
+#' @param inputs Output of `.bm_gather_inputs()`.
+#' @param ranks Output of `.bm_rankings()`.
+#' @param figs Output of `.bm_draw()`.
+#' @inheritParams benchmarking_multiple
+#' @return `NULL`, invisibly.
+#' @keywords internal
+#' @noRd
+.bm_export_all <- function(output_dir, inputs, ranks, figs, export_tables,
+                           export_plots, plot_width, plot_height, plot_dpi,
+                           verbose) {
+  if (!dir.exists(output_dir)) dir.create(output_dir, recursive = TRUE)
+  if (verbose) message("  Exporting to: ", output_dir)
+  comp_dir <- file.path(output_dir, "by_comparison")
+  if ((export_tables || export_plots) && !dir.exists(comp_dir))
+    dir.create(comp_dir, recursive = TRUE)
+
+  safe <- function(comp) gsub("[^A-Za-z0-9_-]", "_", comp)
+  put_tsv <- function(df, file, dir = output_dir)
+    .bm_export_data(df, file.path(dir, file))
+  put_png <- function(p, file, dir = comp_dir)
+    if (!is.null(p))
+      .bm_export_gg_plot(p, file.path(dir, file), plot_width, plot_height, plot_dpi)
+  ranking  <- ranks$ranking
+  extended <- ranks$extended
+
+  if (export_tables) {
+    put_tsv(inputs$opdea, "bm_multiple_opdea_combined.tsv")
+    for (s in c("mean_aggregated", "median_aggregated",
+                "mean_ranking", "median_ranking"))
+      put_tsv(ranking[[s]], paste0("bm_multiple_", s, ".tsv"))
+    put_tsv(ranks$by_comp$ranking_combined, "bm_multiple_ranking_by_comparison.tsv")
+    for (comp in ranks$comps)
+      put_tsv(ranks$by_comp$by_comparison[[comp]],
+              paste0("bm_ranking_", safe(comp), ".tsv"), comp_dir)
+    if (!is.null(extended)) {
+      put_tsv(extended$extended_combined, "bm_multiple_extended_combined.tsv")
+      put_tsv(extended$mean_aggregated, "bm_multiple_extended_mean_aggregated.tsv")
+      put_tsv(extended$mean_ranking, "bm_multiple_extended_ranking.tsv")
+    }
+    if (verbose)
+      message("  Exported ", 6 + length(ranks$comps) + 3 * !is.null(extended),
+              " TSV files.")
+  }
+
+  if (export_plots) {
+    for (nm in figs$selected)
+      put_png(figs$global[[nm]], paste0("bm_multiple_", nm, ".png"), output_dir)
+    for (comp in ranks$comps) {
+      put_png(figs$heatmap_by_comp[[comp]], paste0("bm_ranking_heatmap_", safe(comp), ".png"))
+      put_png(figs$bars_by_comp[[comp]], paste0("bm_ranking_bars_", safe(comp), ".png"))
+    }
+    if (verbose) message("  Exported ", figs$n_ok, " global + ",
+                         figs$n_comp_plots, " per-comparison PNG files.")
+  }
+
+  if (!is.null(inputs$confusion)) {
+    if (export_tables)
+      put_tsv(inputs$confusion, "bm_multiple_confusion_combined.tsv")
+    if (export_plots) {
+      put_png(figs$confusion_stacked, "bm_multiple_confusion_stacked.png", output_dir)
+      for (comp in names(figs$confusion_by_comp))
+        put_png(figs$confusion_by_comp[[comp]],
+                paste0("bm_confusion_stacked_", safe(comp), ".png"))
+    }
+    if (verbose) message("  Exported confusion data and plots.")
+  }
+
+  if (!is.null(inputs$classified)) {
+    if (export_tables)
+      put_tsv(inputs$classified, "bm_multiple_classified_combined.tsv")
+    if (export_plots) {
+      for (comp in names(figs$roc_by_comp)) {
+        put_png(figs$roc_by_comp[[comp]], paste0("bm_roc_", safe(comp), ".png"))
+        put_png(figs$roc_zoom_by_comp[[comp]], paste0("bm_roc_zoom_", safe(comp), ".png"))
+      }
+    }
+    if (verbose) message("  Exported classified data and ROC plots.")
+  }
+  invisible(NULL)
+}
+
+#' Step 5: the list benchmarking_multiple() returns
+#' @param inputs Output of `.bm_gather_inputs()`.
+#' @param ranks Output of `.bm_rankings()`.
+#' @param figs Output of `.bm_draw()`.
+#' @param metrics The OpDEA metrics used.
+#' @return See the Value section of [benchmarking_multiple()].
+#' @keywords internal
+#' @noRd
+.bm_result <- function(inputs, ranks, figs, metrics) {
+  ranking  <- ranks$ranking
+  extended <- ranks$extended
+  result <- list(
+    opdea_combined    = inputs$opdea,
+    mean_aggregated   = ranking$mean_aggregated,
+    median_aggregated = ranking$median_aggregated,
+    mean_ranking      = ranking$mean_ranking,
+    median_ranking    = ranking$median_ranking,
+    ranking_by_comparison          = ranks$by_comp$by_comparison,
+    ranking_by_comparison_combined = ranks$by_comp$ranking_combined
+  )
+
+  # Global plots with the gg_ prefix, then the per-comparison ones
+  for (nm in figs$selected) {
+    result[[paste0("gg_", nm)]] <- figs$global[[nm]]
+  }
+  result$gg_ranking_heatmap_by_comp <- figs$heatmap_by_comp
+  result$gg_ranking_bars_by_comp    <- figs$bars_by_comp
+
+  if (!is.null(inputs$confusion)) {
+    result$confusion_combined           <- inputs$confusion
+    result$gg_confusion_stacked         <- figs$confusion_stacked
+    result$gg_confusion_stacked_by_comp <- figs$confusion_by_comp
+  }
+  if (!is.null(inputs$classified)) {
+    result$classified_combined <- inputs$classified
+    result$gg_roc_by_comp      <- figs$roc_by_comp
+    result$gg_roc_zoom_by_comp <- figs$roc_zoom_by_comp
+  }
+  if (!is.null(extended)) {
+    result$extended_combined        <- extended$extended_combined
+    result$extended_mean_aggregated <- extended$mean_aggregated
+    result$extended_ranking         <- extended$mean_ranking
+    result$bench_metrics_combined   <- inputs$bench_metrics
+  }
+
+  result$parameters <- list(
+    metrics          = metrics,
+    extended_metrics = if (!is.null(extended)) extended$metrics_used else NULL,
+    n_methods        = length(unique(inputs$opdea$Assay)),
+    n_comparisons    = length(unique(inputs$opdea$Comparison)),
+    comparisons      = ranks$comps,
+    plots            = figs$selected
+  )
+  result
+}
+
+
 #' Multiple-method OpDEA Benchmarking
 #'
 #' Orchestrator that imports, ranks, visualizes, and exports results from
@@ -1760,525 +2164,21 @@ benchmarking_multiple <- function(opdea_combined            = NULL,
                                   plot_height    = 8,
                                   plot_dpi       = 150) {
 
-  # ==========================================================================
-  # STEP 1: Input resolution
-  # ==========================================================================
-  if (!is.null(opdea_combined) && !is.null(results_dir)) {
-    warning("Both opdea_combined and results_dir provided. Using opdea_combined.")
-  }
-
-  if (is.null(opdea_combined)) {
-    if (is.null(results_dir))
-      stop("Provide either opdea_combined or results_dir.")
-    if (verbose) message("=== IMPORTING OPDEA RESULTS ===")
-    opdea_combined <- import_opdea_results(results_dir, pattern,
-                                           method_names, recursive)
-  }
-
-  .bm_validate_opdea(opdea_combined)
-
-  # --- Import confusion data (optional) ---
-  has_confusion <- FALSE
-  if (is.null(confusion_combined) && !is.null(results_dir)) {
-    confusion_combined <- tryCatch({
-      if (verbose) message("  Importing confusion data ...")
-      import_confusion_results(results_dir,
-                               method_names = method_names,
-                               recursive    = recursive)
-    }, error = function(e) {
-      if (verbose) message("  No confusion data found (skipping): ", e$message)
-      NULL
-    })
-  }
-  if (!is.null(confusion_combined)) {
-    tryCatch({
-      .bm_validate_confusion(confusion_combined)
-      has_confusion <- TRUE
-    }, error = function(e) {
-      warning("Invalid confusion_combined (skipping): ", e$message)
-      confusion_combined <- NULL
-    })
-  }
-
-  # --- Import classified data (optional, for ROC curves) ---
-  has_classified <- FALSE
-  if (is.null(classified_combined) && !is.null(results_dir)) {
-    classified_combined <- tryCatch({
-      if (verbose) message("  Importing classified data ...")
-      import_classified_results(results_dir,
-                                method_names = method_names,
-                                recursive    = recursive)
-    }, error = function(e) {
-      if (verbose) message("  No classified data found (skipping): ", e$message)
-      NULL
-    })
-  }
-  if (!is.null(classified_combined)) {
-    tryCatch({
-      .bm_validate_classified(classified_combined, p_col)
-      has_classified <- TRUE
-    }, error = function(e) {
-      warning("Invalid classified_combined (skipping): ", e$message)
-      classified_combined <- NULL
-    })
-  }
-
-  # --- Import benchmark metrics data (optional, for extended ranking) ---
-  has_bench_metrics <- FALSE
-  if (is.null(bench_metrics_combined) && !is.null(results_dir)) {
-    bench_metrics_combined <- tryCatch({
-      if (verbose) message("  Importing benchmark metrics data ...")
-      import_benchmark_metrics(results_dir,
-                               method_names = method_names,
-                               recursive    = recursive)
-    }, error = function(e) {
-      if (verbose) message("  No benchmark metrics data found (skipping): ", e$message)
-      NULL
-    })
-  }
-  if (!is.null(bench_metrics_combined)) {
-    tryCatch({
-      .bm_validate_bench_metrics(bench_metrics_combined)
-      has_bench_metrics <- TRUE
-    }, error = function(e) {
-      warning("Invalid bench_metrics_combined (skipping): ", e$message)
-      bench_metrics_combined <- NULL
-    })
-  }
-
-  # --- Normalize Assay: drop the folder prefix (e.g. "benchmark_") ---
-  # In results_dir mode Assay = folder name (benchmark_<method>); this makes it
-  # match the in-memory mode. Harmless if the Assay carries no such prefix.
-  if (!is.null(strip_prefix) && nzchar(strip_prefix)) {
-    .strip_assay <- function(df) {
-      if (!is.null(df) && "Assay" %in% names(df))
-        df$Assay <- sub(paste0("^", strip_prefix), "", df$Assay)
-      df
-    }
-    opdea_combined         <- .strip_assay(opdea_combined)
-    confusion_combined     <- .strip_assay(confusion_combined)
-    classified_combined    <- .strip_assay(classified_combined)
-    bench_metrics_combined <- .strip_assay(bench_metrics_combined)
-  }
-
-  n_methods <- length(unique(opdea_combined$Assay))
-  n_comps   <- length(unique(opdea_combined$Comparison))
-
-  if (verbose) {
-    message("=== MULTIPLE-METHOD OPDEA BENCHMARKING ===")
-    message("  Methods: ", n_methods,
-            " | Comparisons: ", n_comps,
-            " | Rows: ", nrow(opdea_combined))
-    if (has_confusion) message("  Confusion data: available")
-    if (has_classified) message("  Classified data: available (ROC curves)")
-    if (has_bench_metrics) message("  Benchmark metrics data: available (extended ranking)")
-  }
-
-  # ==========================================================================
-  # STEP 2: Compute ranking
-  # ==========================================================================
-  if (verbose) message("  Computing ranking ...")
-  ranking <- bm_compute_ranking(opdea_combined, metrics)
-
-  if (verbose) {
-    message("  Best method (mean):   ", ranking$mean_ranking$Assay[1],
-            " (rank_final = ", ranking$mean_ranking$rank_final[1], ")")
-    message("  Best method (median): ", ranking$median_ranking$Assay[1],
-            " (rank_final = ", ranking$median_ranking$rank_final[1], ")")
-  }
-
-  # ==========================================================================
-  # STEP 2b: Compute ranking by comparison
-  # ==========================================================================
-  if (verbose) message("  Computing ranking by comparison ...")
-  ranking_by_comp <- bm_compute_ranking_by_comparison(opdea_combined, metrics)
-  comps <- names(ranking_by_comp$by_comparison)
-
-  if (verbose) {
-    for (comp in comps) {
-      best <- ranking_by_comp$by_comparison[[comp]]$Assay[1]
-      best_rf <- ranking_by_comp$by_comparison[[comp]]$rank_final[1]
-      message("    ", comp, ": best = ", best, " (rank_final = ", best_rf, ")")
-    }
-  }
-
-  # ==========================================================================
-  # STEP 2c: Compute extended ranking (11 metrics)
-  # ==========================================================================
-  extended_ranking <- NULL
-  if (has_bench_metrics) {
-    if (verbose) message("  Computing extended ranking (11 metrics) ...")
-    extended_ranking <- tryCatch(
-      bm_compute_extended_ranking(opdea_combined, bench_metrics_combined,
-                                  extended_metrics),
-      error = function(e) {
-        warning("bm_compute_extended_ranking() failed: ", conditionMessage(e))
-        NULL
-      }
-    )
-    if (!is.null(extended_ranking) && verbose) {
-      message("  Best method (extended): ",
-              extended_ranking$mean_ranking$Assay[1],
-              " (rank_final = ",
-              extended_ranking$mean_ranking$rank_final[1], ")")
-    }
-  }
-
-  # ==========================================================================
-  # STEP 3: Plot registry
-  # ==========================================================================
-  all_plot_names <- c("ranking_heatmap_mean", "ranking_heatmap_median",
-                      "ranking_bars_mean", "ranking_bars_median",
-                      "metrics_heatmap_mean", "metrics_heatmap_median",
-                      "metrics_comparison")
-
-  # Add extended ranking plots if data available
-  if (!is.null(extended_ranking)) {
-    all_plot_names <- c(all_plot_names,
-                        "extended_ranking_bars", "extended_ranking_heatmap")
-  }
-
-  plot_fns <- list(
-    ranking_heatmap_mean   = function() bm_plot_ranking_heatmap(ranking, "mean"),
-    ranking_heatmap_median = function() bm_plot_ranking_heatmap(ranking, "median"),
-    ranking_bars_mean      = function() bm_plot_ranking_bars(ranking, "mean"),
-    ranking_bars_median    = function() bm_plot_ranking_bars(ranking, "median"),
-    metrics_heatmap_mean   = function() bm_plot_metrics_heatmap(ranking, "mean"),
-    metrics_heatmap_median = function() bm_plot_metrics_heatmap(ranking, "median"),
-    metrics_comparison     = function() bm_plot_metrics_comparison(opdea_combined, metrics)
-  )
-
-  # Add extended ranking plot functions if data available
-  if (!is.null(extended_ranking)) {
-    plot_fns$extended_ranking_bars    <- function() bm_plot_extended_ranking_bars(extended_ranking)
-    plot_fns$extended_ranking_heatmap <- function() bm_plot_extended_ranking_heatmap(extended_ranking)
-  }
-
-  # Determine which plots to run
-  if (identical(plots, "all")) {
-    selected <- all_plot_names
-  } else {
-    unknown <- setdiff(plots, all_plot_names)
-    if (length(unknown) > 0)
-      warning("Unknown plot name(s) ignored: ", paste(unknown, collapse = ", "))
-    selected <- intersect(plots, all_plot_names)
-    if (length(selected) == 0)
-      stop("No valid plot names provided.")
-  }
-
-  # Execute plots
-  plot_result <- vector("list", length(selected))
-  names(plot_result) <- selected
-
-  for (nm in selected) {
-    if (verbose) message("  Generating plot: ", nm, " ...")
-    plot_result[[nm]] <- tryCatch(
-      plot_fns[[nm]](),
-      error = function(e) {
-        warning("bm_plot_", nm, "() failed: ", conditionMessage(e))
-        NULL
-      }
-    )
-  }
-
-  n_ok   <- sum(!vapply(plot_result, is.null, logical(1)))
-  n_fail <- length(selected) - n_ok
-  if (verbose) {
-    if (n_fail > 0)
-      message("  ", n_ok, " global plot(s) generated, ", n_fail, " failed")
-    else
-      message("  ", n_ok, " global plot(s) generated.")
-  }
-
-  # --- Per-comparison plots ---
-  gg_heatmap_by_comp <- vector("list", length(comps))
-  names(gg_heatmap_by_comp) <- comps
-  gg_bars_by_comp <- vector("list", length(comps))
-  names(gg_bars_by_comp) <- comps
-
-  for (comp in comps) {
-    if (verbose) message("  Generating plots for comparison: ", comp, " ...")
-    gg_heatmap_by_comp[[comp]] <- tryCatch(
-      bm_plot_ranking_heatmap_by_comp(ranking_by_comp, comp),
-      error = function(e) {
-        warning("bm_plot_ranking_heatmap_by_comp(", comp, ") failed: ",
-                conditionMessage(e))
-        NULL
-      }
-    )
-    gg_bars_by_comp[[comp]] <- tryCatch(
-      bm_plot_ranking_bars_by_comp(ranking_by_comp, comp),
-      error = function(e) {
-        warning("bm_plot_ranking_bars_by_comp(", comp, ") failed: ",
-                conditionMessage(e))
-        NULL
-      }
-    )
-  }
-
-  n_comp_plots <- sum(!vapply(gg_heatmap_by_comp, is.null, logical(1))) +
-                  sum(!vapply(gg_bars_by_comp, is.null, logical(1)))
-  if (verbose) message("  ", n_comp_plots, " per-comparison plot(s) generated.")
-
-  # --- Confusion stacked bar plots ---
-  gg_confusion_stacked <- NULL
-  gg_confusion_by_comp <- list()
-
-  if (has_confusion) {
-    if (verbose) message("  Generating confusion stacked bar plots ...")
-
-    # Faceted (all comparisons)
-    gg_confusion_stacked <- tryCatch(
-      bm_plot_confusion_stacked(confusion_combined),
-      error = function(e) {
-        warning("bm_plot_confusion_stacked() failed: ", conditionMessage(e))
-        NULL
-      }
-    )
-
-    # Per comparison
-    conf_comps <- unique(confusion_combined$Comparison)
-    gg_confusion_by_comp <- vector("list", length(conf_comps))
-    names(gg_confusion_by_comp) <- conf_comps
-
-    for (comp in conf_comps) {
-      gg_confusion_by_comp[[comp]] <- tryCatch(
-        bm_plot_confusion_stacked(confusion_combined, comparison = comp),
-        error = function(e) {
-          warning("bm_plot_confusion_stacked(", comp, ") failed: ",
-                  conditionMessage(e))
-          NULL
-        }
-      )
-    }
-
-    n_conf_ok <- (!is.null(gg_confusion_stacked)) +
-                 sum(!vapply(gg_confusion_by_comp, is.null, logical(1)))
-    if (verbose) message("  ", n_conf_ok, " confusion plot(s) generated.")
-  }
-
-  # --- ROC curves per comparison (one curve per method) ---
-  gg_roc_by_comp      <- list()
-  gg_roc_zoom_by_comp <- list()
-
-  if (has_classified) {
-    if (verbose) message("  Generating ROC curves per comparison ...")
-
-    roc_comps <- unique(classified_combined$Comparison)
-    gg_roc_by_comp      <- vector("list", length(roc_comps))
-    names(gg_roc_by_comp) <- roc_comps
-    gg_roc_zoom_by_comp <- vector("list", length(roc_comps))
-    names(gg_roc_zoom_by_comp) <- roc_comps
-
-    for (comp in roc_comps) {
-      gg_roc_by_comp[[comp]] <- tryCatch(
-        bm_plot_roc(classified_combined, comp, p_col = p_col, zoom = FALSE),
-        error = function(e) {
-          warning("bm_plot_roc(", comp, ") failed: ", conditionMessage(e))
-          NULL
-        }
-      )
-      gg_roc_zoom_by_comp[[comp]] <- tryCatch(
-        bm_plot_roc(classified_combined, comp, p_col = p_col, zoom = TRUE),
-        error = function(e) {
-          warning("bm_plot_roc(", comp, ", zoom) failed: ", conditionMessage(e))
-          NULL
-        }
-      )
-    }
-
-    n_roc_ok <- sum(!vapply(gg_roc_by_comp, is.null, logical(1))) +
-                sum(!vapply(gg_roc_zoom_by_comp, is.null, logical(1)))
-    if (verbose) message("  ", n_roc_ok, " ROC plot(s) generated.")
-  }
-
-  # ==========================================================================
-  # STEP 4: Export
-  # ==========================================================================
+  # Each step is a helper below the section header: gather the inputs, rank
+  # the methods, draw the plots, export them, and put the result together.
+  inputs <- .bm_gather_inputs(opdea_combined, confusion_combined,
+                              classified_combined, bench_metrics_combined,
+                              results_dir, pattern, method_names, recursive,
+                              strip_prefix, p_col, verbose)
+  ranks <- .bm_rankings(inputs, metrics, extended_metrics, verbose)
+  figs  <- .bm_draw(inputs, ranks, metrics, plots, p_col, verbose)
   if (!is.null(output_dir)) {
-    if (!dir.exists(output_dir)) dir.create(output_dir, recursive = TRUE)
-    if (verbose) message("  Exporting to: ", output_dir)
-
-    if (export_tables) {
-      .bm_export_data(opdea_combined,
-                      file.path(output_dir, "bm_multiple_opdea_combined.tsv"))
-      .bm_export_data(ranking$mean_aggregated,
-                      file.path(output_dir, "bm_multiple_mean_aggregated.tsv"))
-      .bm_export_data(ranking$median_aggregated,
-                      file.path(output_dir, "bm_multiple_median_aggregated.tsv"))
-      .bm_export_data(ranking$mean_ranking,
-                      file.path(output_dir, "bm_multiple_mean_ranking.tsv"))
-      .bm_export_data(ranking$median_ranking,
-                      file.path(output_dir, "bm_multiple_median_ranking.tsv"))
-
-      # Per-comparison tables
-      comp_dir <- file.path(output_dir, "by_comparison")
-      if (!dir.exists(comp_dir)) dir.create(comp_dir, recursive = TRUE)
-
-      .bm_export_data(ranking_by_comp$ranking_combined,
-                      file.path(output_dir, "bm_multiple_ranking_by_comparison.tsv"))
-
-      for (comp in comps) {
-        safe_comp <- gsub("[^A-Za-z0-9_-]", "_", comp)
-        .bm_export_data(ranking_by_comp$by_comparison[[comp]],
-                        file.path(comp_dir, paste0("bm_ranking_", safe_comp, ".tsv")))
-      }
-
-      # Extended ranking tables
-      if (!is.null(extended_ranking)) {
-        .bm_export_data(extended_ranking$extended_combined,
-                        file.path(output_dir, "bm_multiple_extended_combined.tsv"))
-        .bm_export_data(extended_ranking$mean_aggregated,
-                        file.path(output_dir, "bm_multiple_extended_mean_aggregated.tsv"))
-        .bm_export_data(extended_ranking$mean_ranking,
-                        file.path(output_dir, "bm_multiple_extended_ranking.tsv"))
-      }
-
-      n_tables <- 5 + 1 + length(comps) +
-                  (if (!is.null(extended_ranking)) 3L else 0L)
-      if (verbose) message("  Exported ", n_tables, " TSV files.")
-    }
-
-    if (export_plots) {
-      for (nm in selected) {
-        if (!is.null(plot_result[[nm]])) {
-          .bm_export_gg_plot(plot_result[[nm]],
-                             file.path(output_dir, paste0("bm_multiple_", nm, ".png")),
-                             plot_width, plot_height, plot_dpi)
-        }
-      }
-
-      # Per-comparison plots
-      comp_dir <- file.path(output_dir, "by_comparison")
-      if (!dir.exists(comp_dir)) dir.create(comp_dir, recursive = TRUE)
-
-      for (comp in comps) {
-        safe_comp <- gsub("[^A-Za-z0-9_-]", "_", comp)
-        if (!is.null(gg_heatmap_by_comp[[comp]])) {
-          .bm_export_gg_plot(gg_heatmap_by_comp[[comp]],
-                             file.path(comp_dir, paste0("bm_ranking_heatmap_", safe_comp, ".png")),
-                             plot_width, plot_height, plot_dpi)
-        }
-        if (!is.null(gg_bars_by_comp[[comp]])) {
-          .bm_export_gg_plot(gg_bars_by_comp[[comp]],
-                             file.path(comp_dir, paste0("bm_ranking_bars_", safe_comp, ".png")),
-                             plot_width, plot_height, plot_dpi)
-        }
-      }
-
-      if (verbose) message("  Exported ", n_ok, " global + ",
-                           n_comp_plots, " per-comparison PNG files.")
-    }
-
-    # Confusion exports
-    if (has_confusion) {
-      if (export_tables) {
-        .bm_export_data(confusion_combined,
-                        file.path(output_dir, "bm_multiple_confusion_combined.tsv"))
-      }
-      if (export_plots) {
-        if (!is.null(gg_confusion_stacked)) {
-          .bm_export_gg_plot(gg_confusion_stacked,
-                             file.path(output_dir, "bm_multiple_confusion_stacked.png"),
-                             plot_width, plot_height, plot_dpi)
-        }
-        comp_dir <- file.path(output_dir, "by_comparison")
-        if (!dir.exists(comp_dir)) dir.create(comp_dir, recursive = TRUE)
-        for (comp in names(gg_confusion_by_comp)) {
-          if (!is.null(gg_confusion_by_comp[[comp]])) {
-            safe_comp <- gsub("[^A-Za-z0-9_-]", "_", comp)
-            .bm_export_gg_plot(gg_confusion_by_comp[[comp]],
-                               file.path(comp_dir,
-                                         paste0("bm_confusion_stacked_", safe_comp, ".png")),
-                               plot_width, plot_height, plot_dpi)
-          }
-        }
-      }
-      if (verbose) message("  Exported confusion data and plots.")
-    }
-
-    # ROC exports
-    if (has_classified) {
-      if (export_tables) {
-        .bm_export_data(classified_combined,
-                        file.path(output_dir, "bm_multiple_classified_combined.tsv"))
-      }
-      if (export_plots) {
-        comp_dir <- file.path(output_dir, "by_comparison")
-        if (!dir.exists(comp_dir)) dir.create(comp_dir, recursive = TRUE)
-        for (comp in names(gg_roc_by_comp)) {
-          safe_comp <- gsub("[^A-Za-z0-9_-]", "_", comp)
-          if (!is.null(gg_roc_by_comp[[comp]])) {
-            .bm_export_gg_plot(gg_roc_by_comp[[comp]],
-                               file.path(comp_dir, paste0("bm_roc_", safe_comp, ".png")),
-                               plot_width, plot_height, plot_dpi)
-          }
-          if (!is.null(gg_roc_zoom_by_comp[[comp]])) {
-            .bm_export_gg_plot(gg_roc_zoom_by_comp[[comp]],
-                               file.path(comp_dir, paste0("bm_roc_zoom_", safe_comp, ".png")),
-                               plot_width, plot_height, plot_dpi)
-          }
-        }
-      }
-      if (verbose) message("  Exported classified data and ROC plots.")
-    }
+    .bm_export_all(output_dir, inputs, ranks, figs, export_tables, export_plots,
+                   plot_width, plot_height, plot_dpi, verbose)
   }
-
-  # ==========================================================================
-  # STEP 5: Build result
-  # ==========================================================================
-  result <- list(
-    opdea_combined    = opdea_combined,
-    mean_aggregated   = ranking$mean_aggregated,
-    median_aggregated = ranking$median_aggregated,
-    mean_ranking      = ranking$mean_ranking,
-    median_ranking    = ranking$median_ranking,
-    ranking_by_comparison          = ranking_by_comp$by_comparison,
-    ranking_by_comparison_combined = ranking_by_comp$ranking_combined
-  )
-
-  # Add global plots with gg_ prefix
-  for (nm in selected) {
-    result[[paste0("gg_", nm)]] <- plot_result[[nm]]
-  }
-
-  # Add per-comparison plots
-  result$gg_ranking_heatmap_by_comp <- gg_heatmap_by_comp
-  result$gg_ranking_bars_by_comp    <- gg_bars_by_comp
-
-  # Confusion data and plots
-  if (has_confusion) {
-    result$confusion_combined              <- confusion_combined
-    result$gg_confusion_stacked            <- gg_confusion_stacked
-    result$gg_confusion_stacked_by_comp    <- gg_confusion_by_comp
-  }
-
-  # Classified data and ROC plots
-  if (has_classified) {
-    result$classified_combined     <- classified_combined
-    result$gg_roc_by_comp          <- gg_roc_by_comp
-    result$gg_roc_zoom_by_comp     <- gg_roc_zoom_by_comp
-  }
-
-  # Extended ranking data and plots
-  if (!is.null(extended_ranking)) {
-    result$extended_combined          <- extended_ranking$extended_combined
-    result$extended_mean_aggregated   <- extended_ranking$mean_aggregated
-    result$extended_ranking           <- extended_ranking$mean_ranking
-    result$bench_metrics_combined     <- bench_metrics_combined
-  }
-
-  result$parameters <- list(
-    metrics           = metrics,
-    extended_metrics  = if (!is.null(extended_ranking)) extended_ranking$metrics_used else NULL,
-    n_methods         = n_methods,
-    n_comparisons     = n_comps,
-    comparisons       = comps,
-    plots             = selected
-  )
+  result <- .bm_result(inputs, ranks, figs, metrics)
 
   if (verbose) message("=== DONE ===")
-
   result
 }
 
