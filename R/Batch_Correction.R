@@ -955,13 +955,24 @@ pvca_analysis <- function(se,
 #'   interest (e.g. the condition) in order to PRESERVE it; otherwise ComBat
 #'   removes all batch-associated variance and can erase biological signal when
 #'   condition and batch are confounded.
+#'
+#'   Protecting covariates needs at least two non-missing values of a protein
+#'   in every combination of batch and covariate level. Proteins that lack them
+#'   are corrected for the batch alone, without protecting the covariates, so
+#'   that none of their measured values is lost; BERT itself would set them to
+#'   missing. With a balanced design (every condition equally represented in
+#'   every batch) this is harmless; when batch and condition are unbalanced, it
+#'   can remove part of the biological signal of those proteins. Their names
+#'   are listed in `metadata(se)$batch_correction`.
 #' @param qualitycontrol Logical. Compute ASW (Average Silhouette Width)
 #'   quality metrics for raw vs corrected data (default FALSE).
 #' @param verbose Logical (default TRUE).
 #'
-#' @return SummarizedExperiment with the new corrected assay added.
-#'   If BERT returns fewer features than the input, the SE is subsetted
-#'   to match and a warning is issued.
+#' @return SummarizedExperiment with the new corrected assay added, and
+#'   `metadata(se)$batch_correction`, a list naming the features kept
+#'   unadjusted (`unadjusted`, no variance within a batch) and those corrected
+#'   for the batch only (`batch_only`). If BERT returns fewer features than the
+#'   input, the SE is subsetted to match and a warning is issued.
 #'
 #' @examples
 #' data(nadia_dia)
@@ -982,11 +993,8 @@ pvca_analysis <- function(se,
 #'
 #' # On a real experiment you would normally pass the biological variable of
 #' # interest in `covariates`, so that ComBat preserves it instead of removing
-#' # it along with the batch effect. `covariates = "Condition"` works on this
-#' # example: the assay is already imputed, so each batch-by-condition cell has
-#' # its two values. Before imputation, with only two samples per cell, BERT
-#' # needs two non-missing values per cell and any protein with a gap there
-#' # stops being adjustable.
+#' # it along with the batch effect. Before imputation, a protein that lacks
+#' # two values in some batch-by-condition cell is corrected for the batch only.
 #' @export
 batch_correct_proteomics <- function(
     se,
@@ -1076,30 +1084,58 @@ batch_correct_proteomics <- function(
   # through unadjusted.
   combat_bad <- logical(nrow(mat))
   if (algorithm == "ComBat") combat_bad <- .bc_combat_unfittable(mat, batch_vals)
+
+  # --- Proteins that cannot be adjusted with the protected covariates ---
+  # BERT needs at least two values in every combination of batch and covariate
+  # level, and sets a protein's values in a batch to NA when they are missing
+  # (as documented in its vignette). Those values were then imputed as if they
+  # had never been measured, and proteins left without values in a condition
+  # dropped out of the analysis. They are corrected for the batch alone
+  # instead, which keeps every measured value. On the spike-in example with a
+  # simulated batch effect this recovered the sensitivity of a batch-free
+  # analysis, where letting BERT discard the values detected less than half of
+  # the true changes (Bioconductor review, #186).
+  batch_only <- logical(nrow(mat))
+  if (!is.null(cov_df)) {
+    # The cells BERT sees: the batch crossed with the covariates as encoded
+    cells <- interaction(batch_vals, do.call(paste, cov_df), drop = TRUE)
+    batch_only <- !combat_bad & apply(!is.na(mat), 1, function(obs)
+      any(tapply(obs, cells, sum) < 2))
+  }
+  # BERT needs at least two features per call: a lone protein moves to the
+  # next, more permissive group
+  protected <- !combat_bad & !batch_only
+  if (sum(protected) == 1) { batch_only <- batch_only | protected; protected[] <- FALSE }
+  if (sum(batch_only) == 1) { combat_bad <- combat_bad | batch_only; batch_only[] <- FALSE }
+
   if (any(combat_bad) && verbose)
     message("- Uncorrectable features (zero within-batch variance): ",
             sum(combat_bad), " -> kept unadjusted")
+  if (any(batch_only) && verbose)
+    message("- Features without two values in every batch-by-covariate cell: ",
+            sum(batch_only), " -> corrected for the batch only, without ",
+            "protecting the covariates")
 
   # --- Run BERT ---
   if (verbose) message("- Running BERT ...")
-  corrected_fit <- .bc_run_bert(
-    mat            = mat[!combat_bad, , drop = FALSE],
+  run_bert <- function(rows, covs, qc) .bc_run_bert(
+    mat            = mat[rows, , drop = FALSE],
     batch_vec      = batch_vals,
     method         = algorithm,
     combatmode     = ComBat_mode,
-    covariates     = cov_df,
-    qualitycontrol = qualitycontrol,
+    covariates     = covs,
+    qualitycontrol = qc,
     verbose        = verbose
   )
+  fits <- list()
+  if (any(protected))  fits$protected  <- run_bert(protected, cov_df, qualitycontrol)
+  if (any(batch_only)) fits$batch_only <- run_bert(batch_only, NULL, FALSE)
+  cols <- if (length(fits)) colnames(fits[[1]]) else colnames(mat)
+  if (any(combat_bad)) fits$passthrough <- mat[combat_bad, cols, drop = FALSE]
 
-  if (any(combat_bad)) {
-    passthrough <- mat[combat_bad, colnames(corrected_fit), drop = FALSE]
-    corrected_mat <- rbind(corrected_fit, passthrough)
-    corrected_mat <- corrected_mat[intersect(rownames(mat), rownames(corrected_mat)),
-                                   , drop = FALSE]
-  } else {
-    corrected_mat <- corrected_fit
-  }
+  corrected_mat <- do.call(rbind, unname(fits))
+  corrected_mat <- corrected_mat[intersect(rownames(mat), rownames(corrected_mat)),
+                                 , drop = FALSE]
 
   # --- Align output to SE ---
   n_features_out <- nrow(corrected_mat)
@@ -1137,6 +1173,16 @@ batch_correct_proteomics <- function(
   # Ensure exact row/column order matches SE (BERT may reorder features)
   corrected_mat <- corrected_mat[rownames(se), colnames(se), drop = FALSE]
   SummarizedExperiment::assay(se, corrected_assay_name) <- corrected_mat
+
+  # Record which features were not corrected as requested, so that they can be
+  # inspected after a run with verbose = FALSE
+  S4Vectors::metadata(se)$batch_correction <- list(
+    assay       = assay_name,
+    batch       = batch_column,
+    algorithm   = algorithm,
+    covariates  = covariates,
+    unadjusted  = rownames(mat)[combat_bad],
+    batch_only  = rownames(mat)[batch_only])
 
   if (verbose) {
     message("- New assay added: '", corrected_assay_name, "'")

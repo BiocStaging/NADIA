@@ -35,6 +35,14 @@ Changes made in response to the Bioconductor review.
 * A Parquet export that needs `arrow` now fails before the analysis starts.
   `process_proteomics()` used to run to the end and then skip the Parquet
   files with a warning.
+* Batch correction with protected covariates no longer discards measured
+  values. BERT needs two values of a protein in every combination of batch and
+  covariate level, and set the protein's values in a batch to missing when they
+  were lacking: those values were then imputed, and proteins left without
+  values in a condition dropped out of the analysis. With two replicates per
+  condition in each batch this affected over a quarter of the proteins. Those
+  proteins are now corrected for the batch only, and are listed in
+  `metadata(se)$batch_correction`.
 * `proteomics_heatmap()` no longer changes ComplexHeatmap's `message` option
   for the rest of the session.
 

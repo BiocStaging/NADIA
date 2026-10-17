@@ -170,9 +170,13 @@ although they should be followed by the post-correction checks shown below.
 every batch. When `batch_covariates` are supplied, this requirement applies to
 each combination of batch and protected-covariate levels. In addition, a protein
 must have at least two non-missing quantitative values within each of these
-combinations for BERT to estimate its correction. Insufficient replication can
-make individual proteins unadjustable and, when it affects many proteins, may
-prevent the batch-correction model from being fitted.
+combinations for BERT to estimate its correction. NADIA corrects the proteins
+that lack them for the batch alone, without protecting the covariates, so that
+none of their measured values is lost, and lists them in
+`metadata(se)$batch_correction`. This is harmless when every condition is
+equally represented in every batch; when the design is unbalanced, it can remove
+part of the biological signal of those proteins. Proteins with fewer than two
+values in a batch cannot be corrected at all and are kept unadjusted.
 :::
 
 # Step 2: how much variance does the batch explain?
