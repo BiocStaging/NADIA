@@ -1,4 +1,6 @@
-# NADIA <img src="man/figures/logo.svg" align="right" height="139" alt="NADIA package logo" style="width:auto;padding:0;" />
+<img src="man/figures/logo.svg" align="right" height="139" alt="NADIA package logo" style="width:auto;padding:0;" />
+
+# NADIA
 
 <!-- badges: start -->
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22504221.svg)](https://doi.org/10.5281/zenodo.22504221)
@@ -15,7 +17,7 @@ data from bottom-up proteomics. It starts from quantification reports exported b
 Spectronaut, DIA-NN or Proteome Discoverer and produces processed matrices,
 differential abundance results, tables and visualisations.
 
-<p><a href="vignettes/figures/nadia-workflow-overview.svg"><img src="vignettes/figures/nadia-workflow-overview.svg" alt="NADIA workflow: import DIA, TMT or label-free DDA data; normalise, optionally correct batch effects, handle missing values, test differential abundance and optionally run Pattern Profiler; explore and export the results. Method assessment and benchmarking support pipeline selection." style="width:100%;padding:0;" /></a></p>
+<p><a href="vignettes/figures/nadia-workflow-overview.svg"><img src="vignettes/figures/nadia-workflow-overview.svg" alt="NADIA workflow: import DIA, TMT or label-free DDA data, or a SummarizedExperiment object; normalise, optionally correct batch effects, handle missing values, test differential abundance and optionally run Pattern Profiler; explore and export the results. Method assessment and benchmarking support pipeline selection." style="width:100%;padding:0;" /></a></p>
 
 *NADIA at a glance: a common workflow from quantification reports to interpretable,
 reproducible results, with explicit attention to missing values.*
