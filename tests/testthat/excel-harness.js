@@ -24,10 +24,11 @@ const ctx = {
   document: { createElement: () => ({ click: () => {} }) },
   Blob: function () {},
   Reactable: { getDataCSV: () => tsv },
-  // The test table has no quoted fields, so a plain split is enough
+  // The test table has no quoted fields, so a plain split is enough; lines end
+  // in \r\n on Windows, where writeLines() writes the table
   Papa: {
     parse: (text) => {
-      const lines = text.trim().split("\n").map((l) => l.split("\t"));
+      const lines = text.trim().split(/\r?\n/).map((l) => l.split("\t"));
       const fields = lines[0];
       const data = lines.slice(1).map((v) => Object.fromEntries(fields.map((f, i) => [f, v[i]])));
       return { data, meta: { fields } };
